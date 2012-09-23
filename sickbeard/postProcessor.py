@@ -131,7 +131,8 @@ class PostProcessor(object):
             self._log(u"File "+existing_file+" doesn't exist so there's no worries about replacing it", logger.DEBUG)
             return PostProcessor.DOESNT_EXIST
 
-    def _list_associated_files(self, file_path):
+    def _list_associated_files(self, file_path, subtitles_only=False):
+
         """
         For a given file path searches for files with the same name but different extension and returns them.
         
@@ -151,8 +152,10 @@ class PostProcessor(object):
         base_name = re.sub(r'[\[\]\*\?]', r'[\g<0>]', base_name)
     
         for associated_file_path in ek.ek(glob.glob, base_name+'*'):
-            # only list it if the only non-shared part is the extension
-            if '.' in associated_file_path[len(base_name):]:
+            # only list it if the only non-shared part is the extension or if it is a subtitle
+            if '.' in associated_file_path[len(base_name):] and not associated_file_path.endswith('srt'):
+                continue
+            if subtitles_only and not associated_file_path.endswith('srt'):
                 continue
 
             file_path_list.append(associated_file_path)
@@ -188,7 +191,7 @@ class PostProcessor(object):
                 # do the library update for synoindex
                 notifiers.synoindex_notifier.deleteFile(cur_file)
                 
-    def _combined_file_operation (self, file_path, new_path, new_base_name, associated_files=False, action=None):
+    def _combined_file_operation (self, file_path, new_path, new_base_name, associated_files=False, action=None, subtitles=False):
         """
         Performs a generic operation (move or copy) on a file. Can rename the file as well as change its location,
         and optionally move associated files too.
@@ -207,7 +210,11 @@ class PostProcessor(object):
         if associated_files:
             file_list = self._list_associated_files(file_path)
         else:
-            file_list = [file_path]
+            if subtitles:
+                file_list = self._list_associated_files(file_path, True)
+                file_list.append(file_path)
+            else:
+                file_list = [file_path]
 
         if not file_list:
             self._log(u"There were no files associated with "+file_path+", not moving anything", logger.DEBUG)
@@ -219,6 +226,12 @@ class PostProcessor(object):
             
             # get the extension
             cur_extension = cur_file_path.rpartition('.')[-1]
+            
+            # check if file have language of subtitles
+            if cur_extension == 'srt':
+                cur_lang = cur_file_path.rpartition('.')[0].rpartition('.')[-1]
+                if cur_lang in sickbeard.SUBTITLES_LANGUAGES:
+                    cur_extension = cur_lang + '.' + cur_extension
         
             # replace .nfo with .nfo-orig to avoid conflicts
             if cur_extension == 'nfo':
@@ -226,16 +239,22 @@ class PostProcessor(object):
 
             # If new base name then convert name
             if new_base_name:
-                new_file_name = new_base_name +'.' + cur_extension
+                new_file_name = new_base_name + '.' + cur_extension
             # if we're not renaming we still want to change extensions sometimes
             else:
                 new_file_name = helpers.replaceExtension(cur_file_name, cur_extension)
             
-            new_file_path = ek.ek(os.path.join, new_path, new_file_name)
-
+            if sickbeard.SUBTITLES_SUBDIR and cur_extension.endswith('srt'):
+                subs_new_path = ek.ek(os.path.join, new_path, sickbeard.SUBTITLES_SUBDIR)
+                if not ek.ek(os.path.isdir, subs_new_path):
+                    ek.ek(os.mkdir, subs_new_path)
+                new_file_path = ek.ek(os.path.join, subs_new_path, new_file_name)
+            else:
+                new_file_path = ek.ek(os.path.join, new_path, new_file_name)
+            
             action(cur_file_path, new_file_path)
                 
-    def _move(self, file_path, new_path, new_base_name, associated_files=False):
+    def _move(self, file_path, new_path, new_base_name, associated_files=False, subtitles=False):
         """
         file_path: The full path of the media file to move
         new_path: Destination path where we want to move the file to 
@@ -253,9 +272,9 @@ class PostProcessor(object):
                 self._log("Unable to move file "+cur_file_path+" to "+new_file_path+": "+ex(e), logger.ERROR)
                 raise e
                 
-        self._combined_file_operation(file_path, new_path, new_base_name, associated_files, action=_int_move)
+        self._combined_file_operation(file_path, new_path, new_base_name, associated_files, action=_int_move, subtitles=subtitles)
                 
-    def _copy(self, file_path, new_path, new_base_name, associated_files=False):
+    def _copy(self, file_path, new_path, new_base_name, associated_files=False, subtitles=False):
         """
         file_path: The full path of the media file to copy
         new_path: Destination path where we want to copy the file to 
@@ -273,7 +292,7 @@ class PostProcessor(object):
                 logger.log("Unable to copy file "+cur_file_path+" to "+new_file_path+": "+ex(e), logger.ERROR)
                 raise e
 
-        self._combined_file_operation(file_path, new_path, new_base_name, associated_files, action=_int_copy)
+        self._combined_file_operation(file_path, new_path, new_base_name, associated_files, action=_int_copy, subtitles=subtitles)
 
     def _find_ep_destination_folder(self, ep_obj):
         """
@@ -793,6 +812,10 @@ class PostProcessor(object):
                 cur_ep.status = common.Quality.compositeStatus(common.DOWNLOADED, new_ep_quality)
                 cur_ep.saveToDB()
 
+        # download subtitles
+        if sickbeard.USE_SUBTITLES and ep_obj.show.subtitles:
+            cur_ep.downloadSubtitles(self.file_path)
+        
         # figure out the base name of the resulting episode file
         if sickbeard.RENAME_EPISODES:
             orig_extension = self.file_name.rpartition('.')[-1]
@@ -807,9 +830,9 @@ class PostProcessor(object):
         try:
             # move the episode and associated files to the show dir
             if sickbeard.KEEP_PROCESSED_DIR:
-                self._copy(self.file_path, dest_path, new_base_name, sickbeard.MOVE_ASSOCIATED_FILES)
+                self._copy(self.file_path, dest_path, new_base_name, sickbeard.MOVE_ASSOCIATED_FILES, sickbeard.USE_SUBTITLES and ep_obj.show.subtitles)
             else:
-                self._move(self.file_path, dest_path, new_base_name, sickbeard.MOVE_ASSOCIATED_FILES)
+                self._move(self.file_path, dest_path, new_base_name, sickbeard.MOVE_ASSOCIATED_FILES, sickbeard.USE_SUBTITLES and ep_obj.show.subtitles)
         except OSError, IOError:
             raise exceptions.PostProcessingFailed("Unable to move the files to their new home")
         
