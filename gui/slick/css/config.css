@@ -62,9 +62,7 @@
 /* Hides from IE-mac \*/
 * html .clearfix{height:1%;}
 /* End hide from IE-mac */
-#provider_group, #service_group{display:inline-block;vertical-align:top;}
-#provider_group label, #service_group label{font-size: 20px;text-align:center;display:block;font-weight:bold;margin-bottom:8px;}
-#provider_order_list, #service_order_list{list-style-type:none;width:250px;margin:0 10px;padding:0;}
+#provider_order_list, #service_order_list{list-style-type:none;width:250px;margin:0;padding:0;}
 #provider_order_list li, #service_order_list li{font-size:15px;font-weight:bold;height:1.3em;font-family:Verdana;margin:0 5px 5px;padding:6px;}
 #provider_order_list input, #service_order_list input{margin:0px 2px;}
 .providerDiv{display:none;padding-left:20px;}
