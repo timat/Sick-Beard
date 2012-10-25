@@ -1205,6 +1205,7 @@ class ConfigProviders:
     def saveProviders(self, nzbmatrix_username=None, nzbmatrix_apikey=None,
                       nzbs_r_us_uid=None, nzbs_r_us_hash=None, newznab_string=None,
                       tvtorrents_digest=None, tvtorrents_hash=None,
+                      torrentday_u=None, torrentday_tp=None,
                       thepiratebay_trusted=None, thepiratebay_proxy=None, thepiratebay_proxy_url=None,
                       btn_api_key=None,
                       dtt_norar = None, dtt_single = None,newzbin_username=None, newzbin_password=None,
@@ -1270,6 +1271,8 @@ class ConfigProviders:
                 sickbeard.EZRSS = curEnabled
             elif curProvider == 'tvtorrents':
                 sickbeard.TVTORRENTS = curEnabled
+            elif curProvider == 'torrentday':
+                sickbeard.TORRENTDAY = curEnabled
             elif curProvider == 'thepiratebay':
                 sickbeard.THEPIRATEBAY = curEnabled                    
             elif curProvider == 'btn':
@@ -1283,6 +1286,9 @@ class ConfigProviders:
 
         sickbeard.TVTORRENTS_DIGEST = tvtorrents_digest.strip()
         sickbeard.TVTORRENTS_HASH = tvtorrents_hash.strip()
+ 
+        sickbeard.TORRENTDAY_U = torrentday_u.strip()
+        sickbeard.TORRENTDAY_TP = torrentday_tp.strip()
  
         if thepiratebay_trusted == "on":
             thepiratebay_trusted = 1

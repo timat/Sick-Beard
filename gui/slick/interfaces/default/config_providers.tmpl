@@ -102,7 +102,7 @@ var show_nzb_providers = #if $sickbeard.USE_NZBS then "true" else "false"#;
                                 <span class="component-title jumbo">Configure Provider:</span>
                                 <span class="component-desc">
                                     #set $provider_config_list = []
-                                    #for $cur_provider in ("nzbs_r_us", "newzbin", "nzbmatrix", "thepiratebay", "dailytvtorrents", "tvtorrents", "btn"):
+                                    #for $cur_provider in ("nzbs_r_us", "newzbin", "nzbmatrix", "thepiratebay", "dailytvtorrents", "tvtorrents", "torrentday", "btn"):
                                         #set $cur_provider_obj = $sickbeard.providers.getProviderClass($cur_provider)
                                         #if $cur_provider_obj.providerType == $GenericProvider.NZB and not $sickbeard.USE_NZBS:
                                             #continue
@@ -216,6 +216,21 @@ var show_nzb_providers = #if $sickbeard.USE_NZBS then "true" else "false"#;
                             <label class="clearfix">
                                 <span class="component-title">TvTorrents Hash:</span>
                                 <input class="component-desc" type="text" name="tvtorrents_hash" value="$sickbeard.TVTORRENTS_HASH" size="40" />
+                            </label>
+                        </div>
+</div>
+
+<div class="providerDiv" id="torrentdayDiv">
+                        <div class="field-pair">
+                            <label class="clearfix">
+                                <span class="component-title">TorrentDay U:</span>
+                                <input class="component-desc" type="text" name="torrentday_u" value="$sickbeard.TORRENTDAY_U" size="40" />
+                            </label>
+                        </div>
+                        <div class="field-pair">
+                            <label class="clearfix">
+                                <span class="component-title">TorrentDay TP:</span>
+                                <input class="component-desc" type="text" name="torrentday_tp" value="$sickbeard.TORRENTDAY_TP" size="40" />
                             </label>
                         </div>
 </div>
