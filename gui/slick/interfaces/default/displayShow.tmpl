@@ -92,7 +92,7 @@ initially download: <b><%=", ".join([Quality.qualityStrings[x] for x in anyQuali
 #end if
 #if $bestQualities:
 replace with: <b><%=", ".join([Quality.qualityStrings[x] for x in bestQualities])%></b>
-#end if 
+#end if
 #end if
     </td></tr>
     </table>
@@ -125,7 +125,7 @@ replace with: <b><%=", ".join([Quality.qualityStrings[x] for x in bestQualities]
 <div style="clear:both;" class="clearfix"></div>
 
 <div class="float-left">
-	Change selected episodes to 
+	Change selected episodes to
 	<select id="statusSelect">
 	#for $curStatus in [$WANTED, $SKIPPED, $ARCHIVED, $IGNORED] + $Quality.DOWNLOADED:
 	#if $curStatus == $DOWNLOADED:
@@ -145,13 +145,13 @@ replace with: <b><%=", ".join([Quality.qualityStrings[x] for x in bestQualities]
 		<label for="skipped"><span class="skipped">Skipped: <b>$epCounts[$Overview.SKIPPED]</b> <input type="checkbox" id="skipped" checked="checked" /></span></label>
     </div>
     <div class="pull-right">
-        <button class="btn btn-mini seriesCheck"><a>Select Filtered Episodes</a></button> 
+        <button class="btn btn-mini seriesCheck"><a>Select Filtered Episodes</a></button>
         <button class="btn btn-mini clearAll"><a>Clear All</a></button>
 	</div>
-<br />	
+<br />
 
 <table class="sickbeardTable" cellspacing="1" border="0" cellpadding="0">
-    
+
 #for $epResult in $sqlResults:
 
     #if int($epResult["season"]) != $curSeason:
@@ -163,7 +163,7 @@ replace with: <b><%=", ".join([Quality.qualityStrings[x] for x in bestQualities]
   </tr>
   <tr id="season-$epResult["season"]-cols"><th width="1%"><input type="checkbox" class="seasonCheck" id="$epResult["season"]" /></th><th>NFO</th><th>TBN</th><th>Episode</th><th>Name</th><th class="nowrap">Airdate</th><th>Filename</th>#if $sickbeard.USE_SUBTITLES and $show.subtitles then "<th>Subtitles</th>" else ""#<th>Status</th><th>Search</th></tr>
         #set $curSeason = int($epResult["season"])
-    #end if    
+    #end if
 
   #set $epStr = str($epResult["season"]) + "x" + str($epResult["episode"])
   #set $epLoc = $epResult["location"]
@@ -179,7 +179,7 @@ replace with: <b><%=", ".join([Quality.qualityStrings[x] for x in bestQualities]
     <td class="title">
     #if $epResult["description"] != "" and $epResult["description"] != None:
     <img src="$sbRoot/images/info32.png" height="16" class="plotInfo" alt="" id="plot_info_$show.tvdbid<%="_"+str(epResult["season"])+"_"+str(epResult["episode"])%>" />
-	#end if    
+	#end if
     $epResult["name"]
 </td>
     <td align="center" class="nowrap">#if int($epResult["airdate"]) == 1 then "never" else $datetime.date.fromordinal(int($epResult["airdate"]))#</td>
@@ -195,7 +195,7 @@ $epLoc
     <td class="subtitles_column" align="center">&nbsp;
     #for $sub_lang in $epResult["subtitles"].split(','):
         #if $sub_lang:
-            <img src="$sbRoot/images/flags/${sub_lang}.png" width="16" height="11" alt="${sub_lang}" />&nbsp;
+            <img src="$sbRoot/images/flags/${sub_lang[:2]}.png" width="16" height="11" alt="${sub_lang}" />&nbsp;
         #end if
     #end for
     </td>
