@@ -17,9 +17,8 @@
 # along with Sick Beard.  If not, see <http://www.gnu.org/licenses/>.
 
 import re
-import urllib
 
-from sickbeard.helpers import sanitizeSceneName
+from sickbeard import helpers
 from sickbeard import name_cache
 from sickbeard import logger
 from sickbeard import db
@@ -32,6 +31,7 @@ def get_scene_exceptions(tvdb_id):
     myDB = db.DBConnection("cache.db")
     exceptions = myDB.select("SELECT show_name FROM scene_exceptions WHERE tvdb_id = ?", [tvdb_id])
     return [cur_exception["show_name"] for cur_exception in exceptions]
+
 
 def get_scene_exception_by_name(show_name):
     """
@@ -52,11 +52,12 @@ def get_scene_exception_by_name(show_name):
         cur_exception_name = cur_exception["show_name"]
         cur_tvdb_id = int(cur_exception["tvdb_id"])
 
-        if show_name.lower() in (cur_exception_name.lower(), sanitizeSceneName(cur_exception_name).lower().replace('.',' ')):
+        if show_name.lower() in (cur_exception_name.lower(), helpers.sanitizeSceneName(cur_exception_name).lower().replace('.', ' ')):
             logger.log(u"Scene exception lookup got tvdb id "+str(cur_tvdb_id)+u", using that", logger.DEBUG)
             return cur_tvdb_id
 
     return None
+
 
 def retrieve_exceptions():
     """
@@ -68,10 +69,19 @@ def retrieve_exceptions():
 
     # exceptions are stored on github pages
     url = 'http://midgetspy.github.com/sb_tvdb_scene_exceptions/exceptions.txt'
-    open_url = urllib.urlopen(url)
     
+    logger.log(u"Check scene exceptions update")
+    url_data = helpers.getURL(url)
+
+    if url_data is None:
+        # When urlData is None, trouble connecting to github
+        logger.log(u"Check scene exceptions update failed. Unable to get URL: " + url, logger.ERROR)
+        return
+
+    else:
     # each exception is on one line with the format tvdb_id: 'show name 1', 'show name 2', etc
-    for cur_line in open_url.readlines():
+        for cur_line in url_data.splitlines():
+            cur_line = cur_line.decode('utf-8')
         tvdb_id, sep, aliases = cur_line.partition(':') #@UnusedVariable
         
         if not aliases:
@@ -102,7 +112,10 @@ def retrieve_exceptions():
 
     # since this could invalidate the results of the cache we clear it out after updating
     if changed_exceptions:
+            logger.log(u"Updated scene exceptions")
         name_cache.clearCache()
+        else:
+            logger.log(u"No scene exceptions update needed")
         
 def update_scene_exceptions(tvdb_id, scene_exceptions):
     """
@@ -116,4 +129,4 @@ def update_scene_exceptions(tvdb_id, scene_exceptions):
     for cur_exception in scene_exceptions:
         myDB.action("INSERT INTO scene_exceptions (tvdb_id, show_name) VALUES (?,?)", [tvdb_id, cur_exception])
     
-    name_cache.clearCache()
+    name_cache.clearCache()        

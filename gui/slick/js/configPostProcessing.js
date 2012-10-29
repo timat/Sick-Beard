@@ -13,7 +13,8 @@ $(document).ready(function() {
         var pattern = $('#naming_pattern').val();
         var multi = $('#naming_multi_ep :selected').val();
 
-        $.get(sbRoot + '/config/postProcessing/testNaming', {pattern:pattern}, function(data) {
+        $.get(sbRoot + '/config/postProcessing/testNaming', {pattern: pattern},
+            function (data) {
                   if (data) {
                       $('#naming_example').text(data + '.ext');
                       $('#naming_example_div').show();
@@ -22,7 +23,8 @@ $(document).ready(function() {
                   }
               });
 
-        $.get(sbRoot + '/config/postProcessing/testNaming', {pattern:pattern, multi:multi}, function(data) {
+        $.get(sbRoot + '/config/postProcessing/testNaming', {pattern: pattern, multi: multi},
+            function (data) {
                   if (data) {
                       $('#naming_example_multi').text(data + '.ext');
                       $('#naming_example_multi_div').show();
@@ -31,7 +33,8 @@ $(document).ready(function() {
                   }
               });
 
-        $.get(sbRoot + '/config/postProcessing/isNamingValid', {pattern:pattern, multi:multi}, function(data) {
+        $.get(sbRoot + '/config/postProcessing/isNamingValid', {pattern: pattern, multi: multi},
+            function (data) {
                   if (data == "invalid") {
                       $('#naming_pattern').qtip('option', {
                           'content.text':'This pattern is invalid.',
@@ -61,7 +64,8 @@ $(document).ready(function() {
     function fill_abd_examples() {
         var pattern = $('#naming_abd_pattern').val();
 
-        $.get(sbRoot + '/config/postProcessing/testNaming', {pattern:pattern, abd:'True'}, function(data) {
+        $.get(sbRoot + '/config/postProcessing/testNaming', {pattern: pattern, abd: 'True'},
+            function (data) {
                   if (data) {
                       $('#naming_abd_example').text(data + '.ext');
                       $('#naming_abd_example_div').show();
@@ -70,7 +74,8 @@ $(document).ready(function() {
                   }
               });
 
-        $.get(sbRoot + '/config/postProcessing/isNamingValid', {pattern:pattern, abd:'True'}, function(data) {
+        $.get(sbRoot + '/config/postProcessing/isNamingValid', {pattern: pattern, abd: 'True'},
+            function (data) {
                   if (data == "invalid") {
                       $('#naming_abd_pattern').qtip('option', {
                           'content.text':'This pattern is invalid.',

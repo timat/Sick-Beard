@@ -12,7 +12,7 @@
 				subtitles_td.html("&nbsp;");
 				$.each(subtitles,function(index, language){
 					if (language != "") {
-						subtitles_td.append($("<img/>").attr({"src": sbRoot+"/images/flags/"+language.r.substring(0, 2)+".png", "alt": language, "width": 16, "height": 11}));
+						subtitles_td.append($("<img/>").attr({"src": sbRoot+"/images/flags/"+language+".png", "alt": language, "width": 16, "height": 11}));
 						subtitles_td.append("&nbsp;");
 					}
 				});

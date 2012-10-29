@@ -28,16 +28,17 @@ from common import SNATCHED, Quality, SEASON_RESULT, MULTI_EP_RESULT
 from sickbeard import logger, db, show_name_helpers, exceptions, helpers
 from sickbeard import sab
 from sickbeard import nzbget
+from sickbeard import utorrent
+from sickbeard import transmission
+from sickbeard import deluge
 from sickbeard import history
 from sickbeard import notifiers
 from sickbeard import nzbSplitter
 from sickbeard import ui
-from sickbeard import utorrent
-from sickbeard import transmission
-from sickbeard import deluge
 from sickbeard import encodingKludge as ek
-from sickbeard.exceptions import ex
 from sickbeard import providers
+
+from sickbeard.exceptions import ex
 from sickbeard.providers.generic import GenericProvider
 
 def _downloadResult(result):
@@ -116,6 +117,7 @@ def snatchEpisode(result, endStatus=SNATCHED):
             logger.log(u"Unknown NZB action specified in config: " + sickbeard.NZB_METHOD, logger.ERROR)
             dlResult = False
     
+    # TORRENTs can be sent to Clients or saved to disk
     elif result.resultType == "torrent":
         # torrents are always saved to disk
         if sickbeard.TORRENT_METHOD == "blackhole": 
@@ -143,7 +145,7 @@ def snatchEpisode(result, endStatus=SNATCHED):
             curEpObj.saveToDB()
 
         if curEpObj.status not in Quality.DOWNLOADED:
-            notifiers.notify_snatch(curEpObj.prettyName(True))
+            notifiers.notify_snatch(curEpObj.prettyName())
 
     return True
 
@@ -179,7 +181,7 @@ def searchForNeededEpisodes():
         for curEp in curFoundResults:
 
             if curEp.show.paused:
-                logger.log(u"Show "+curEp.show.name+" is paused, ignoring all RSS items for "+curEp.prettyName(True), logger.DEBUG)
+                logger.log(u"Show "+curEp.show.name+" is paused, ignoring all RSS items for "+curEp.prettyName(), logger.DEBUG)
                 continue
 
             # find the best result for the current episode
@@ -270,7 +272,7 @@ def isFinalResult(result):
 
 def findEpisode(episode, manualSearch=False):
 
-    logger.log(u"Searching for " + episode.prettyName(True))
+    logger.log(u"Searching for " + episode.prettyName())
 
     foundResults = []
 
@@ -396,6 +398,7 @@ def findSeason(show, season):
         # if we need every ep in the season and there's nothing better then just download this and be done with it
         if allWanted and bestSeasonNZB.quality == highest_quality_overall:
             logger.log(u"Every ep in this season is needed, downloading the whole "+bestSeasonNZB.provider.providerType+" "+bestSeasonNZB.name)
+
             epObjs = []
             for curEpNum in allEps:
                 epObjs.append(show.getEpisode(season, curEpNum))
