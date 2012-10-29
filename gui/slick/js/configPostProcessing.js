@@ -1,9 +1,9 @@
-$(document).ready(function() {
+$(document).ready(function () {
 
     // http://stackoverflow.com/questions/2219924/idiomatic-jquery-delayed-event-only-after-a-short-pause-in-typing-e-g-timew
-    var typewatch = (function() {
+    var typewatch = (function () {
         var timer = 0;
-        return function(callback, ms) {
+        return function (callback, ms) {
             clearTimeout(timer);
             timer = setTimeout(callback, ms);
         };
@@ -15,49 +15,49 @@ $(document).ready(function() {
 
         $.get(sbRoot + '/config/postProcessing/testNaming', {pattern: pattern},
             function (data) {
-                  if (data) {
-                      $('#naming_example').text(data + '.ext');
-                      $('#naming_example_div').show();
-                  } else {
-                      $('#naming_example_div').hide();
-                  }
-              });
+                if (data) {
+                    $('#naming_example').text(data + '.ext');
+                    $('#naming_example_div').show();
+                } else {
+                    $('#naming_example_div').hide();
+                }
+            });
 
         $.get(sbRoot + '/config/postProcessing/testNaming', {pattern: pattern, multi: multi},
             function (data) {
-                  if (data) {
-                      $('#naming_example_multi').text(data + '.ext');
-                      $('#naming_example_multi_div').show();
-                  } else {
-                      $('#naming_example_multi_div').hide();
-                  }
-              });
+                if (data) {
+                    $('#naming_example_multi').text(data + '.ext');
+                    $('#naming_example_multi_div').show();
+                } else {
+                    $('#naming_example_multi_div').hide();
+                }
+            });
 
         $.get(sbRoot + '/config/postProcessing/isNamingValid', {pattern: pattern, multi: multi},
             function (data) {
-                  if (data == "invalid") {
-                      $('#naming_pattern').qtip('option', {
-                          'content.text':'This pattern is invalid.',
-                          'style.classes':'ui-tooltip-rounded ui-tooltip-shadow ui-tooltip-red'
-                      });
-                      $('#naming_pattern').qtip('toggle', true);
-                      $('#naming_pattern').css('background-color', '#FFDDDD');
-                  } else if (data == "seasonfolders") {
-                      $('#naming_pattern').qtip('option', {
-                          'content.text':'This pattern would be invalid without the folders, using it will force "Flatten" off for all shows.',
-                          'style.classes':'ui-tooltip-rounded ui-tooltip-shadow ui-tooltip-red'
-                      });
-                      $('#naming_pattern').qtip('toggle', true);
-                      $('#naming_pattern').css('background-color', '#FFFFDD');
-                  } else {
-                      $('#naming_pattern').qtip('option', {
-                          'content.text':'This pattern is valid.',
-                          'style.classes':'ui-tooltip-rounded ui-tooltip-shadow ui-tooltip-green'
-                      });
-                      $('#naming_pattern').qtip('toggle', false);
-                      $('#naming_pattern').css('background-color', '#FFFFFF');
-                  }
-              });
+                if (data == "invalid") {
+                    $('#naming_pattern').qtip('option', {
+                        'content.text': 'This pattern is invalid.',
+                        'style.classes': 'ui-tooltip-rounded ui-tooltip-shadow ui-tooltip-red'
+                    });
+                    $('#naming_pattern').qtip('toggle', true);
+                    $('#naming_pattern').css('background-color', '#FFDDDD');
+                } else if (data == "seasonfolders") {
+                    $('#naming_pattern').qtip('option', {
+                        'content.text': 'This pattern would be invalid without the folders, using it will force "Flatten" off for all shows.',
+                        'style.classes': 'ui-tooltip-rounded ui-tooltip-shadow ui-tooltip-red'
+                    });
+                    $('#naming_pattern').qtip('toggle', true);
+                    $('#naming_pattern').css('background-color', '#FFFFDD');
+                } else {
+                    $('#naming_pattern').qtip('option', {
+                        'content.text': 'This pattern is valid.',
+                        'style.classes': 'ui-tooltip-rounded ui-tooltip-shadow ui-tooltip-green'
+                    });
+                    $('#naming_pattern').qtip('toggle', false);
+                    $('#naming_pattern').css('background-color', '#FFFFFF');
+                }
+            });
 
     }
 
@@ -66,39 +66,39 @@ $(document).ready(function() {
 
         $.get(sbRoot + '/config/postProcessing/testNaming', {pattern: pattern, abd: 'True'},
             function (data) {
-                  if (data) {
-                      $('#naming_abd_example').text(data + '.ext');
-                      $('#naming_abd_example_div').show();
-                  } else {
-                      $('#naming_abd_example_div').hide();
-                  }
-              });
+                if (data) {
+                    $('#naming_abd_example').text(data + '.ext');
+                    $('#naming_abd_example_div').show();
+                } else {
+                    $('#naming_abd_example_div').hide();
+                }
+            });
 
         $.get(sbRoot + '/config/postProcessing/isNamingValid', {pattern: pattern, abd: 'True'},
             function (data) {
-                  if (data == "invalid") {
-                      $('#naming_abd_pattern').qtip('option', {
-                          'content.text':'This pattern is invalid.',
-                          'style.classes':'ui-tooltip-rounded ui-tooltip-shadow ui-tooltip-red'
-                      });
-                      $('#naming_abd_pattern').qtip('toggle', true);
-                      $('#naming_abd_pattern').css('background-color', '#FFDDDD');
-                  } else if (data == "seasonfolders") {
-                      $('#naming_abd_pattern').qtip('option', {
-                          'content.text':'This pattern would be invalid without the folders, using it will force "Flatten" off for all shows.',
-                          'style.classes':'ui-tooltip-rounded ui-tooltip-shadow ui-tooltip-red'
-                      });
-                      $('#naming_abd_pattern').qtip('toggle', true);
-                      $('#naming_abd_pattern').css('background-color', '#FFFFDD');
-                  } else {
-                      $('#naming_abd_pattern').qtip('option', {
-                          'content.text':'This pattern is valid.',
-                          'style.classes':'ui-tooltip-rounded ui-tooltip-shadow ui-tooltip-green'
-                      });
-                      $('#naming_abd_pattern').qtip('toggle', false);
-                      $('#naming_abd_pattern').css('background-color', '#FFFFFF');
-                  }
-              });
+                if (data == "invalid") {
+                    $('#naming_abd_pattern').qtip('option', {
+                        'content.text': 'This pattern is invalid.',
+                        'style.classes': 'ui-tooltip-rounded ui-tooltip-shadow ui-tooltip-red'
+                    });
+                    $('#naming_abd_pattern').qtip('toggle', true);
+                    $('#naming_abd_pattern').css('background-color', '#FFDDDD');
+                } else if (data == "seasonfolders") {
+                    $('#naming_abd_pattern').qtip('option', {
+                        'content.text': 'This pattern would be invalid without the folders, using it will force "Flatten" off for all shows.',
+                        'style.classes': 'ui-tooltip-rounded ui-tooltip-shadow ui-tooltip-red'
+                    });
+                    $('#naming_abd_pattern').qtip('toggle', true);
+                    $('#naming_abd_pattern').css('background-color', '#FFFFDD');
+                } else {
+                    $('#naming_abd_pattern').qtip('option', {
+                        'content.text': 'This pattern is valid.',
+                        'style.classes': 'ui-tooltip-rounded ui-tooltip-shadow ui-tooltip-green'
+                    });
+                    $('#naming_abd_pattern').qtip('toggle', false);
+                    $('#naming_abd_pattern').css('background-color', '#FFFFFF');
+                }
+            });
 
     }
 
@@ -124,40 +124,40 @@ $(document).ready(function() {
         fill_abd_examples();
     }
 
-    $('#name_presets').change(function() {
+    $('#name_presets').change(function () {
         setup_naming();
     });
 
-    $('#name_abd_presets').change(function() {
+    $('#name_abd_presets').change(function () {
         setup_abd_naming();
     });
 
-    $('#naming_custom_abd').change(function() {
+    $('#naming_custom_abd').change(function () {
         setup_abd_naming();
     });
 
     $('#naming_multi_ep').change(fill_examples);
     $('#naming_pattern').focusout(fill_examples);
-    $('#naming_pattern').keyup(function() {
-        typewatch(function() {
+    $('#naming_pattern').keyup(function () {
+        typewatch(function () {
             fill_examples();
         }, 500);
     });
 
     $('#naming_abd_pattern').focusout(fill_examples);
-    $('#naming_abd_pattern').keyup(function() {
-        typewatch(function() {
+    $('#naming_abd_pattern').keyup(function () {
+        typewatch(function () {
             fill_abd_examples();
         }, 500);
     });
 
-    $('#show_naming_key').click(function() {
+    $('#show_naming_key').click(function () {
         $('#naming_key').toggle();
     });
-    $('#show_naming_abd_key').click(function() {
+    $('#show_naming_abd_key').click(function () {
         $('#naming_abd_key').toggle();
     });
-    $('#do_custom').click(function() {
+    $('#do_custom').click(function () {
         $('#naming_pattern').val($('#name_presets :selected').attr('id'));
         $('#naming_custom').show();
         $('#naming_pattern').focus();
@@ -166,12 +166,12 @@ $(document).ready(function() {
     setup_abd_naming();
 
     // -- start of metadata options div toggle code --
-    $('#metadataType').change(function() {
+    $('#metadataType').change(function () {
         $(this).showHideMetadata();
     });
 
-    $.fn.showHideMetadata = function() {
-        $('.metadataDiv').each(function() {
+    $.fn.showHideMetadata = function () {
+        $('.metadataDiv').each(function () {
             var targetName = $(this).attr('id');
             var selectedTarget = $('#metadataType :selected').val();
 
@@ -186,16 +186,16 @@ $(document).ready(function() {
     $(this).showHideMetadata();
     // -- end of metadata options div toggle code --
 
-    $('.metadata_checkbox').click(function() {
+    $('.metadata_checkbox').click(function () {
         $(this).refreshMetadataConfig(false);
     });
 
-    $.fn.refreshMetadataConfig = function(first) {
+    $.fn.refreshMetadataConfig = function (first) {
 
         var cur_most = 0;
         var cur_most_provider = '';
 
-        $('.metadataDiv').each(function() {
+        $('.metadataDiv').each(function () {
             var generator_name = $(this).attr('id');
 
             var config_arr = [];
@@ -239,53 +239,53 @@ $(document).ready(function() {
     }
 
     $(this).refreshMetadataConfig(true);
-    $('img[title]').qtip({
-                             position:{
-                                 viewport:$(window),
-                                 at:'bottom center',
-                                 my:'top right'
-                             },
-                             style:{
-                                 tip:{
-                                     corner:true,
-                                     method:'polygon'
-                                 },
-                                 classes:'ui-tooltip-shadow ui-tooltip-dark'
-                             }
-                         });
-    $('i[title]').qtip({
-                           position:{
-                               viewport:$(window),
-                               at:'top center',
-                               my:'bottom center',
-                           },
-                           style:{
-                               tip:{
-                                   corner:true,
-                                   method:'polygon'
-                               },
-                               classes:'ui-tooltip-rounded ui-tooltip-shadow ui-tooltip-sb'
-                           }
-                       });
-    $('.custom-pattern').qtip({
-                                  content:'validating...',
-                                  show:{
-                                      event:false,
-                                      ready:false
-                                  },
-                                  hide:false,
-                                  position:{
-                                      viewport:$(window),
-                                      at:'center left',
-                                      my:'center right',
-                                  },
-                                  style:{
-                                      tip:{
-                                          corner:true,
-                                          method:'polygon'
-                                      },
-                                      classes:'ui-tooltip-rounded ui-tooltip-shadow ui-tooltip-red'
-                                  }
-                              });
+    $('img[title]').qtip( {
+        position: {
+            viewport: $(window),
+            at: 'bottom center',
+            my: 'top right'
+        },
+        style: {
+            tip: {
+                corner: true,
+                method: 'polygon'
+            },
+            classes: 'ui-tooltip-shadow ui-tooltip-dark'
+        }
+    });
+    $('i[title]').qtip( {
+        position: {
+            viewport: $(window),
+            at: 'top center',
+            my: 'bottom center',
+        },
+        style: {
+            tip: {
+                corner: true,
+                method: 'polygon'
+            },
+            classes: 'ui-tooltip-rounded ui-tooltip-shadow ui-tooltip-sb'
+        }
+    });
+    $('.custom-pattern').qtip( {
+        content: 'validating...',
+        show: {
+            event: false,
+            ready: false
+        },
+        hide: false,
+        position: {
+            viewport: $(window),
+            at: 'center left',
+            my: 'center right',
+        },
+        style: {
+            tip: {
+                corner: true,
+                method: 'polygon'
+            },
+            classes: 'ui-tooltip-rounded ui-tooltip-shadow ui-tooltip-red'
+        }
+    });
 
 });

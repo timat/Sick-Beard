@@ -518,13 +518,13 @@ class TVShow(object):
                         same_file = False
 
                     curEp.checkForMetaFiles()
-
+                
 
             if rootEp == None:
                 rootEp = curEp
             else:
                 if curEp not in rootEp.relatedEps:
-                rootEp.relatedEps.append(curEp)
+                    rootEp.relatedEps.append(curEp)
 
             # if it's a new file then 
             if not same_file:
@@ -1035,7 +1035,7 @@ class TVEpisode(object):
 
     def _set_location(self, new_location):
         logger.log(u"Setter sets location to " + new_location, logger.DEBUG)
-
+        
         #self._location = newLocation
         dirty_setter("_location")(self, new_location)
 
@@ -1117,24 +1117,24 @@ class TVEpisode(object):
         sqlResult = self.loadFromDB(season, episode)
 
         if not sqlResult:
-        # only load from NFO if we didn't load from DB
+            # only load from NFO if we didn't load from DB
             if ek.ek(os.path.isfile, self.location):
-            try:
-                self.loadFromNFO(self.location)
-            except exceptions.NoNFOException:
-                logger.log(str(self.show.tvdbid) + ": There was an error loading the NFO for episode " + str(season) + "x" + str(episode), logger.ERROR)
-                pass
+                try:
+                    self.loadFromNFO(self.location)
+                except exceptions.NoNFOException:
+                    logger.log(str(self.show.tvdbid) + ": There was an error loading the NFO for episode " + str(season) + "x" + str(episode), logger.ERROR)
+                    pass
 
-        # if we tried loading it from NFO and didn't find the NFO, use TVDB
-        if self.hasnfo == False:
-            try:
-                result = self.loadFromTVDB(season, episode)
-            except exceptions.EpisodeDeletedException:
-                result = False
+                # if we tried loading it from NFO and didn't find the NFO, use TVDB
+                if self.hasnfo == False:
+                    try:
+                        result = self.loadFromTVDB(season, episode)
+                    except exceptions.EpisodeDeletedException:
+                        result = False
 
                     # if we failed SQL *and* NFO, TVDB then fail
                     if result == False:
-                raise exceptions.EpisodeNotFoundException("Couldn't find episode " + str(season) + "x" + str(episode))
+                        raise exceptions.EpisodeNotFoundException("Couldn't find episode " + str(season) + "x" + str(episode))
         
         # don't update if not needed
         if self.dirty:
@@ -1178,7 +1178,7 @@ class TVEpisode(object):
                 self.file_size = 0
 
             self.tvdbid = int(sqlResults[0]["tvdbid"])
-
+            
             if sqlResults[0]["release_name"] != None:
                 self.release_name = sqlResults[0]["release_name"]
 
@@ -1487,7 +1487,7 @@ class TVEpisode(object):
         """
         Returns the name of this episode in a "pretty" human-readable format. Used for logging
         and notifications and such.
-
+        
         Returns: A string representing the episode's name and season/ep numbers 
         """
 
@@ -1499,7 +1499,7 @@ class TVEpisode(object):
         Eg. "Ep Name (1)" and "Ep Name (2)" becomes "Ep Name"
             "Ep Name" and "Other Ep Name" becomes "Ep Name & Other Ep Name"
         """
-
+        
         multiNameRegex = "(.*) \(\d\)"
 
         self.relatedEps = sorted(self.relatedEps, key=lambda x: x.episode)
@@ -1513,7 +1513,7 @@ class TVEpisode(object):
             singleName = True
             curGoodName = None
 
-            for curName in [self.name]+[x.name for x in self.relatedEps]:
+            for curName in [self.name] + [x.name for x in self.relatedEps]:
                 match = re.match(multiNameRegex, curName)
                 if not match:
                     singleName = False
@@ -1533,20 +1533,20 @@ class TVEpisode(object):
                     goodName += " & " + relEp.name
 
         return goodName
-            
+
     def _replace_map(self):
         """
         Generates a replacement map for this episode which maps all possible custom naming patterns to the correct
         value for this episode.
-
+        
         Returns: A dict with patterns as the keys and their replacement values as the values.
         """
-
+        
         ep_name = self._ep_name()
-
+        
         def dot(name):
             return helpers.sanitizeSceneName(name)
-
+        
         def us(name):
             return re.sub('[ -]','_', name)
 
@@ -1566,13 +1566,13 @@ class TVEpisode(object):
             except InvalidNameException, e:
                 logger.log(u"Unable to get parse release_group: "+ex(e), logger.DEBUG)
                 return ''
-            
+
             if not parse_result.release_group:
                 return ''
             return parse_result.release_group
 
         epStatus, epQual = Quality.splitCompositeStatus(self.status) #@UnusedVariable
-
+        
         return {
                    '%SN': self.show.name,
                    '%S.N': dot(self.show.name),
@@ -1626,11 +1626,11 @@ class TVEpisode(object):
         
         if multi == None:
             multi = sickbeard.NAMING_MULTI_EP
-
+        
         replace_map = self._replace_map()
 
         result_name = pattern
-
+        
         # if there's no release group then replace it with a reasonable facsimile
         if not replace_map['%RN']:
             if self.show.air_by_date:
@@ -1690,9 +1690,9 @@ class TVEpisode(object):
                 sep = ''
                 regex_used = ep_only_regex
 
-        else:                                                               
+            else:
                 continue
-            
+
             # we need at least this much info to continue
             if not ep_sep or not ep_format:
                 continue
@@ -1700,11 +1700,11 @@ class TVEpisode(object):
             # start with the ep string, eg. E03
             ep_string = self._format_string(ep_format.upper(), replace_map)
             for other_ep in self.relatedEps:
-
+                
                 # for limited extend we only append the last ep
                 if multi == NAMING_LIMITED_EXTEND and other_ep != self.relatedEps[-1]:
                     continue
-
+                
                 elif multi == NAMING_DUPLICATE:
                     # add " - S01"
                     ep_string += sep + season_format
@@ -1728,7 +1728,7 @@ class TVEpisode(object):
             result_name = result_name.replace(cur_name_group, cur_name_group_result)
 
         result_name = self._format_string(result_name, replace_map)
-                
+        
         return result_name
 
     def proper_path(self):

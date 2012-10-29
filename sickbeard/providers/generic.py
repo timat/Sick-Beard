@@ -108,7 +108,7 @@ class GenericProvider:
 
         result = None
 
-            result = helpers.getURL(url, headers)
+        result = helpers.getURL(url, headers)
 
         if result is None:
             logger.log(u"Error loading "+self.name+" URL: " + url, logger.ERROR)

@@ -92,7 +92,7 @@ initially download: <b><%=", ".join([Quality.qualityStrings[x] for x in anyQuali
 #end if
 #if $bestQualities:
 replace with: <b><%=", ".join([Quality.qualityStrings[x] for x in bestQualities])%></b>
-#end if
+#end if 
 #end if
     </td></tr>
     </table>
@@ -125,14 +125,14 @@ $Quality.DOWNLOADED.sort()
 <div style="clear:both;" class="clearfix"></div>
 
 <div class="float-left">
-	Change selected episodes to
+	Change selected episodes to 
 	<select id="statusSelect">
-	#for $curStatus in [$WANTED, $SKIPPED, $ARCHIVED, $IGNORED] + $Quality.DOWNLOADED:
-	#if $curStatus == $DOWNLOADED:
-	#continue
-	#end if
-	<option value="$curStatus">$statusStrings[$curStatus]</option>
-	#end for
+		#for $curStatus in [$WANTED, $SKIPPED, $ARCHIVED, $IGNORED] + $Quality.DOWNLOADED:
+		#if $curStatus == $DOWNLOADED:
+		#continue
+		#end if
+		<option value="$curStatus">$statusStrings[$curStatus]</option>
+		#end for
 	</select>
 	<input type="hidden" id="showID" value="$show.tvdbid" />
 	<input class="btn" type="button" id="changeStatus" value="Go" />
@@ -140,20 +140,20 @@ $Quality.DOWNLOADED.sort()
 
 	<div class="float-right clearfix" id="checkboxControls" style="margin-top: 3px;">
 		<div style="padding-bottom: 3px;">
-		<label for="wanted"><span class="wanted">Wanted: <b>$epCounts[$Overview.WANTED]</b> <input type="checkbox" id="wanted" checked="checked" /></span></label>
-		<label for="qual"><span class="qual">Low Quality: <b>$epCounts[$Overview.QUAL]</b> <input type="checkbox" id="qual" checked="checked" /></span></label>
-		<label for="good"><span class="good">Downloaded: <b>$epCounts[$Overview.GOOD]</b> <input type="checkbox" id="good" checked="checked" /></span></label>
-		<label for="skipped"><span class="skipped">Skipped: <b>$epCounts[$Overview.SKIPPED]</b> <input type="checkbox" id="skipped" checked="checked" /></span></label>
-    </div>
-    <div class="pull-right">
+			<label for="wanted"><span class="wanted">Wanted: <b>$epCounts[$Overview.WANTED]</b> <input type="checkbox" id="wanted" checked="checked" /></span></label>
+			<label for="qual"><span class="qual">Low Quality: <b>$epCounts[$Overview.QUAL]</b> <input type="checkbox" id="qual" checked="checked" /></span></label>
+			<label for="good"><span class="good">Downloaded: <b>$epCounts[$Overview.GOOD]</b> <input type="checkbox" id="good" checked="checked" /></span></label>
+			<label for="skipped"><span class="skipped">Skipped: <b>$epCounts[$Overview.SKIPPED]</b> <input type="checkbox" id="skipped" checked="checked" /></span></label>
+		</div>
+	    <div class="pull-right">
 	        <button class="btn btn-mini seriesCheck" style="line-height: 8px;"><a>Select Filtered Episodes</a></button> 
 	        <button class="btn btn-mini clearAll" style="line-height: 8px;"><a>Clear All</a></button>
 		</div>
-	</div>
-<br />
+    </div>
+<br />	
 
 <table class="sickbeardTable" cellspacing="1" border="0" cellpadding="0">
-
+    
 #for $epResult in $sqlResults:
 
     #if int($epResult["season"]) != $curSeason:
@@ -165,7 +165,7 @@ $Quality.DOWNLOADED.sort()
   </tr>
   <tr id="season-$epResult["season"]-cols"><th width="1%"><input type="checkbox" class="seasonCheck" id="$epResult["season"]" /></th><th>NFO</th><th>TBN</th><th>Episode</th><th>Name</th><th class="nowrap">Airdate</th><th>Filename</th>#if $sickbeard.USE_SUBTITLES and $show.subtitles then "<th>Subtitles</th>" else ""#<th>Status</th><th>Search</th></tr>
         #set $curSeason = int($epResult["season"])
-    #end if
+    #end if    
 
   #set $epStr = str($epResult["season"]) + "x" + str($epResult["episode"])
   #set $epLoc = $epResult["location"]
@@ -181,7 +181,7 @@ $Quality.DOWNLOADED.sort()
     <td class="title">
     #if $epResult["description"] != "" and $epResult["description"] != None:
     <img style="padding-top: 2px;" src="$sbRoot/images/info32.png" height="16" class="plotInfo" alt="" id="plot_info_$show.tvdbid<%="_"+str(epResult["season"])+"_"+str(epResult["episode"])%>" />
-	#end if
+	#end if    
     $epResult["name"]
 </td>
     <td align="center" class="nowrap">#if int($epResult["airdate"]) == 1 then "never" else $datetime.date.fromordinal(int($epResult["airdate"]))#</td>
@@ -198,7 +198,7 @@ $epLoc
     #if $epResult["subtitles"]:
         #for $sub_lang in subliminal.language.language_list($epResult["subtitles"].split(',')):
             <img src="$sbRoot/images/flags/${sub_lang.alpha2}.png" width="16" height="11" alt="${sub_lang}" />&nbsp;
-    #end for
+        #end for
     #end if
     </td>
 #end if

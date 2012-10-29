@@ -92,7 +92,7 @@ def getShowImage(url, imgNum=None):
 
     logger.log(u"Getting show image at "+tempURL, logger.DEBUG)
 
-        image_data = helpers.getURL(tempURL)
+    image_data = helpers.getURL(tempURL)
 
     if image_data is None:
         logger.log(u"There was an error trying to retrieve the image, aborting", logger.ERROR)

@@ -85,7 +85,7 @@ class PostProcessor(object):
         self.in_history = False
         self.release_group = None
         self.is_proper = False
-    
+
         self.good_results = {self.NZB_NAME: False,
                              self.FOLDER_NAME: False,
                              self.FILE_NAME: False}
@@ -149,7 +149,7 @@ class PostProcessor(object):
         
         Returns: A list containing all files which are associated to the given file
         """
-    
+
         if not file_path:
             return []
 
@@ -185,19 +185,19 @@ class PostProcessor(object):
         file_path: The file to delete
         associated_files: True to delete all files which differ only by extension, False to leave them
         """
-        
+
         if not file_path:
             return
-        
+
         # figure out which files we want to delete
-            file_list = [file_path]
+        file_list = [file_path]
         if associated_files:
             file_list = file_list + self._list_associated_files(file_path)
 
         if not file_list:
-            self._log(u"There were no files associated with "+file_path+", not deleting anything", logger.DEBUG)
+            self._log(u"There were no files associated with " + file_path + ", not deleting anything", logger.DEBUG)
             return
-        
+
         # delete the file and any other files which we want to delete
         for cur_file in file_list:
             self._log(u"Deleting file "+cur_file, logger.DEBUG)
@@ -205,7 +205,7 @@ class PostProcessor(object):
                 ek.ek(os.remove, cur_file)
                 # do the library update for synoindex
                 notifiers.synoindex_notifier.deleteFile(cur_file)
-                
+
     def _combined_file_operation (self, file_path, new_path, new_base_name, associated_files=False, action=None, subtitles=False):
         """
         Performs a generic operation (move or copy) on a file. Can rename the file as well as change its location,
@@ -226,13 +226,13 @@ class PostProcessor(object):
         if associated_files:
             file_list = self._list_associated_files(file_path)
         elif subtitles:
-                file_list = self._list_associated_files(file_path, True)
-                file_list.append(file_path)
-            else:
+            file_list = self._list_associated_files(file_path, True)
+            file_list.append(file_path)
+        else:
             file_list = file_list + self._list_associated_files(file_path)
 
         if not file_list:
-            self._log(u"There were no files associated with "+file_path+", not moving anything", logger.DEBUG)
+            self._log(u"There were no files associated with " + file_path + ", not moving anything", logger.DEBUG)
             return
         
         # deal with all files
@@ -404,7 +404,7 @@ class PostProcessor(object):
             # remember whether it's a proper
             if parse_result.extra_info:
                 self.is_proper = re.search('(^|[\. _-])(proper|repack)([\. _-]|$)', parse_result.extra_info, re.I) != None
-        
+            
             # if the result is complete then remember that for later
             if parse_result.series_name and parse_result.season_number != None and parse_result.episode_numbers and parse_result.release_group:
                 test_name = os.path.basename(name)
@@ -485,10 +485,10 @@ class PostProcessor(object):
         
                         # try to look up the nzb in history
         attempt_list = [self._history_lookup,
-    
+
                         # try to analyze the nzb name
                         lambda: self._analyze_name(self.nzb_name),
-
+    
                         # try to analyze the file name
                         lambda: self._analyze_name(self.file_name),
 
@@ -545,9 +545,9 @@ class PostProcessor(object):
                     epObj = t[tvdb_id].airedOn(episodes[0])[0]
                     season = int(epObj["seasonnumber"])
                     episodes = [int(epObj["episodenumber"])]
-                    self._log(u"Got season "+str(season)+" episodes "+str(episodes), logger.DEBUG)
+                    self._log(u"Got season " + str(season) + " episodes " + str(episodes), logger.DEBUG)
                 except tvdb_exceptions.tvdb_episodenotfound, e:
-                    self._log(u"Unable to find episode with date "+str(episodes[0])+u" for show "+str(tvdb_id)+u", skipping", logger.DEBUG)
+                    self._log(u"Unable to find episode with date " + str(episodes[0]) + u" for show " + str(tvdb_id) + u", skipping", logger.DEBUG)
                     # we don't want to leave dates in the episode list if we couldn't convert them to real episode numbers
                     episodes = []
                     continue
@@ -712,52 +712,52 @@ class PostProcessor(object):
             return True 
         
         return False
-    
+
     def process(self):
         """
         Post-process a given file
         """
-        
-        self._log(u"Processing "+self.file_path+" ("+str(self.nzb_name)+")")
-        
-        if os.path.isdir( self.file_path ):
-            self._log(u"File "+self.file_path+" seems to be a directory")
+
+        self._log(u"Processing " + self.file_path + " (" + str(self.nzb_name) + ")")
+
+        if os.path.isdir(self.file_path):
+            self._log(u"File " + self.file_path + " seems to be a directory")
             return False
         for ignore_file in self.IGNORED_FILESTRINGS:
             if ignore_file in self.file_path:
-                self._log(u"File "+self.file_path+" is ignored type, skipping" )
+                self._log(u"File " + self.file_path + " is ignored type, skipping")
                 return False
         # reset per-file stuff
         self.in_history = False
-        
+
         # try to find the file info
         (tvdb_id, season, episodes) = self._find_info()
-        
+
         # if we don't have it then give up
         if not tvdb_id or season == None or not episodes:
             return False
-        
+
         # retrieve/create the corresponding TVEpisode objects
         ep_obj = self._get_ep_obj(tvdb_id, season, episodes)
-        
+
         # get the quality of the episode we're processing
         new_ep_quality = self._get_quality(ep_obj)
-        logger.log(u"Quality of the episode we're processing: "+str(new_ep_quality), logger.DEBUG)
-        
+        logger.log(u"Quality of the episode we're processing: " + str(new_ep_quality), logger.DEBUG)
+
         # see if this is a priority download (is it snatched, in history, or PROPER)
-        priority_download = self._is_priority(ep_obj, new_ep_quality) 
-        self._log(u"Is ep a priority download: "+str(priority_download), logger.DEBUG)
-        
+        priority_download = self._is_priority(ep_obj, new_ep_quality)
+        self._log(u"Is ep a priority download: " + str(priority_download), logger.DEBUG)
+
         # set the status of the episodes
         for curEp in [ep_obj] + ep_obj.relatedEps:
             curEp.status = common.Quality.compositeStatus(common.SNATCHED, new_ep_quality)
-        
+
         # check for an existing file
         existing_file_status = self._checkForExistingFile(ep_obj.location)
 
         # if it's not priority then we don't want to replace smaller files in case it was a mistake
         if not priority_download:
-        
+
             # if there's an existing file that we don't want to replace stop here
             if existing_file_status in (PostProcessor.EXISTS_LARGER, PostProcessor.EXISTS_SAME):
                 self._log(u"File exists and we are not going to replace it because it's not smaller, quitting post-processing", logger.DEBUG)
@@ -767,11 +767,11 @@ class PostProcessor(object):
             elif existing_file_status != PostProcessor.DOESNT_EXIST:
                 self._log(u"Unknown existing file status. This should never happen, please log this as a bug.", logger.ERROR)
                 return False
-        
+
         # if the file is priority then we're going to replace it even if it exists
         else:
             self._log(u"This download is marked a priority download so I'm going to replace an existing file if I find one", logger.DEBUG)
-        
+
         # delete the existing file (and company)
         for cur_ep in [ep_obj] + ep_obj.relatedEps:
             try:
@@ -781,19 +781,19 @@ class PostProcessor(object):
                     helpers.delete_empty_folders(ek.ek(os.path.dirname, cur_ep.location), keep_dir=ep_obj.show._location)
             except (OSError, IOError):
                 raise exceptions.PostProcessingFailed("Unable to delete the existing files")
-        
+
         # if the show directory doesn't exist then make it if allowed
         if not ek.ek(os.path.isdir, ep_obj.show._location) and sickbeard.CREATE_MISSING_SHOW_DIRS:
             self._log(u"Show directory doesn't exist, creating it", logger.DEBUG)
             try:
                 ek.ek(os.mkdir, ep_obj.show._location)
-                
+
             except (OSError, IOError):
                 raise exceptions.PostProcessingFailed("Unable to create the show directory: " + ep_obj.show._location)
-        
+
             # get metadata for the show (but not episode because it hasn't been fully processed)
             ep_obj.show.writeMetadata(True)
-            
+
         # update the ep info before we rename so the quality & release name go into the name properly
         for cur_ep in [ep_obj] + ep_obj.relatedEps:
             with cur_ep.lock:
@@ -830,9 +830,9 @@ class PostProcessor(object):
             dest_path = ek.ek(os.path.dirname, proper_absolute_path)
         except exceptions.ShowDirNotFoundException:
             raise exceptions.PostProcessingFailed(u"Unable to post-process an episode if the show dir doesn't exist, quitting")
-            
-        self._log(u"Destination folder for this episode: "+dest_path, logger.DEBUG)
-        
+
+        self._log(u"Destination folder for this episode: " + dest_path, logger.DEBUG)
+
         # create any folders we need
         helpers.make_dirs(dest_path)
 
@@ -840,7 +840,7 @@ class PostProcessor(object):
         if sickbeard.USE_SUBTITLES and ep_obj.show.subtitles:
             cur_ep.location = self.file_path
             cur_ep.downloadSubtitles()
-        
+
         # figure out the base name of the resulting episode file
         if sickbeard.RENAME_EPISODES:
             orig_extension = self.file_name.rpartition('.')[-1]
@@ -850,8 +850,8 @@ class PostProcessor(object):
         else:
             # if we're not renaming then there's no new base name, we'll just use the existing name
             new_base_name = None
-            new_file_name = self.file_name 
-                       
+            new_file_name = self.file_name
+
         try:
             # move the episode and associated files to the show dir
             if sickbeard.KEEP_PROCESSED_DIR:
@@ -860,13 +860,13 @@ class PostProcessor(object):
                 self._move(self.file_path, dest_path, new_base_name, sickbeard.MOVE_ASSOCIATED_FILES, sickbeard.USE_SUBTITLES and ep_obj.show.subtitles)
         except (OSError, IOError):
             raise exceptions.PostProcessingFailed("Unable to move the files to their new home")
-        
+
         # put the new location in the database
         for cur_ep in [ep_obj] + ep_obj.relatedEps:
             with cur_ep.lock:
                 cur_ep.location = ek.ek(os.path.join, dest_path, new_file_name)
                 cur_ep.saveToDB()
-        
+
         # log it to history
         history.logDownload(ep_obj, self.file_path, new_ep_quality, self.release_group)
 
@@ -888,10 +888,10 @@ class PostProcessor(object):
 
         # do the library update for trakt
         notifiers.trakt_notifier.update_library(ep_obj)
-        
+
         # do the library update for pyTivo
         notifiers.pytivo_notifier.update_library(ep_obj)
-        
+
         self._run_extra_scripts(ep_obj)
 
         return True

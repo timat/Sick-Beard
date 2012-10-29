@@ -478,7 +478,7 @@ class Manage:
 
             if quality_preset == 'keep':
                 anyQualities, bestQualities = Quality.splitQuality(showObj.quality)
-            
+
             exceptions_list = []
             
             curErrors += Home().editShow(curShow, new_show_dir, anyQualities, bestQualities, exceptions_list, new_flatten_folders, new_paused, subtitles=new_subtitles, directCall=True)
@@ -758,7 +758,7 @@ class ConfigGeneral:
 
         sickbeard.UPDATE_SHOWS_ON_START = update_shows_on_start
         sickbeard.LAUNCH_BROWSER = launch_browser
-        
+
         sickbeard.WEB_PORT = int(web_port)
         sickbeard.WEB_IPV6 = web_ipv6
         sickbeard.WEB_LOG = web_log
@@ -870,7 +870,7 @@ class ConfigSearch:
         sickbeard.NZB_METHOD = nzb_method
         sickbeard.TORRENT_METHOD = torrent_method
         sickbeard.USENET_RETENTION = int(usenet_retention)
-
+        
         sickbeard.DOWNLOAD_PROPERS = download_propers
 
         sickbeard.SAB_USERNAME = sab_username
@@ -1025,18 +1025,18 @@ class ConfigPostProcessing:
 
         if multi != None:
             multi = int(multi)
-                
+
         result = naming.test_name(pattern, multi, abd)
 
         result = ek.ek(os.path.join, result['dir'], result['name']) 
 
         return result
-
+    
     @cherrypy.expose
     def isNamingValid(self, pattern=None, multi=None, abd=False):
         if pattern == None:
             return "invalid"
-
+        
         # air by date shows just need one check, we don't need to worry about season folders 
         if abd:
             is_valid = naming.check_valid_abd_naming(pattern)
@@ -1045,7 +1045,7 @@ class ConfigPostProcessing:
         else:
             # check validity of single and multi ep cases for the whole path
             is_valid = naming.check_valid_naming(pattern, multi)
-
+    
             # check validity of single and multi ep cases for only the file name
             require_season_folders = naming.check_force_season_folders(pattern, multi)
 
@@ -1056,7 +1056,7 @@ class ConfigPostProcessing:
         else:
             return "invalid"
 
-
+        
 class ConfigProviders:
 
     @cherrypy.expose
@@ -1194,8 +1194,6 @@ class ConfigProviders:
                 sickbeard.EZRSS = curEnabled
             elif curProvider == 'tvtorrents':
                 sickbeard.TVTORRENTS = curEnabled
-            elif curProvider == 'torrentday':
-                sickbeard.TORRENTDAY = curEnabled
             elif curProvider == 'btn':
                 sickbeard.BTN = curEnabled
             elif curProvider in newznabProviderDict:
@@ -1209,11 +1207,11 @@ class ConfigProviders:
 
         sickbeard.TVTORRENTS_DIGEST = tvtorrents_digest.strip()
         sickbeard.TVTORRENTS_HASH = tvtorrents_hash.strip()
- 
-        sickbeard.BTN_API_KEY = btn_api_key.strip()
 
         sickbeard.TORRENTDAY_U = torrentday_u.strip()
         sickbeard.TORRENTDAY_TP = torrentday_tp.strip()
+
+        sickbeard.BTN_API_KEY = btn_api_key.strip()
 
         if dtt_norar == "on":
             dtt_norar = 1
@@ -1228,7 +1226,7 @@ class ConfigProviders:
             dtt_single = 0
 
         sickbeard.DTT_SINGLE = dtt_single  
- 
+
         if thepiratebay_trusted == "on":
             thepiratebay_trusted = 1
         else:
@@ -1681,7 +1679,7 @@ class Config:
         t = PageTemplate(file="config.tmpl")
         t.submenu = ConfigMenu
         t.hasChangeLog = False
-        
+
         # read changelog file, if present, and format it to be used for tooltip
         data = []
         if os.path.isfile('CHANGELOG.txt'):
@@ -1793,7 +1791,7 @@ class NewHomeAddShows:
         # Insert the whole show's name as the first search term so best results are first
         # ex: keywords = ['Some Show Name', 'Some', 'Show', 'Name']
         if len(keywords) > 1:
-        keywords.insert(0, nameUTF8)
+            keywords.insert(0, nameUTF8)
 
         # Query the TVDB for each search term and build the list of results
         results = []
@@ -1812,24 +1810,24 @@ class NewHomeAddShows:
                 logger.log(u"Unable to get URL: " + finalURL, logger.ERROR)
                 break
             else:
-            try:
-                seriesXML = etree.ElementTree(etree.XML(urlData))
-                series = seriesXML.getiterator('Series')
+                try:
+                    seriesXML = etree.ElementTree(etree.XML(urlData))
+                    series = seriesXML.getiterator('Series')
 
-            except Exception, e:
-                # use finalURL in log, because urlData can be too much information
-                logger.log(u"Unable to parse XML for some reason: "+ex(e)+" from XML: "+finalURL, logger.ERROR)
-                series = ''
+                except Exception, e:
+                    # use finalURL in log, because urlData can be too much information
+                    logger.log(u"Unable to parse XML for some reason: "+ex(e)+" from XML: "+finalURL, logger.ERROR)
+                    series = ''
 
-            # add each result to our list
-            for curSeries in series:
-                tvdb_id = int(curSeries.findtext('seriesid'))
-                
-                # don't add duplicates
-                if tvdb_id in [x[0] for x in results]:
-                    continue
-                
-                results.append((tvdb_id, curSeries.findtext('SeriesName'), curSeries.findtext('FirstAired')))
+                # add each result to our list
+                for curSeries in series:
+                    tvdb_id = int(curSeries.findtext('seriesid'))
+
+                    # don't add duplicates
+                    if tvdb_id in [x[0] for x in results]:
+                        continue
+
+                    results.append((tvdb_id, curSeries.findtext('SeriesName'), curSeries.findtext('FirstAired')))
 
         lang_id = tvdb_api.Tvdb().config['langabbv_to_id'][lang]
 
@@ -2462,7 +2460,7 @@ class Home:
                 return _genericMessage("Error", "Show not in show list")
 
         showObj.exceptions = scene_exceptions.get_scene_exceptions(showObj.tvdbid)      
-            
+
         myDB = db.DBConnection()
 
         seasonResults = myDB.select(
@@ -2573,7 +2571,7 @@ class Home:
                 return [errString]
             else:
                 return _genericMessage("Error", errString)
-            
+
         showObj.exceptions = scene_exceptions.get_scene_exceptions(showObj.tvdbid)
 
         if not location and not anyQualities and not bestQualities and not flatten_folders:
@@ -2626,7 +2624,7 @@ class Home:
             bestQualities = [bestQualities]
             
         if type(exceptions_list) != list:
-            exceptions_list = [exceptions_list]
+            exceptions_list = [exceptions_list]            
 
         #If directCall from mass_edit_update no scene exceptions handling
         if directCall:            
@@ -2693,7 +2691,7 @@ class Home:
                 time.sleep(1)
             except exceptions.CantUpdateException, e:
                 errors.append("Unable to force an update on scene exceptions of the show.")
-        
+
         if directCall:
             return errors
 

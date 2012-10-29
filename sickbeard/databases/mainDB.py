@@ -54,24 +54,24 @@ class MainSanityCheck(db.DBSanityCheck):
             logger.log(u"No duplicate show, check passed")
 
     def fix_duplicate_episodes(self):
-    
+
         sqlResults = self.connection.select("SELECT showid, season, episode, COUNT(showid) as count FROM tv_episodes GROUP BY showid, season, episode HAVING count > 1")
-    
+
         for cur_duplicate in sqlResults:
-    
+
             logger.log(u"Duplicate episode detected! showid: " + str(cur_duplicate["showid"]) + u" season: "+str(cur_duplicate["season"]) + u" episode: "+str(cur_duplicate["episode"]) + u" count: " + str(cur_duplicate["count"]), logger.DEBUG)
-    
+
             cur_dupe_results = self.connection.select("SELECT episode_id FROM tv_episodes WHERE showid = ? AND season = ? and episode = ? ORDER BY episode_id DESC LIMIT ?",
                                            [cur_duplicate["showid"], cur_duplicate["season"], cur_duplicate["episode"], int(cur_duplicate["count"])-1]
                                            )
-            
+
             for cur_dupe_id in cur_dupe_results:
                 logger.log(u"Deleting duplicate episode with episode_id: " + str(cur_dupe_id["episode_id"]))
                 self.connection.action("DELETE FROM tv_episodes WHERE episode_id = ?", [cur_dupe_id["episode_id"]])
-        
+
         else:
             logger.log(u"No duplicate episode, check passed")
-        
+
     def fix_orphan_episodes(self):
 
         sqlResults = self.connection.select("SELECT episode_id, showid, tv_shows.tvdb_id FROM tv_episodes LEFT JOIN tv_shows ON tv_episodes.showid=tv_shows.tvdb_id WHERE tv_shows.tvdb_id is NULL")
@@ -141,7 +141,7 @@ class NumericProviders (AddAirdateIndex):
                 7: 'ezrss',
                 8: 'thepiratebay',
                 9: 'dtt' }
-
+                
     def execute(self):
         self.connection.action("ALTER TABLE history RENAME TO history_old")
         self.connection.action("CREATE TABLE history (action NUMERIC, date NUMERIC, showid NUMERIC, season NUMERIC, episode NUMERIC, quality NUMERIC, resource TEXT, provider TEXT);")
@@ -417,8 +417,8 @@ class FixAirByDateSetting(SetNzbTorrentSettings):
                 self.connection.action("UPDATE tv_shows SET air_by_date = ? WHERE tvdb_id = ?", [1, cur_show["tvdb_id"]])
         
         self.incDBVersion()
-        
-class AddSubtitlesSupport(FixAirByDateSetting):
+
+class AddSubtitlesSupport(FixAirByDateSetting):    
     def test(self):
         return self.checkDBVersion() >= 10
 
@@ -430,7 +430,7 @@ class AddSubtitlesSupport(FixAirByDateSetting):
         self.incDBVersion()
 
 class AddSizeAndSceneNameFields(AddSubtitlesSupport):
-        
+
     def test(self):
         return self.checkDBVersion() >= 11
     

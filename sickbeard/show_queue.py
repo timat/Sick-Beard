@@ -365,7 +365,7 @@ class QueueItemRename(ShowQueueItem):
 
         ShowQueueItem.execute(self)
 
-        logger.log(u"Performing rename on "+self.show.name)
+        logger.log(u"Performing rename on " + self.show.name)
 
         try:
             show_loc = self.show.location

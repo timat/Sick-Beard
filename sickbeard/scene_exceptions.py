@@ -40,7 +40,7 @@ def get_scene_exception_by_name(show_name):
     """
 
     myDB = db.DBConnection("cache.db")
-    
+
     # try the obvious case first
     exception_result = myDB.select("SELECT tvdb_id FROM scene_exceptions WHERE LOWER(show_name) = ?", [show_name.lower()])
     if exception_result:
@@ -69,7 +69,7 @@ def retrieve_exceptions():
 
     # exceptions are stored on github pages
     url = 'http://midgetspy.github.com/sb_tvdb_scene_exceptions/exceptions.txt'
-    
+
     logger.log(u"Check scene exceptions update")
     url_data = helpers.getURL(url)
 
@@ -79,41 +79,41 @@ def retrieve_exceptions():
         return
 
     else:
-    # each exception is on one line with the format tvdb_id: 'show name 1', 'show name 2', etc
+        # each exception is on one line with the format tvdb_id: 'show name 1', 'show name 2', etc
         for cur_line in url_data.splitlines():
             cur_line = cur_line.decode('utf-8')
-        tvdb_id, sep, aliases = cur_line.partition(':') #@UnusedVariable
-        
-        if not aliases:
-            continue
-    
-        tvdb_id = int(tvdb_id)
-        
-        # regex out the list of shows, taking \' into account
-        alias_list = [re.sub(r'\\(.)', r'\1', x) for x in re.findall(r"'(.*?)(?<!\\)',?", aliases)]
-        
-        exception_dict[tvdb_id] = alias_list
+            tvdb_id, sep, aliases = cur_line.partition(':') #@UnusedVariable
 
-    myDB = db.DBConnection("cache.db")
+            if not aliases:
+                continue
 
-    changed_exceptions = False
+            tvdb_id = int(tvdb_id)
 
-    # write all the exceptions we got off the net into the database
-    for cur_tvdb_id in exception_dict:
+            # regex out the list of shows, taking \' into account
+            alias_list = [re.sub(r'\\(.)', r'\1', x) for x in re.findall(r"'(.*?)(?<!\\)',?", aliases)]
 
-        # get a list of the existing exceptions for this ID
-        existing_exceptions = [x["show_name"] for x in myDB.select("SELECT * FROM scene_exceptions WHERE tvdb_id = ?", [cur_tvdb_id])]
-        
-        for cur_exception in exception_dict[cur_tvdb_id]:
-            # if this exception isn't already in the DB then add it
-            if cur_exception not in existing_exceptions:
-                myDB.action("INSERT INTO scene_exceptions (tvdb_id, show_name) VALUES (?,?)", [cur_tvdb_id, cur_exception])
-                changed_exceptions = True
+            exception_dict[tvdb_id] = alias_list
 
-    # since this could invalidate the results of the cache we clear it out after updating
-    if changed_exceptions:
+        myDB = db.DBConnection("cache.db")
+
+        changed_exceptions = False
+
+        # write all the exceptions we got off the net into the database
+        for cur_tvdb_id in exception_dict:
+
+            # get a list of the existing exceptions for this ID
+            existing_exceptions = [x["show_name"] for x in myDB.select("SELECT * FROM scene_exceptions WHERE tvdb_id = ?", [cur_tvdb_id])]
+
+            for cur_exception in exception_dict[cur_tvdb_id]:
+                # if this exception isn't already in the DB then add it
+                if cur_exception not in existing_exceptions:
+                    myDB.action("INSERT INTO scene_exceptions (tvdb_id, show_name) VALUES (?,?)", [cur_tvdb_id, cur_exception])
+                    changed_exceptions = True
+
+        # since this could invalidate the results of the cache we clear it out after updating
+        if changed_exceptions:
             logger.log(u"Updated scene exceptions")
-        name_cache.clearCache()
+            name_cache.clearCache()
         else:
             logger.log(u"No scene exceptions update needed")
         

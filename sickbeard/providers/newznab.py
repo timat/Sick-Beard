@@ -40,203 +40,203 @@ from sickbeard.exceptions import ex
 
 class NewznabProvider(generic.NZBProvider):
 
-	def __init__(self, name, url, key=''):
+    def __init__(self, name, url, key=''):
 
-		generic.NZBProvider.__init__(self, name)
+        generic.NZBProvider.__init__(self, name)
 
-		self.cache = NewznabCache(self)
+        self.cache = NewznabCache(self)
 
-		self.url = url
-		self.key = key
-		
-		# if a provider doesn't need an api key then this can be false
-		self.needs_auth = True
+        self.url = url
+        self.key = key
 
-		self.enabled = True
-		self.supportsBacklog = True
+        # if a provider doesn't need an api key then this can be false
+        self.needs_auth = True
 
-		self.default = False
+        self.enabled = True
+        self.supportsBacklog = True
 
-	def configStr(self):
-		return self.name + '|' + self.url + '|' + self.key + '|' + str(int(self.enabled))
+        self.default = False
 
-	def imageName(self):
+    def configStr(self):
+        return self.name + '|' + self.url + '|' + self.key + '|' + str(int(self.enabled))
+
+    def imageName(self):
         if ek.ek(os.path.isfile, ek.ek(os.path.join, sickbeard.PROG_DIR, 'data', 'images', 'providers', self.getID() + '.png')):
-			return self.getID()+'.png'
-		return 'newznab.png'
+            return self.getID() + '.png'
+        return 'newznab.png'
 
-	def isEnabled(self):
-		return self.enabled
+    def isEnabled(self):
+        return self.enabled
 
-	def _get_season_search_strings(self, show, season=None):
+    def _get_season_search_strings(self, show, season=None):
 
-		if not show:
-			return [{}]
-		
-		to_return = []
+        if not show:
+            return [{}]
 
-		# add new query strings for exceptions
-		name_exceptions = scene_exceptions.get_scene_exceptions(show.tvdbid) + [show.name]
-		for cur_exception in name_exceptions:
-		
-			cur_params = {}
-	
-			# search directly by tvrage id
-			if show.tvrid:
-				cur_params['rid'] = show.tvrid
-			# if we can't then fall back on a very basic name search
-			else:
+        to_return = []
+
+        # add new query strings for exceptions
+        name_exceptions = scene_exceptions.get_scene_exceptions(show.tvdbid) + [show.name]
+        for cur_exception in name_exceptions:
+
+            cur_params = {}
+
+            # search directly by tvrage id
+            if show.tvrid:
+                cur_params['rid'] = show.tvrid
+            # if we can't then fall back on a very basic name search
+            else:
                 cur_params['q'] = helpers.sanitizeSceneName(cur_exception).replace('.', '_')
-	
-			if season != None:
-				# air-by-date means &season=2010&q=2010.03, no other way to do it atm
-				if show.air_by_date:
-					cur_params['season'] = season.split('-')[0]
-					if 'q' in cur_params:
-						cur_params['q'] += '.' + season.replace('-', '.')
-					else:
-						cur_params['q'] = season.replace('-', '.')
-				else:
-					cur_params['season'] = season
 
-			# hack to only add a single result if it's a rageid search
-			if not ('rid' in cur_params and to_return):
-				to_return.append(cur_params) 
+            if season != None:
+                # air-by-date means &season=2010&q=2010.03, no other way to do it atm
+                if show.air_by_date:
+                    cur_params['season'] = season.split('-')[0]
+                    if 'q' in cur_params:
+                        cur_params['q'] += '.' + season.replace('-', '.')
+                    else:
+                        cur_params['q'] = season.replace('-', '.')
+                else:
+                    cur_params['season'] = season
 
-		return to_return
+            # hack to only add a single result if it's a rageid search
+            if not ('rid' in cur_params and to_return):
+                to_return.append(cur_params)
 
-	def _get_episode_search_strings(self, ep_obj):
-		
-		params = {}
+        return to_return
 
-		if not ep_obj:
-			return [params]
-		
-		# search directly by tvrage id
-		if ep_obj.show.tvrid:
-			params['rid'] = ep_obj.show.tvrid
-		# if we can't then fall back on a very basic name search
-		else:
+    def _get_episode_search_strings(self, ep_obj):
+
+        params = {}
+
+        if not ep_obj:
+            return [params]
+
+        # search directly by tvrage id
+        if ep_obj.show.tvrid:
+            params['rid'] = ep_obj.show.tvrid
+        # if we can't then fall back on a very basic name search
+        else:
             params['q'] = helpers.sanitizeSceneName(ep_obj.show.name).replace('.', '_')
 
-		if ep_obj.show.air_by_date:
-			date_str = str(ep_obj.airdate)
-			
-			params['season'] = date_str.partition('-')[0]
-			params['ep'] = date_str.partition('-')[2].replace('-','/')
-		else:
-			params['season'] = ep_obj.season
-			params['ep'] = ep_obj.episode
+        if ep_obj.show.air_by_date:
+            date_str = str(ep_obj.airdate)
 
-		to_return = [params]
+            params['season'] = date_str.partition('-')[0]
+            params['ep'] = date_str.partition('-')[2].replace('-', '/')
+        else:
+            params['season'] = ep_obj.season
+            params['ep'] = ep_obj.episode
 
-		# only do exceptions if we are searching by name
-		if 'q' in params:
+        to_return = [params]
 
-			# add new query strings for exceptions
-			name_exceptions = scene_exceptions.get_scene_exceptions(ep_obj.show.tvdbid)
-			for cur_exception in name_exceptions:
-				
-				# don't add duplicates 
-				if cur_exception == ep_obj.show.name:
-					continue
+        # only do exceptions if we are searching by name
+        if 'q' in params:
 
-				cur_return = params.copy()
+            # add new query strings for exceptions
+            name_exceptions = scene_exceptions.get_scene_exceptions(ep_obj.show.tvdbid)
+            for cur_exception in name_exceptions:
+
+                # don't add duplicates
+                if cur_exception == ep_obj.show.name:
+                    continue
+
+                cur_return = params.copy()
                 cur_return['q'] = helpers.sanitizeSceneName(cur_exception).replace('.', '_')
-				to_return.append(cur_return)
+                to_return.append(cur_return)
 
-		return to_return
+        return to_return
 
-	def _doGeneralSearch(self, search_string):
-		return self._doSearch({'q': search_string})
+    def _doGeneralSearch(self, search_string):
+        return self._doSearch({'q': search_string})
 
-	def _checkAuthFromData(self, data):
+    def _checkAuthFromData(self, data):
 
-		try:
-			parsedXML = parseString(data)
-		except Exception:
-			return False
+        try:
+            parsedXML = parseString(data)
+        except Exception:
+            return False
 
-		if parsedXML.documentElement.tagName == 'error':
-			code = parsedXML.documentElement.getAttribute('code')
-			if code == '100':
-				raise exceptions.AuthException("Your API key for "+self.name+" is incorrect, check your config.")
-			elif code == '101':
-				raise exceptions.AuthException("Your account on "+self.name+" has been suspended, contact the administrator.")
-			elif code == '102':
-				raise exceptions.AuthException("Your account isn't allowed to use the API on "+self.name+", contact the administrator")
-			else:
-				logger.log(u"Unknown error given from "+self.name+": "+parsedXML.documentElement.getAttribute('description'), logger.ERROR)
-				return False
+        if parsedXML.documentElement.tagName == 'error':
+            code = parsedXML.documentElement.getAttribute('code')
+            if code == '100':
+                raise exceptions.AuthException("Your API key for " + self.name + " is incorrect, check your config.")
+            elif code == '101':
+                raise exceptions.AuthException("Your account on " + self.name + " has been suspended, contact the administrator.")
+            elif code == '102':
+                raise exceptions.AuthException("Your account isn't allowed to use the API on " + self.name + ", contact the administrator")
+            else:
+                logger.log(u"Unknown error given from " + self.name + ": "+parsedXML.documentElement.getAttribute('description'), logger.ERROR)
+                return False
 
-		return True
+        return True
 
     def _doSearch(self, search_params, show=None, max_age=0):
 
-		params = {"t": "tvsearch",
-				  "maxage": sickbeard.USENET_RETENTION,
-				  "limit": 100,
-				  "cat": '5030,5040'}
+        params = {"t": "tvsearch",
+                  "maxage": sickbeard.USENET_RETENTION,
+                  "limit": 100,
+                  "cat": '5030,5040'}
 
         # if max_age is set, use it, don't allow it to be missing
         if max_age or not params['maxage']:
             params['maxage'] = max_age
 
-		# hack this in for now
-		if self.getID() == 'nzbs_org':
-			params['cat'] += ',5070,5090'
+        # hack this in for now
+        if self.getID() == 'nzbs_org':
+            params['cat'] += ',5070,5090'
 
-		if search_params:
-			params.update(search_params)
+        if search_params:
+            params.update(search_params)
 
-		if self.key:
-			params['apikey'] = self.key
+        if self.key:
+            params['apikey'] = self.key
 
-		searchURL = self.url + 'api?' + urllib.urlencode(params)
+        searchURL = self.url + 'api?' + urllib.urlencode(params)
 
-		logger.log(u"Search url: " + searchURL, logger.DEBUG)
+        logger.log(u"Search url: " + searchURL, logger.DEBUG)
 
-		data = self.getURL(searchURL)
-		
-		if not data:
-			return []
+        data = self.getURL(searchURL)
 
-		# hack this in until it's fixed server side
-		if not data.startswith('<?xml'):
-			data = '<?xml version="1.0" encoding="ISO-8859-1" ?>' + data
+        if not data:
+            return []
 
-		try:
-			parsedXML = parseString(data)
-			items = parsedXML.getElementsByTagName('item')
-		except Exception, e:
-			logger.log(u"Error trying to load "+self.name+" RSS feed: "+ex(e), logger.ERROR)
-			logger.log(u"RSS data: "+data, logger.DEBUG)
-			return []
+        # hack this in until it's fixed server side
+        if not data.startswith('<?xml'):
+            data = '<?xml version="1.0" encoding="ISO-8859-1" ?>' + data
 
-		if not self._checkAuthFromData(data):
-			return []
+        try:
+            parsedXML = parseString(data)
+            items = parsedXML.getElementsByTagName('item')
+        except Exception, e:
+            logger.log(u"Error trying to load " + self.name + " RSS feed: " + ex(e), logger.ERROR)
+            logger.log(u"RSS data: " + data, logger.DEBUG)
+            return []
 
-		if parsedXML.documentElement.tagName != 'rss':
-			logger.log(u"Resulting XML from "+self.name+" isn't RSS, not parsing it", logger.ERROR)
-			return []
+        if not self._checkAuthFromData(data):
+            return []
 
-		results = []
+        if parsedXML.documentElement.tagName != 'rss':
+            logger.log(u"Resulting XML from " + self.name + " isn't RSS, not parsing it", logger.ERROR)
+            return []
 
-		for curItem in items:
-			(title, url) = self._get_title_and_url(curItem)
+        results = []
 
-			if not title or not url:
-				logger.log(u"The XML returned from the "+self.name+" RSS feed is incomplete, this result is unusable: "+data, logger.ERROR)
-				continue
+        for curItem in items:
+            (title, url) = self._get_title_and_url(curItem)
 
-			results.append(curItem)
+            if not title or not url:
+                logger.log(u"The XML returned from the " + self.name + " RSS feed is incomplete, this result is unusable: " + data, logger.ERROR)
+                continue
 
-		return results
+            results.append(curItem)
 
-	def findPropers(self, date=None):
+        return results
+
+    def findPropers(self, date=None):
 
         search_terms = ['.proper.', '.repack.']
-		results = []
+        results = []
 
         cache_results = self.cache.listPropers(date)
         results = [classes.Proper(x['name'], x['url'], datetime.datetime.fromtimestamp(x['time'])) for x in cache_results]
@@ -257,54 +257,54 @@ class NewznabProvider(generic.NZBProvider):
 
                 if not dateStr:
                     logger.log(u"Unable to figure out the date for entry " + title + ", skipping it")
-				continue
+                    continue
                 else:
 
                     resultDate = email.utils.parsedate(dateStr)
                     if resultDate:
                         resultDate = datetime.datetime(*resultDate[0:6])
 
-			if date == None or resultDate > date:
+                if date == None or resultDate > date:
                     search_result = classes.Proper(title, url, resultDate)
                     results.append(search_result)
 
-		return results
+        return results
 
 
 class NewznabCache(tvcache.TVCache):
 
-	def __init__(self, provider):
+    def __init__(self, provider):
 
-		tvcache.TVCache.__init__(self, provider)
+        tvcache.TVCache.__init__(self, provider)
 
-		# only poll newznab providers every 15 minutes max
-		self.minTime = 15
+        # only poll newznab providers every 15 minutes max
+        self.minTime = 15
 
-	def _getRSSData(self):
+    def _getRSSData(self):
 
-		params = {"t": "tvsearch",
-				  "age": sickbeard.USENET_RETENTION,
-				  "cat": '5040,5030'}
+        params = {"t": "tvsearch",
+                  "age": sickbeard.USENET_RETENTION,
+                  "cat": '5040,5030'}
 
-		# hack this in for now
-		if self.provider.getID() == 'nzbs_org':
-			params['cat'] += ',5070,5090'
+        # hack this in for now
+        if self.provider.getID() == 'nzbs_org':
+            params['cat'] += ',5070,5090'
 
-		if self.provider.key:
-			params['apikey'] = self.provider.key
+        if self.provider.key:
+            params['apikey'] = self.provider.key
 
-		url = self.provider.url + 'api?' + urllib.urlencode(params)
+        url = self.provider.url + 'api?' + urllib.urlencode(params)
 
-		logger.log(self.provider.name + " cache update URL: "+ url, logger.DEBUG)
+        logger.log(self.provider.name + " cache update URL: " + url, logger.DEBUG)
 
-		data = self.provider.getURL(url)
+        data = self.provider.getURL(url)
 
-		# hack this in until it's fixed server side
-		if data and not data.startswith('<?xml'):
-			data = '<?xml version="1.0" encoding="ISO-8859-1" ?>' + data
+        # hack this in until it's fixed server side
+        if data and not data.startswith('<?xml'):
+            data = '<?xml version="1.0" encoding="ISO-8859-1" ?>' + data
 
-		return data
+        return data
 
-	def _checkAuth(self, data):
+    def _checkAuth(self, data):
 
-		return self.provider._checkAuthFromData(data)
+        return self.provider._checkAuthFromData(data)

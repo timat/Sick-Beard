@@ -116,7 +116,7 @@ def snatchEpisode(result, endStatus=SNATCHED):
         else:
             logger.log(u"Unknown NZB action specified in config: " + sickbeard.NZB_METHOD, logger.ERROR)
             dlResult = False
-    
+
     # TORRENTs can be sent to Clients or saved to disk
     elif result.resultType == "torrent":
         # torrents are always saved to disk
@@ -128,7 +128,7 @@ def snatchEpisode(result, endStatus=SNATCHED):
         elif sickbeard.TORRENT_METHOD == "transmission":
             dlResult = transmission.sendTORRENT(result)
         elif sickbeard.TORRENT_METHOD == "deluge":
-            dlResult = deluge.sendTORRENT(result)
+            dlResult = deluge.sendTORRENT(result)      
     else:
         logger.log(u"Unknown result type, unable to download it", logger.ERROR)
         dlResult = False
@@ -409,21 +409,21 @@ def findSeason(show, season):
             logger.log(u"No eps from this season are wanted at this quality, ignoring the result of "+bestSeasonNZB.name, logger.DEBUG)
 
         else:
-
+            
             if bestSeasonNZB.provider.providerType == GenericProvider.NZB:
                 logger.log(u"Breaking apart the NZB and adding the individual ones to our results", logger.DEBUG)
-    
+                
                 # if not, break it apart and add them as the lowest priority results
                 individualResults = nzbSplitter.splitResult(bestSeasonNZB)
-    
+
                 individualResults = filter(lambda x:  show_name_helpers.filterBadReleases(x.name) and show_name_helpers.isGoodResult(x.name, show), individualResults)
-    
+
                 for curResult in individualResults:
                     if len(curResult.episodes) == 1:
                         epNum = curResult.episodes[0].episode
                     elif len(curResult.episodes) > 1:
                         epNum = MULTI_EP_RESULT
-    
+
                     if epNum in foundResults:
                         foundResults[epNum].append(curResult)
                     else:

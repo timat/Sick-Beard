@@ -184,7 +184,7 @@ class NameParser(object):
     def parse(self, name):
         
         name = self._unicodify(name)
-
+        
         cached = name_parser_cache.get(name)
         if cached:
             return cached

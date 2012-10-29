@@ -65,7 +65,7 @@ def logDownload(episode, filename, new_ep_quality, release_group=None):
     if release_group:
         provider = release_group
     else:
-    provider = -1
+        provider = -1
 
     action = episode.status
 

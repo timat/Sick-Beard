@@ -388,7 +388,7 @@ def initialize(consoleLogging=True):
                 USE_SYNOLOGYNOTIFIER, SYNOLOGYNOTIFIER_NOTIFY_ONSNATCH, SYNOLOGYNOTIFIER_NOTIFY_ONDOWNLOAD, SYNOLOGYNOTIFIER_NOTIFY_ONSUBTITLEDOWNLOAD, \
                 USE_BANNER, USE_LISTVIEW, METADATA_XBMC, METADATA_MEDIABROWSER, METADATA_PS3, METADATA_SYNOLOGY, metadata_provider_dict, \
                 NEWZBIN, NEWZBIN_USERNAME, NEWZBIN_PASSWORD, GIT_PATH, MOVE_ASSOCIATED_FILES, \
-                GUI_NAME,COMING_EPS_LAYOUT, COMING_EPS_SORT, COMING_EPS_DISPLAY_PAUSED, METADATA_WDTV, METADATA_TIVO, IGNORE_WORDS, CREATE_MISSING_SHOW_DIRS, \
+                GUI_NAME, COMING_EPS_LAYOUT, COMING_EPS_SORT, COMING_EPS_DISPLAY_PAUSED, METADATA_WDTV, METADATA_TIVO, IGNORE_WORDS, CREATE_MISSING_SHOW_DIRS, \
                 ADD_SHOWS_WO_DIR, USE_SUBTITLES, SUBTITLES_LANGUAGES, SUBTITLES_MULTI, SUBTITLES_SUBDIR, SUBTITLES_SERVICES_LIST, SUBTITLES_SERVICES_ENABLED, subtitlesFinderScheduler
 
         if __INITIALIZED__:
@@ -432,7 +432,7 @@ def initialize(consoleLogging=True):
         WEB_USERNAME = check_setting_str(CFG, 'General', 'web_username', '')
         WEB_PASSWORD = check_setting_str(CFG, 'General', 'web_password', '')
         LAUNCH_BROWSER = bool(check_setting_int(CFG, 'General', 'launch_browser', 1))
-        
+
         UPDATE_SHOWS_ON_START = bool(check_setting_int(CFG, 'General', 'update_shows_on_start', 0))
 
         USE_API = bool(check_setting_int(CFG, 'General', 'use_api', 0)) 
@@ -473,7 +473,7 @@ def initialize(consoleLogging=True):
         TVDB_API_PARMS = {'apikey': TVDB_API_KEY,
                           'language': 'en',
                           'useZip': True}
-        
+
         if CACHE_DIR:
             TVDB_API_PARMS['cache'] = os.path.join(CACHE_DIR, 'tvdb')
 
@@ -526,7 +526,7 @@ def initialize(consoleLogging=True):
         EZRSS = bool(check_setting_int(CFG, 'General', 'use_torrent', 0))
         if not EZRSS:
             EZRSS = bool(check_setting_int(CFG, 'EZRSS', 'ezrss', 0))
-        
+            
         TVTORRENTS = bool(check_setting_int(CFG, 'TVTORRENTS', 'tvtorrents', 0))    
         TVTORRENTS_DIGEST = check_setting_str(CFG, 'TVTORRENTS', 'tvtorrents_digest', '')
         TVTORRENTS_HASH = check_setting_str(CFG, 'TVTORRENTS', 'tvtorrents_hash', '')
@@ -537,7 +537,7 @@ def initialize(consoleLogging=True):
         DTT = bool(check_setting_int(CFG, 'DTT', 'dtt', 0))
         DTT_NORAR = bool(check_setting_int(CFG, 'DTT', 'dtt_norar', 0))
         DTT_SINGLE = bool(check_setting_int(CFG, 'DTT', 'dtt_single', 0))
-
+        
         TORRENTDAY = bool(check_setting_int(CFG, 'TORRENTDAY', 'torrentday', 0))    
         TORRENTDAY_U = check_setting_str(CFG, 'TORRENTDAY', 'torrentday_u', '')
         TORRENTDAY_TP = check_setting_str(CFG, 'TORRENTDAY', 'torrentday_tp', '')
@@ -545,7 +545,7 @@ def initialize(consoleLogging=True):
         THEPIRATEBAY = bool(check_setting_int(CFG, 'THEPIRATEBAY', 'thepiratebay', 0)) 
         THEPIRATEBAY_TRUSTED = bool(check_setting_int(CFG, 'THEPIRATEBAY', 'thepiratebay_trusted', 0))         
         THEPIRATEBAY_PROXY = bool(check_setting_int(CFG, 'THEPIRATEBAY', 'thepiratebay_proxy', 0))
-        THEPIRATEBAY_PROXY_URL = check_setting_str(CFG, 'THEPIRATEBAY', 'thepiratebay_proxy_url', '')
+        THEPIRATEBAY_PROXY_URL = check_setting_str(CFG, 'THEPIRATEBAY', 'thepiratebay_proxy_url', '')        
         THEPIRATEBAY_BLACKLIST = check_setting_str(CFG, 'THEPIRATEBAY', 'thepiratebay_blacklist', '')        
 
         NZBS = bool(check_setting_int(CFG, 'NZBs', 'nzbs', 0))
@@ -582,7 +582,7 @@ def initialize(consoleLogging=True):
         TORRENT_PATH = check_setting_str(CFG, 'TORRENT', 'torrent_path', '')
         TORRENT_RATIO = check_setting_str(CFG, 'TORRENT', 'torrent_ratio', '')
         TORRENT_PAUSED = bool(check_setting_int(CFG, 'TORRENT', 'torrent_paused', 0)) 
-
+        
         USE_XBMC = bool(check_setting_int(CFG, 'XBMC', 'use_xbmc', 0)) 
         XBMC_NOTIFY_ONSNATCH = bool(check_setting_int(CFG, 'XBMC', 'xbmc_notify_onsnatch', 0))
         XBMC_NOTIFY_ONDOWNLOAD = bool(check_setting_int(CFG, 'XBMC', 'xbmc_notify_ondownload', 0))
@@ -757,7 +757,7 @@ def initialize(consoleLogging=True):
                 tmp_provider.set_config(cur_metadata_config)
                 metadata_provider_dict[tmp_provider.name] = tmp_provider
 
-        GUI_NAME = check_setting_str(CFG, 'GUI', 'gui_name', 'slick')        
+        GUI_NAME = check_setting_str(CFG, 'GUI', 'gui_name', 'slick') 
 
         COMING_EPS_LAYOUT = check_setting_str(CFG, 'GUI', 'coming_eps_layout', 'banner')
         COMING_EPS_DISPLAY_PAUSED = bool(check_setting_int(CFG, 'GUI', 'coming_eps_display_paused', 0))
@@ -766,7 +766,7 @@ def initialize(consoleLogging=True):
         newznabData = check_setting_str(CFG, 'Newznab', 'newznab_data', '')
         newznabProviderList = providers.getNewznabProviderList(newznabData)
         providerList = providers.makeProviderList()
-        
+
         # start up all the threads
         logger.sb_log_instance.initLogging(consoleLogging=consoleLogging)
 
@@ -1070,7 +1070,7 @@ def save_config():
     new_config['General']['use_nzbs'] = int(USE_NZBS)
     new_config['General']['use_torrents'] = int(USE_TORRENTS)
     new_config['General']['nzb_method'] = NZB_METHOD
-    new_config['General']['torrent_method'] = TORRENT_METHOD
+    new_config['General']['torrent_method'] = TORRENT_METHOD    
     new_config['General']['usenet_retention'] = int(USENET_RETENTION)
     new_config['General']['search_frequency'] = int(SEARCH_FREQUENCY)
     new_config['General']['download_propers'] = int(DOWNLOAD_PROPERS)
@@ -1121,7 +1121,7 @@ def save_config():
     new_config['TVTORRENTS']['tvtorrents'] = int(TVTORRENTS)
     new_config['TVTORRENTS']['tvtorrents_digest'] = TVTORRENTS_DIGEST
     new_config['TVTORRENTS']['tvtorrents_hash'] = TVTORRENTS_HASH
-    
+
     new_config['BTN'] = {}
     new_config['BTN']['btn'] = int(BTN)
     new_config['BTN']['btn_api_key'] = BTN_API_KEY

@@ -36,7 +36,7 @@ except:
 
 import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), 'lib')))
-    
+
 # We only need this for compiling an EXE and I will just always do that on 2.6+
 if sys.hexversion >= 0x020600F0:
     from multiprocessing import freeze_support
@@ -90,13 +90,13 @@ def daemonize():
     # pylint: disable=E1101
     # Make a non-session-leader child process
     try:
-        pid = os.fork() #@UndefinedVariable - only available in UNIX
+        pid = os.fork()  # @UndefinedVariable - only available in UNIX
         if pid != 0:
             sys.exit(0)
     except OSError, e:
         raise RuntimeError("1st fork failed: %s [%d]" % (e.strerror, e.errno))
 
-    os.setsid() #@UndefinedVariable - only available in UNIX
+    os.setsid()  # @UndefinedVariable - only available in UNIX
 
     # Make sure I can read my own files and shut out others
     prev = os.umask(0)
@@ -104,7 +104,7 @@ def daemonize():
 
     # Make the child a session-leader by detaching from the terminal
     try:
-        pid = os.fork() #@UndefinedVariable - only available in UNIX
+        pid = os.fork()  # @UndefinedVariable - only available in UNIX
         if pid != 0:
             sys.exit(0)
     except OSError, e:
@@ -164,7 +164,7 @@ def main():
     threading.currentThread().name = "MAIN"
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "qfdp::", ['quiet', 'forceupdate', 'daemon', 'port=', 'pidfile=', 'nolaunch', 'config=', 'datadir=']) #@UnusedVariable
+        opts, args = getopt.getopt(sys.argv[1:], "qfdp::", ['quiet', 'forceupdate', 'daemon', 'port=', 'pidfile=', 'nolaunch', 'config=', 'datadir='])  # @UnusedVariable
     except getopt.GetoptError:
         print "Available Options: --quiet, --forceupdate, --port, --daemon, --pidfile, --config, --datadir"
         sys.exit()
@@ -239,7 +239,7 @@ def main():
 
     # Make sure we can write to the data dir
     if not os.access(sickbeard.DATA_DIR, os.W_OK):
-        raise SystemExit("Data dir must be writeable '" + sickbeard.DATA_DIR + "'")
+        raise SystemExit("Datadir must be writeable '" + sickbeard.DATA_DIR + "'")
 
     # Make sure we can write to the config file
     if not os.access(sickbeard.CONFIG_FILE, os.W_OK):
@@ -293,17 +293,17 @@ def main():
 
     try:
         initWebServer({
-                'port': startPort,
-                'host': webhost,
-                'data_root': os.path.join(sickbeard.PROG_DIR, 'gui/'+sickbeard.GUI_NAME),
-                'web_root': sickbeard.WEB_ROOT,
-                'log_dir': log_dir,
-                'username': sickbeard.WEB_USERNAME,
-                'password': sickbeard.WEB_PASSWORD,
-                'enable_https': sickbeard.ENABLE_HTTPS,
-                'https_cert': sickbeard.HTTPS_CERT,
-                'https_key': sickbeard.HTTPS_KEY,
-        })
+                      'port': startPort,
+                      'host': webhost,
+                      'data_root': os.path.join(sickbeard.PROG_DIR, 'gui/'+sickbeard.GUI_NAME),
+                      'web_root': sickbeard.WEB_ROOT,
+                      'log_dir': log_dir,
+                      'username': sickbeard.WEB_USERNAME,
+                      'password': sickbeard.WEB_PASSWORD,
+                      'enable_https': sickbeard.ENABLE_HTTPS,
+                      'https_cert': sickbeard.HTTPS_CERT,
+                      'https_key': sickbeard.HTTPS_KEY,
+                      })
     except IOError:
         logger.log(u"Unable to start web server, is something else running on port %d?" % startPort, logger.ERROR)
         if sickbeard.LAUNCH_BROWSER and not sickbeard.DAEMON:
@@ -324,7 +324,7 @@ def main():
 
     # Start an update if we're supposed to
     if forceUpdate:
-        sickbeard.showUpdateScheduler.action.run(force=True) #@UndefinedVariable
+        sickbeard.showUpdateScheduler.action.run(force=True)  # @UndefinedVariable
 
     # Stay alive while my threads do the work
     while (True):

@@ -135,7 +135,7 @@ ep_regexes = [
                ^((?P<series_name>.+?)[. _-]+)?             # Show_Name and separator
                (e(p(isode)?)?|part|pt)[. _-]?              # e, ep, episode, or part
                (?P<ep_num>(\d+|[ivx]+))                    # first ep num
-               ((([. _-]+(and|&|to)[. _-]+)|-)                # and/&/to joiner
+               ((([. _-]+(and|&|to)[. _-]+)|-)             # and/&/to joiner
                (?P<extra_ep_num>(?!(1080|720)[pi])(\d+|[ivx]+))[. _-])            # second ep num
                ([. _-]*(?P<extra_info>.+?)                 # Source_Quality_Etc-
                ((?<![. _-])(?<!WEB)                        # Make sure this is really the release group

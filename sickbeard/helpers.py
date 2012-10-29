@@ -132,9 +132,9 @@ def getURL (url, headers=[]):
         opener.addheaders.append(cur_header)
 
     try:
-    usock = opener.open(url)
-    url = usock.geturl()
-    encoding = usock.info().get("Content-Encoding")
+        usock = opener.open(url)
+        url = usock.geturl()
+        encoding = usock.info().get("Content-Encoding")
 
         if encoding in ('gzip', 'x-gzip', 'deflate'):
             content = usock.read()
@@ -147,7 +147,7 @@ def getURL (url, headers=[]):
         else:
             result = usock.read()
 
-            usock.close()
+        usock.close()
 
     except urllib2.HTTPError, e:
         logger.log(u"HTTP error " + str(e.code) + " while loading URL " + url, logger.WARNING)
@@ -159,13 +159,13 @@ def getURL (url, headers=[]):
         logger.log(u"BadStatusLine error while loading URL " + url, logger.WARNING)
         return None
     except socket.timeout:
-        logger.log(u"Timed out while loading URL "+url, logger.WARNING)
+        logger.log(u"Timed out while loading URL " + url, logger.WARNING)
         return None
     except ValueError:
-        logger.log(u"Unknown error while loading URL "+url, logger.WARNING)
+        logger.log(u"Unknown error while loading URL " + url, logger.WARNING)
         return None
     except Exception:
-        logger.log(u"Unknown exception while loading URL "+url+": "+traceback.format_exc(), logger.WARNING)
+        logger.log(u"Unknown exception while loading URL " + url + ": " + traceback.format_exc(), logger.WARNING)
         return None
 
     return result
