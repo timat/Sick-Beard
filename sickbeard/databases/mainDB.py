@@ -73,7 +73,7 @@ class MainSanityCheck(db.DBSanityCheck):
             logger.log(u"No duplicate episode, check passed")
 
     def fix_orphan_episodes(self):
-
+        
         sqlResults = self.connection.select("SELECT episode_id, showid, tv_shows.tvdb_id FROM tv_episodes LEFT JOIN tv_shows ON tv_episodes.showid=tv_shows.tvdb_id WHERE tv_shows.tvdb_id is NULL")
 
         for cur_orphan in sqlResults:
@@ -418,21 +418,10 @@ class FixAirByDateSetting(SetNzbTorrentSettings):
         
         self.incDBVersion()
 
-class AddSubtitlesSupport(FixAirByDateSetting):    
+class AddSizeAndSceneNameFields(FixAirByDateSetting):
+
     def test(self):
         return self.checkDBVersion() >= 10
-
-    def execute(self):
-        self.addColumn("tv_shows", "subtitles")
-        self.addColumn("tv_episodes", "subtitles", "TEXT", "")
-        self.addColumn("tv_episodes", "subtitles_searchcount")
-        self.addColumn("tv_episodes", "subtitles_lastsearch", "TIMESTAMP", str(datetime.datetime.min))
-        self.incDBVersion()
-
-class AddSizeAndSceneNameFields(AddSubtitlesSupport):
-
-    def test(self):
-        return self.checkDBVersion() >= 11
     
     def execute(self):
 
@@ -534,14 +523,14 @@ class AddSizeAndSceneNameFields(AddSubtitlesSupport):
 class RenameSeasonFolders(AddSizeAndSceneNameFields):
 
     def test(self):
-        return self.checkDBVersion() >= 12
+        return self.checkDBVersion() >= 11
     
     def execute(self):
         
         # rename the column
         self.connection.action("ALTER TABLE tv_shows RENAME TO tmp_tv_shows")
-        self.connection.action("CREATE TABLE tv_shows (show_id INTEGER PRIMARY KEY, location TEXT, show_name TEXT, tvdb_id NUMERIC, network TEXT, genre TEXT, runtime NUMERIC, quality NUMERIC, airs TEXT, status TEXT, flatten_folders NUMERIC, paused NUMERIC, startyear NUMERIC, tvr_id NUMERIC, tvr_name TEXT, air_by_date NUMERIC, lang TEXT, subtitles NUMERIC)")
-        sql = "INSERT INTO tv_shows(show_id, location, show_name, tvdb_id, network, genre, runtime, quality, airs, status, flatten_folders, paused, startyear, tvr_id, tvr_name, air_by_date, lang, subtitles) SELECT show_id, location, show_name, tvdb_id, network, genre, runtime, quality, airs, status, seasonfolders, paused, startyear, tvr_id, tvr_name, air_by_date, lang, subtitles FROM tmp_tv_shows"
+        self.connection.action("CREATE TABLE tv_shows (show_id INTEGER PRIMARY KEY, location TEXT, show_name TEXT, tvdb_id NUMERIC, network TEXT, genre TEXT, runtime NUMERIC, quality NUMERIC, airs TEXT, status TEXT, flatten_folders NUMERIC, paused NUMERIC, startyear NUMERIC, tvr_id NUMERIC, tvr_name TEXT, air_by_date NUMERIC, lang TEXT)")
+        sql = "INSERT INTO tv_shows(show_id, location, show_name, tvdb_id, network, genre, runtime, quality, airs, status, flatten_folders, paused, startyear, tvr_id, tvr_name, air_by_date, lang) SELECT show_id, location, show_name, tvdb_id, network, genre, runtime, quality, airs, status, seasonfolders, paused, startyear, tvr_id, tvr_name, air_by_date, lang FROM tmp_tv_shows"
         self.connection.action(sql)
         
         # flip the values to be opposite of what they were before
@@ -550,4 +539,16 @@ class RenameSeasonFolders(AddSizeAndSceneNameFields):
         self.connection.action("UPDATE tv_shows SET flatten_folders = 0 WHERE flatten_folders = 2")
         self.connection.action("DROP TABLE tmp_tv_shows")
 
+        self.incDBVersion()
+
+class AddSubtitlesSupport(RenameSeasonFolders):    
+    def test(self):
+        return self.checkDBVersion() >= 12
+
+    def execute(self):
+        
+        self.addColumn("tv_shows", "subtitles")
+        self.addColumn("tv_episodes", "subtitles", "TEXT", "")
+        self.addColumn("tv_episodes", "subtitles_searchcount")
+        self.addColumn("tv_episodes", "subtitles_lastsearch", "TIMESTAMP", str(datetime.datetime.min))
         self.incDBVersion()

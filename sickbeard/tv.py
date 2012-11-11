@@ -837,9 +837,9 @@ class TVShow(object):
                 episode = self.makeEpFromFile(episodeLoc['location']);
                 subtitles = episode.downloadSubtitles()
         
-                if sickbeard.SUBTITLES_SUBDIR:
+                if sickbeard.SUBTITLES_DIR:
                     for video in subtitles:
-                        subs_new_path = ek.ek(os.path.join, os.path.dirname(video.path), sickbeard.SUBTITLES_SUBDIR)
+                        subs_new_path = ek.ek(os.path.join, os.path.dirname(video.path), sickbeard.SUBTITLES_DIR)
                         if not ek.ek(os.path.isdir, subs_new_path):
                             ek.ek(os.mkdir, subs_new_path)
                         
@@ -1057,7 +1057,7 @@ class TVEpisode(object):
         logger.log(str(self.show.tvdbid) + ": Downloading subtitles for episode " + str(self.season) + "x" + str(self.episode), logger.DEBUG)
         
         try:
-            subtitles = subliminal.download_subtitles([self.location], languages=sickbeard.SUBTITLES_LANGUAGES, services=sickbeard.subtitles.getEnabledServiceList(), force=False, multi=sickbeard.SUBTITLES_MULTI, cache_dir=sickbeard.CACHE_DIR)
+            subtitles = subliminal.download_subtitles([self.location], languages=sickbeard.SUBTITLES_LANGUAGES, services=sickbeard.subtitles.getEnabledServiceList(), force=False, multi=True, cache_dir=sickbeard.CACHE_DIR)
             
         except Exception as e:
             logger.log("Error occurred when downloading subtitles: " + str(e), logger.DEBUG)
@@ -1573,10 +1573,15 @@ class TVEpisode(object):
 
         epStatus, epQual = Quality.splitCompositeStatus(self.status) #@UnusedVariable
         
+        if sickbeard.NAMING_STRIP_YEAR:
+            show_name = re.sub("\(\w+\)$", "", self.show.name).rstrip()
+        else:
+            show_name = self.show.name 
+        
         return {
-                   '%SN': self.show.name,
-                   '%S.N': dot(self.show.name),
-                   '%S_N': us(self.show.name),
+                   '%SN': show_name,
+                   '%S.N': dot(show_name),
+                   '%S_N': us(show_name),
                    '%EN': ep_name,
                    '%E.N': dot(ep_name),
                    '%E_N': us(ep_name),
@@ -1640,7 +1645,7 @@ class TVEpisode(object):
                 result_name = result_name.replace('%RN', '%S.N.S%0SE%0E.%E.N-SiCKBEARD')
                 result_name = result_name.replace('%rn', '%s.n.s%0se%0e.%e.n-sickbeard')
 
-            result_name = result_name.replace('%RG', 'SiCKBEARD')
+            result_name = result_name.replace('%RG', 'SICKBEARD')
             result_name = result_name.replace('%rg', 'sickbeard')
             logger.log(u"Episode has no release name, replacing it with a generic one: "+result_name, logger.DEBUG)
         
@@ -1793,13 +1798,11 @@ class TVEpisode(object):
         in the naming settings.
         """
 
-        if not ek.ek(os.path.isfile, self.location):
-            logger.log(u"Can't perform rename on " + self.location + " when it doesn't exist, skipping", logger.WARNING)
-            return
-
         proper_path = self.proper_path()
         absolute_proper_path = ek.ek(os.path.join, self.show.location, proper_path)
         absolute_current_path_no_ext, file_ext = os.path.splitext(self.location)
+
+        related_subs = []
 
         current_path = absolute_current_path_no_ext
 
@@ -1814,6 +1817,11 @@ class TVEpisode(object):
             return
 
         related_files = postProcessor.PostProcessor(self.location)._list_associated_files(self.location)
+
+        if self.show.subtitles and sickbeard.SUBTITLES_DIR != '':
+            related_subs = postProcessor.PostProcessor(self.location)._list_associated_files(sickbeard.SUBTITLES_DIR, subtitles_only=True)
+            absolute_proper_subs_path = ek.ek(os.path.join, sickbeard.SUBTITLES_DIR, self.formatted_filename())
+            
         logger.log(u"Files associated to " + self.location + ": " + str(related_files), logger.DEBUG)
 
         # move the ep file
@@ -1824,6 +1832,11 @@ class TVEpisode(object):
             cur_result = helpers.rename_ep_file(cur_related_file, absolute_proper_path)
             if cur_result == False:
                 logger.log(str(self.tvdbid) + ": Unable to rename file " + cur_related_file, logger.ERROR)
+
+        for cur_related_sub in related_subs:
+            cur_result = helpers.rename_ep_file(cur_related_sub, absolute_proper_subs_path)
+            if cur_result == False:
+                logger.log(str(self.tvdbid) + ": Unable to rename file " + cur_related_sub, logger.ERROR)
 
         # save the ep
         with self.lock:

@@ -153,6 +153,11 @@ class PostProcessor(object):
         if not file_path:
             return []
 
+        if file_path != self.file_path:
+            associated_dir = os.path.dirname(file_path)
+            associated_fname = os.path.basename(self.file_path) 
+            file_path = os.path.join(associated_dir, associated_fname)
+
         file_path_list = []
     
         base_name = file_path.rpartition('.')[0]+'.'
@@ -257,8 +262,8 @@ class PostProcessor(object):
             else:
                 new_file_name = helpers.replaceExtension(cur_file_name, cur_extension)
             
-            if sickbeard.SUBTITLES_SUBDIR and cur_extension.endswith('srt'):
-                subs_new_path = ek.ek(os.path.join, new_path, sickbeard.SUBTITLES_SUBDIR)
+            if sickbeard.SUBTITLES_DIR and cur_extension.endswith('srt'):
+                subs_new_path = ek.ek(os.path.join, new_path, sickbeard.SUBTITLES_DIR)
                 if not ek.ek(os.path.isdir, subs_new_path):
                     ek.ek(os.mkdir, subs_new_path)
                 new_file_path = ek.ek(os.path.join, subs_new_path, new_file_name)
