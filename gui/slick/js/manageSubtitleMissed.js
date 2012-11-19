@@ -49,7 +49,7 @@ $(document).ready(function() {
         $(this).hide();
     });
 
-	// selects all visible episode checkboxes.
+    // selects all visible episode checkboxes.
     $('.selectAllShows').click(function(){
         $('.allCheck').each(function(){
                 this.checked = true;
@@ -68,4 +68,5 @@ $(document).ready(function() {
                 this.checked = false;
         });
     });
+
 });

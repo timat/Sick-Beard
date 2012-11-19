@@ -78,7 +78,7 @@
 #end if
     <tr><td class="showLegend">Status: </td><td>$show.status</td></tr>
 #if $showLoc[1]:
-    <tr><td class="showLegend">Location: </td><td><small>$showLoc[0]</small></td></tr>
+    <tr><td class="showLegend">Location: </td><td>$showLoc[0]</td></tr>
 #else:
     <tr><td class="showLegend"><span style="color: red;">Location: </span></td><td><span style="color: red;">$showLoc[0]</span> (dir is missing)</td></tr>
 #end if
@@ -94,6 +94,11 @@ initially download: <b><%=", ".join([Quality.qualityStrings[x] for x in anyQuali
 replace with: <b><%=", ".join([Quality.qualityStrings[x] for x in bestQualities])%></b>
 #end if 
 #end if
+#if $show.exceptions:
+	<tr><td class="showLegend">Scene Name: </td><td>$exceptions_string</td></tr>
+#else:
+    <tr><td>&nbsp</td></tr>
+#end if    
     </td></tr>
     </table>
     <td>
@@ -108,11 +113,6 @@ replace with: <b><%=", ".join([Quality.qualityStrings[x] for x in bestQualities]
 </table>
 </td>
 </tr>
-#if $show.exceptions:
-<table>
-    <tr><td class="showLegend">Scene Exceptions: </td><td>$exceptions_string</td></tr>
-</table>
-#end if
 </table>
 </div>
 </div>
@@ -185,19 +185,22 @@ $Quality.DOWNLOADED.sort()
     $epResult["name"]
 </td>
     <td align="center" class="nowrap">#if int($epResult["airdate"]) == 1 then "never" else $datetime.date.fromordinal(int($epResult["airdate"]))#</td>
-    <td><small>
+    <td class="filename"><small>
 #if $epLoc and $show._location and $epLoc.lower().startswith($show._location.lower()):
-$epLoc[len($show._location)+1:]
+#set $epLoc = os.path.basename($epLoc[len($show._location)+1:])
 #elif $epLoc and (not $epLoc.lower().startswith($show._location.lower()) or not $show._location):
-$epLoc
+#set $epLoc = os.path.basename($epLoc)
 #end if
+$epLoc
 	</small>
     </td>
 #if $sickbeard.USE_SUBTITLES and $show.subtitles:
-    <td class="subtitles_column" align="left">&nbsp;
+    <td class="subtitles_column" align="right">
     #if $epResult["subtitles"]:
         #for $sub_lang in subliminal.language.language_list($epResult["subtitles"].split(',')):
-            <img src="$sbRoot/images/flags/${sub_lang.alpha2}.png" width="16" height="11" alt="${sub_lang}" />&nbsp;
+            #if sub_lang.alpha2 != ""
+            	<img src="$sbRoot/images/flags/${sub_lang.alpha2}.png" width="16" height="11" alt="${sub_lang}" />&nbsp;
+			#end if
         #end for
     #end if
     </td>

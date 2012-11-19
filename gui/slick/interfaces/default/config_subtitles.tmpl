@@ -13,7 +13,7 @@
 <script type="text/javascript" src="$sbRoot/js/configSubtitles.js?$sbPID"></script>
 <script type="text/javascript" src="$sbRoot/js/config.js"></script>
 <script type="text/javascript" src="$sbRoot/js/jquery.tokeninput.js"></script>
-<link rel="stylesheet" type="text/css" href="$sbRoot/css/token-input-facebook.css" />
+<link rel="stylesheet" type="text/css" href="$sbRoot/css/token-input.css" />
 
 <script type="text/javascript">
   	\$(document).ready(function() {
@@ -22,7 +22,6 @@
 	                <%=",\r\n".join("{id: \"" + lang[2] + "\", name: \"" + lang[3] + "\"}" for lang in subtitles.subtitleLanguageFilter())%>
 	            ],
 	            {
-					theme: "facebook",
 					method: "POST",
 	            	hintText: "Write to search a language and select it",
 					preventDuplicates: true,
@@ -64,7 +63,7 @@
                     
 					<fieldset class="component-group-list">
 			            <div class="field-pair">
-                            <input type="checkbox"#if $sickbeard.USE_SUBTITLES then " checked=\"checked\"" else ""# id="use_subtitles" name="use_subtitles">
+                            <input type="checkbox" class="enabler" #if $sickbeard.USE_SUBTITLES then " checked=\"checked\"" else ""# id="use_subtitles" name="use_subtitles">
                             <label for="use_subtitles" class="clearfix">
                                 <span class="component-title">Search Subtitles</span>
                             </label>
@@ -85,18 +84,10 @@
 	    	                            	<span class="component-title">&nbsp;</span>
 			                                <span class="component-desc">The directory where Sick Beard should store your <i>Subtitles</i> files.</span>
 	          	                	</label>
-	          	                	<label class="nocheck clearfix">
+	                            	<label class="nocheck clearfix">
 	    	                            	<span class="component-title">&nbsp;</span>
-			                                <span class="component-desc"><b>NOTE 1:</b> Use an absolute path to store subtitles in specified path.</span>
-									</label>
-									<label class="nocheck clearfix">
-	    	                            	<span class="component-title" style="height: 48px">&nbsp;</span>
-			                                <span class="component-desc"><b>NOTE 2:</b> Use a relative path to create a specified directory for each show and store subtitles there.</span>
-									</label>
-									<label class="nocheck clearfix">
-	    	                            	<span class="component-title">&nbsp;</span>
-			                                <span class="component-desc"><b>NOTE 3:</b> Leave empty if you want store subtitles in episode path.</span>
-									</label>									
+			                                <span class="component-desc"><b>NOTE:</b> Leave empty if you want store subtitle in episode path.</span>
+	          	                	</label>
                         		</div>
 	                    <br/><input type="submit" class="btn config_submitter" value="Save Changes" /><br/>
                         </div>

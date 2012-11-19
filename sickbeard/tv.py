@@ -1572,6 +1572,11 @@ class TVEpisode(object):
             return parse_result.release_group
 
         epStatus, epQual = Quality.splitCompositeStatus(self.status) #@UnusedVariable
+
+        if sickbeard.NAMING_STRIP_YEAR:
+            show_name = re.sub("\(\w+\)$", "", self.show.name).rstrip()
+        else:
+            show_name = self.show.name 
         
         if sickbeard.NAMING_STRIP_YEAR:
             show_name = re.sub("\(\w+\)$", "", self.show.name).rstrip()
@@ -1801,7 +1806,8 @@ class TVEpisode(object):
         proper_path = self.proper_path()
         absolute_proper_path = ek.ek(os.path.join, self.show.location, proper_path)
         absolute_current_path_no_ext, file_ext = os.path.splitext(self.location)
-
+        related_subs = []
+        
         related_subs = []
 
         current_path = absolute_current_path_no_ext
