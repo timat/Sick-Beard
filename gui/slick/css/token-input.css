@@ -29,7 +29,7 @@ ul.token-input-list li input {
     box-shadow: none !important;
     padding: 3px 4px;
     background-color: white;
-    -webkit-appearance: caret;
+/*    -webkit-appearance: caret; */
 }
 
 li.token-input-token {
