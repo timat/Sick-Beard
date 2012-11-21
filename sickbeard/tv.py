@@ -1233,7 +1233,7 @@ class TVEpisode(object):
             return
 
 
-        if not myEp["firstaired"]:
+        if not myEp["firstaired"] or myEp["firstaired"] == "0000-00-00":
             myEp["firstaired"] = str(datetime.date.fromordinal(1))
 
         if myEp["episodename"] == None or myEp["episodename"] == "":
@@ -1629,8 +1629,6 @@ class TVEpisode(object):
         Manipulates an episode naming pattern and then fills the template in
         """
         
-        logger.log(u"pattern: "+pattern, logger.DEBUG)
-        
         if pattern == None:
             pattern = sickbeard.NAMING_PATTERN
         
@@ -1734,10 +1732,12 @@ class TVEpisode(object):
             # fill out the template for this piece and then insert this piece into the actual pattern
             cur_name_group_result = re.sub('(?i)(?x)'+regex_used, regex_replacement, cur_name_group)
             #cur_name_group_result = cur_name_group.replace(ep_format, ep_string)
-            logger.log(u"found "+ep_format+" as the ep pattern using "+regex_used+" and replaced it with "+regex_replacement+" to result in "+cur_name_group_result+" from "+cur_name_group, logger.DEBUG)
+            #logger.log(u"found "+ep_format+" as the ep pattern using "+regex_used+" and replaced it with "+regex_replacement+" to result in "+cur_name_group_result+" from "+cur_name_group, logger.DEBUG)
             result_name = result_name.replace(cur_name_group, cur_name_group_result)
 
         result_name = self._format_string(result_name, replace_map)
+        
+        logger.log(u"formatting pattern: "+pattern+" -> "+result_name, logger.DEBUG)
         
         return result_name
 

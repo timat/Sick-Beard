@@ -120,7 +120,7 @@ class Quality:
             if curQual<<16 & quality:
                 bestQualities.append(curQual)
 
-        return (anyQualities, bestQualities)
+        return (sorted(anyQualities), sorted(bestQualities))
 
     @staticmethod
     def nameQuality(name):
@@ -157,7 +157,7 @@ class Quality:
     @staticmethod
     def assumeQuality(name):
 
-        if name.lower().endswith(".avi"):
+        if name.lower().endswith((".avi", ".mp4")):
             return Quality.SDTV
         elif name.lower().endswith(".mkv"):
             return Quality.HDTV
