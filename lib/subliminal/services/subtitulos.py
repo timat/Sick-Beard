@@ -64,6 +64,12 @@ class Subtitulos(ServiceBase):
             logger.error(u'Request %s returned status code %d' % (r.url, r.status_code))
             return []
         soup = BeautifulSoup(r.content, self.required_features)
+        
+        # custom keywords set by the user for this download task
+        custom_keywords = self.config.custom_keywords
+        if(custom_keywords != None):
+            keywords.add(custom_keywords.lower())
+        
         subtitles = []
         for sub in soup('div', {'id': 'version'}):
             # extract extra compatible keywords

@@ -47,7 +47,7 @@ def consume_task_list(tasks):
     return group_by_video(results)
 
 
-def list_subtitles(paths, languages=None, services=None, force=True, multi=False, cache_dir=None, max_depth=3, scan_filter=None):
+def list_subtitles(paths, languages=None, services=None, force=True, multi=False, cache_dir=None, max_depth=3, scan_filter=None, custom_keywords=None):
     """List subtitles in given paths according to the criteria
 
     :param paths: path(s) to video file or folder
@@ -60,17 +60,18 @@ def list_subtitles(paths, languages=None, services=None, force=True, multi=False
     :param string cache_dir: path to the cache directory to use
     :param int max_depth: maximum depth for scanning entries
     :param function scan_filter: filter function that takes a path as argument and returns a boolean indicating whether it has to be filtered out (``True``) or not (``False``)
+    :param custom_keywords: custom keywords to use for checking with subtitle keywords
     :return: found subtitles
     :rtype: dict of :class:`~subliminal.videos.Video` => [:class:`~subliminal.subtitles.ResultSubtitle`]
 
     """
     paths, languages, services, _ = get_defaults(paths, languages, services, None,
                                                  languages_as=language_set)
-    tasks = create_list_tasks(paths, languages, services, force, multi, cache_dir, max_depth, scan_filter)
+    tasks = create_list_tasks(paths, languages, services, force, multi, cache_dir, max_depth, scan_filter, custom_keywords)
     return consume_task_list(tasks)
 
 
-def download_subtitles(paths, languages=None, services=None, force=True, multi=False, cache_dir=None, max_depth=3, scan_filter=None, order=None):
+def download_subtitles(paths, languages=None, services=None, force=True, multi=False, cache_dir=None, max_depth=3, scan_filter=None, order=None, custom_keywords=None):
     """Download subtitles in given paths according to the criteria
 
     :param paths: path(s) to video file or folder
@@ -84,6 +85,7 @@ def download_subtitles(paths, languages=None, services=None, force=True, multi=F
     :param int max_depth: maximum depth for scanning entries
     :param function scan_filter: filter function that takes a path as argument and returns a boolean indicating whether it has to be filtered out (``True``) or not (``False``)
     :param order: preferred order for subtitles sorting
+    :param custom_keywords: custom keywords to use for checking with subtitle keywords
     :type list: list of :data:`~subliminal.core.LANGUAGE_INDEX`, :data:`~subliminal.core.SERVICE_INDEX`, :data:`~subliminal.core.SERVICE_CONFIDENCE`, :data:`~subliminal.core.MATCHING_CONFIDENCE`
     :return: downloaded subtitles
     :rtype: dict of :class:`~subliminal.videos.Video` => [:class:`~subliminal.subtitles.ResultSubtitle`]
@@ -96,7 +98,7 @@ def download_subtitles(paths, languages=None, services=None, force=True, multi=F
     """
     paths, languages, services, order = get_defaults(paths, languages, services, order,
                                                      languages_as=language_list)
-    subtitles_by_video = list_subtitles(paths, languages, services, force, multi, cache_dir, max_depth, scan_filter)
+    subtitles_by_video = list_subtitles(paths, languages, services, force, multi, cache_dir, max_depth, scan_filter, custom_keywords)
     for video, subtitles in subtitles_by_video.iteritems():
         subtitles.sort(key=lambda s: key_subtitles(s, video, languages, services, order), reverse=True)
     tasks = create_download_tasks(subtitles_by_video, languages, multi)
