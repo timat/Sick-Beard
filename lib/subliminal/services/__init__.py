@@ -245,14 +245,16 @@ class ServiceConfig(object):
 
     :param bool multi: whether to download one subtitle per language or not
     :param string cache_dir: cache directory
+    :param string or list custom_keywords: custom keywords to use for checking with subtitle keywords
 
     """
-    def __init__(self, multi=False, cache_dir=None):
+    def __init__(self, multi=False, cache_dir=None, custom_keywords=None):
         self.multi = multi
         self.cache_dir = cache_dir
         self.cache = None
         if cache_dir is not None:
             self.cache = Cache(cache_dir)
+        self.custom_keywords = custom_keywords
 
     def __repr__(self):
-        return 'ServiceConfig(%r, %s)' % (self.multi, self.cache_dir)
+        return 'ServiceConfig(%r, %s, %s)' % (self.multi, self.cache_dir, self.custom_keywords)

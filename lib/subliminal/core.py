@@ -62,7 +62,7 @@ def get_defaults(paths, languages, services, order, languages_as=language_set):
     return paths, languages, services, order
 
 
-def create_list_tasks(paths, languages, services, force, multi, cache_dir, max_depth, scan_filter):
+def create_list_tasks(paths, languages, services, force, multi, cache_dir, max_depth, scan_filter, custom_keywords):
     """Create a list of :class:`~subliminal.tasks.ListTask` from one or more paths using the given criteria
 
     :param paths: path(s) to video file or folder
@@ -74,6 +74,7 @@ def create_list_tasks(paths, languages, services, force, multi, cache_dir, max_d
     :param string cache_dir: path to the cache directory to use
     :param int max_depth: maximum depth for scanning entries
     :param function scan_filter: filter function that takes a path as argument and returns a boolean indicating whether it has to be filtered out (``True``) or not (``False``)
+    :param custom_keywords: custom keywords to use for checking with subtitle keywords
     :return: the created tasks
     :rtype: list of :class:`~subliminal.tasks.ListTask`
 
@@ -83,7 +84,7 @@ def create_list_tasks(paths, languages, services, force, multi, cache_dir, max_d
         scan_result.extend(scan(p, max_depth, scan_filter))
     logger.debug(u'Found %d videos in %r with maximum depth %d' % (len(scan_result), paths, max_depth))
     tasks = []
-    config = ServiceConfig(multi, cache_dir)
+    config = ServiceConfig(multi, cache_dir, custom_keywords)
     services = filter_services(services)
     for video, detected_subtitles in scan_result:
         detected_languages = set(s.language for s in detected_subtitles)

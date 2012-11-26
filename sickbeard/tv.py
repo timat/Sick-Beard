@@ -1056,8 +1056,18 @@ class TVEpisode(object):
             return
         logger.log(str(self.show.tvdbid) + ": Downloading subtitles for episode " + str(self.season) + "x" + str(self.episode), logger.DEBUG)
         
+        #TODO: Add support for custom keywords
+        myDB = db.DBConnection()
+        sqlResults = myDB.select("SELECT provider FROM history WHERE showid = ? AND season = ? AND episode = ? AND action LIKE '%4' ORDER BY date DESC", [self.show.tvdbid, self.season, self.episode])
+        if len(sqlResults) > 0:
+            provider = sqlResults[0]["provider"]
+            logger.log(str(self.show.tvdbid) + ": Provider " + provider + " found for episode " + str(self.season) + "x" + str(self.episode), logger.DEBUG)
+        else:
+            provider = ''
+            logger.log(str(self.show.tvdbid) + ": No provider found for episode " + str(self.season) + "x" + str(self.episode), logger.DEBUG)
+        
         try:
-            subtitles = subliminal.download_subtitles([self.location], languages=sickbeard.SUBTITLES_LANGUAGES, services=sickbeard.subtitles.getEnabledServiceList(), force=False, multi=True, cache_dir=sickbeard.CACHE_DIR)
+            subtitles = subliminal.download_subtitles([self.location], languages=sickbeard.SUBTITLES_LANGUAGES, services=sickbeard.subtitles.getEnabledServiceList(), force=False, multi=True, cache_dir=sickbeard.CACHE_DIR, custom_keywords=provider)
             
         except Exception as e:
             logger.log("Error occurred when downloading subtitles: " + str(e), logger.DEBUG)
