@@ -123,6 +123,7 @@ METADATA_PS3 = None
 METADATA_WDTV = None
 METADATA_TIVO = None
 METADATA_SYNOLOGY = None
+METADATA_MINIDLNA = None
 
 QUALITY_DEFAULT = None
 STATUS_DEFAULT = None
@@ -385,7 +386,7 @@ def initialize(consoleLogging=True):
                 USE_PUSHOVER, PUSHOVER_USERKEY, PUSHOVER_NOTIFY_ONDOWNLOAD, PUSHOVER_NOTIFY_ONSUBTITLEDOWNLOAD, PUSHOVER_NOTIFY_ONSNATCH, \
                 USE_LIBNOTIFY, LIBNOTIFY_NOTIFY_ONSNATCH, LIBNOTIFY_NOTIFY_ONDOWNLOAD, LIBNOTIFY_NOTIFY_ONSUBTITLEDOWNLOAD, USE_NMJ, NMJ_HOST, NMJ_DATABASE, NMJ_MOUNT, USE_SYNOINDEX, \
                 USE_SYNOLOGYNOTIFIER, SYNOLOGYNOTIFIER_NOTIFY_ONSNATCH, SYNOLOGYNOTIFIER_NOTIFY_ONDOWNLOAD, SYNOLOGYNOTIFIER_NOTIFY_ONSUBTITLEDOWNLOAD, \
-                USE_BANNER, USE_LISTVIEW, METADATA_XBMC, METADATA_MEDIABROWSER, METADATA_PS3, METADATA_SYNOLOGY, metadata_provider_dict, \
+                USE_BANNER, USE_LISTVIEW, METADATA_XBMC, METADATA_MEDIABROWSER, METADATA_PS3, METADATA_SYNOLOGY, METADATA_MINIDLNA, metadata_provider_dict, \
                 NEWZBIN, NEWZBIN_USERNAME, NEWZBIN_PASSWORD, GIT_PATH, MOVE_ASSOCIATED_FILES, \
                 GUI_NAME, COMING_EPS_LAYOUT, COMING_EPS_SORT, COMING_EPS_DISPLAY_PAUSED, METADATA_WDTV, METADATA_TIVO, IGNORE_WORDS, CREATE_MISSING_SHOW_DIRS, \
                 ADD_SHOWS_WO_DIR, USE_SUBTITLES, SUBTITLES_LANGUAGES, SUBTITLES_DIR, SUBTITLES_SERVICES_LIST, SUBTITLES_SERVICES_ENABLED, subtitlesFinderScheduler
@@ -741,6 +742,7 @@ def initialize(consoleLogging=True):
             METADATA_WDTV = check_setting_str(CFG, 'General', 'metadata_wdtv', '0|0|0|0|0|0')
             METADATA_TIVO = check_setting_str(CFG, 'General', 'metadata_tivo', '0|0|0|0|0|0')
             METADATA_SYNOLOGY = check_setting_str(CFG, 'General', 'metadata_synology', '0|0|0|0|0|0')
+            METADATA_MINIDLNA = check_setting_str(CFG, 'General', 'metadata_minidlna', '0|0|0|0|0|0')
 
             for cur_metadata_tuple in [(METADATA_XBMC, metadata.xbmc),
                                        (METADATA_MEDIABROWSER, metadata.mediabrowser),
@@ -748,6 +750,7 @@ def initialize(consoleLogging=True):
                                        (METADATA_WDTV, metadata.wdtv),
                                        (METADATA_TIVO, metadata.tivo),
                                        (METADATA_SYNOLOGY, metadata.synology),
+                                       (METADATA_MINIDLNA, metadata.minidlna),
                                        ]:
 
                 (cur_metadata_config, cur_metadata_class) = cur_metadata_tuple
@@ -1087,6 +1090,7 @@ def save_config():
 
     new_config['General']['use_banner'] = int(USE_BANNER)
     new_config['General']['use_listview'] = int(USE_LISTVIEW)
+    new_config['General']['metadata_minidlna'] = metadata_provider_dict['minidlna'].get_config()
     new_config['General']['metadata_xbmc'] = metadata_provider_dict['XBMC'].get_config()
     new_config['General']['metadata_mediabrowser'] = metadata_provider_dict['MediaBrowser'].get_config()
     new_config['General']['metadata_ps3'] = metadata_provider_dict['Sony PS3'].get_config()
