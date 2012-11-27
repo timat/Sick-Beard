@@ -70,7 +70,7 @@ class SBRotatingLogHandler(object):
         if consoleLogging:
             console = logging.StreamHandler()
     
-            console.setLevel(logging.INFO)
+            console.setLevel(logging.DEBUG)
     
             # set a format which is simpler for console use
             console.setFormatter(logging.Formatter('%(asctime)s %(levelname)s::%(message)s', '%H:%M:%S'))

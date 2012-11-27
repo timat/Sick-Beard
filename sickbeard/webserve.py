@@ -959,9 +959,6 @@ class ConfigSearch:
 
         if usenet_retention == None:
             usenet_retention = 200
-            
-        if ignore_words == None:
-            ignore_words = ""
 
         if ignore_words == None:
             ignore_words = ""
@@ -972,8 +969,6 @@ class ConfigSearch:
         sickbeard.NZB_METHOD = nzb_method
         sickbeard.TORRENT_METHOD = torrent_method
         sickbeard.USENET_RETENTION = int(usenet_retention)
-        
-        sickbeard.IGNORE_WORDS = ignore_words
         
         sickbeard.IGNORE_WORDS = ignore_words
         
