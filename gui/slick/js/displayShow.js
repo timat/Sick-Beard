@@ -55,6 +55,19 @@ $(document).ready(function(){
             }
         });
     });
+    
+    $('.episodesCheck').click(function(){
+        var seasCheck = this;
+        var seasNo = $(seasCheck).attr('id');
+
+        $('.epCheck:visible').each(function(){
+            var epParts = $(this).attr('id').split('x')
+
+            if (epParts[0] != 0) {
+                this.checked = seasCheck.checked
+            }
+        });
+    });
 
     var lastCheck = null;
     $('.epCheck').click(function(event) {

@@ -45,6 +45,7 @@ class TVShow():
         self.name = "Show Name"
         self.genre = "Comedy"
         self.air_by_date = 0
+        self.anime = 0
 
 class TVEpisode(tv.TVEpisode):
     def __init__(self, season, episode, name):
@@ -52,6 +53,7 @@ class TVEpisode(tv.TVEpisode):
         self._name = name
         self._season = season
         self._episode = episode
+        self._absolute_number = 0
         self._airdate = datetime.date(2010, 3, 9)
         self.show = TVShow()
         self._status = Quality.compositeStatus(common.DOWNLOADED, common.Quality.SDTV)
@@ -110,7 +112,7 @@ def check_valid_abd_naming(pattern=None):
 def validate_name(pattern, multi=None, file_only=False, abd=False):
     ep = _generate_sample_ep(multi, abd)
 
-    parser = NameParser(True)
+    parser = NameParser(True, show=ep.show)
 
     new_name = ep.formatted_filename(pattern, multi) + '.ext'
     new_path = ep.formatted_dir(pattern, multi)

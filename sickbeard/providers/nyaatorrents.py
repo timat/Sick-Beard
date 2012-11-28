@@ -183,7 +183,7 @@ class NyaaProvider(generic.TorrentProvider):
 
             # parse the file name
             try:
-                myParser = NameParser()
+                myParser = NameParser(show=episode.show)
                 parse_result = myParser.parse(title)
             except InvalidNameException:
                 logger.log(u"Unable to parse the filename "+title+" into a valid episode", logger.WARNING)

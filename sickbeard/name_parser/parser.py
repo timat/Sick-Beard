@@ -27,11 +27,24 @@ import sickbeard
 from sickbeard import logger
 
 class NameParser(object):
-    def __init__(self, file_name=True):
+    
+    ALL_REGEX = -1   # all available regexs
+    NORMAL_REGEX = 0 # normal regexs only
+    ANIME_REGEX = 1  # anime only
+    
+    def __init__(self, file_name=True, show=None):
 
+        if show == None:
+            regexMode = NameParser.ALL_REGEX
+        elif show.anime:
+            regexMode = NameParser.ANIME_REGEX
+        else:
+            regexMode = NameParser.NORMAL_REGEX
+        
         self.file_name = file_name
         self.compiled_regexes = []
-        self._compile_regexes()
+        self.regexMode = regexMode
+        self._compile_regexes(regexMode)
 
     def clean_series_name(self, series_name):
         """Cleans up series name by removing any . and _
@@ -56,8 +69,24 @@ class NameParser(object):
         series_name = re.sub("-$", "", series_name)
         return series_name.strip()
 
-    def _compile_regexes(self):
-        for (cur_pattern_name, cur_pattern) in regexes.ep_regexes:
+    def _compile_regexes(self, regexMode):
+        if regexMode <= self.ALL_REGEX:
+            logger.log(u"Using ALL regexs" , logger.DEBUG)
+            uncompiled_regex = regexes.anime_ep_regexes+regexes.ep_regexes
+        
+        elif regexMode == self.NORMAL_REGEX:
+            logger.log(u"Using NORMAL regexs" , logger.DEBUG)
+            uncompiled_regex = regexes.ep_regexes
+            
+        elif regexMode == self.ANIME_REGEX:
+            logger.log(u"Using ANIME regexs" , logger.DEBUG)
+            uncompiled_regex = regexes.anime_ep_regexes
+        
+        else:
+            logger.log(u"This is a programing ERROR. Fallback Using NORMAL regexs" , logger.ERROR)
+            uncompiled_regex = regexes.ep_regexes
+            
+        for (cur_pattern_name, cur_pattern) in uncompiled_regex:
             try:
                 cur_regex = re.compile(cur_pattern, re.VERBOSE | re.IGNORECASE)
             except re.error, errormsg:
@@ -98,6 +127,13 @@ class NameParser(object):
                     result.episode_numbers = range(ep_num, self._convert_number(match.group('extra_ep_num'))+1)
                 else:
                     result.episode_numbers = [ep_num]
+                    
+            if 'ep_ab_num' in named_groups:
+                ep_ab_num = self._convert_number(match.group('ep_ab_num'))
+                if 'extra_ab_ep_num' in named_groups and match.group('extra_ab_ep_num'):
+                    result.ab_episode_numbers = range(ep_ab_num, self._convert_number(match.group('extra_ab_ep_num'))+1)
+                else:
+                    result.ab_episode_numbers = [ep_ab_num]
 
             if 'air_year' in named_groups and 'air_month' in named_groups and 'air_day' in named_groups:
                 year = int(match.group('air_year'))
@@ -211,6 +247,7 @@ class NameParser(object):
 
         # build the ParseResult object
         final_result.air_date = self._combine_results(file_name_result, dir_name_result, 'air_date')
+        final_result.ab_episode_numbers = self._combine_results(file_name_result, dir_name_result, 'ab_episode_numbers')
 
         if not final_result.air_date:
             final_result.season_number = self._combine_results(file_name_result, dir_name_result, 'season_number')
@@ -248,7 +285,8 @@ class ParseResult(object):
                  episode_numbers=None,
                  extra_info=None,
                  release_group=None,
-                 air_date=None
+                 air_date=None,
+                 ab_episode_numbers=None
                  ):
 
         self.original_name = original_name
@@ -259,6 +297,11 @@ class ParseResult(object):
             self.episode_numbers = []
         else:
             self.episode_numbers = episode_numbers
+
+        if not ab_episode_numbers:
+            self.ab_episode_numbers = []
+        else:
+            self.ab_episode_numbers = ab_episode_numbers
 
         self.extra_info = extra_info
         self.release_group = release_group
@@ -283,6 +326,8 @@ class ParseResult(object):
             return False
         if self.air_date != other.air_date:
             return False
+        if self.ab_episode_numbers != other.ab_episode_numbers:
+            return False
         
         return True
 
@@ -299,6 +344,8 @@ class ParseResult(object):
 
         if self.air_by_date:
             to_return += str(self.air_date)
+        if self.ab_episode_numbers:
+            to_return += str(self.ab_episode_numbers)
 
         if self.extra_info:
             to_return += ' - ' + self.extra_info
@@ -306,6 +353,8 @@ class ParseResult(object):
             to_return += ' (' + self.release_group + ')'
 
         to_return += ' [ABD: '+str(self.air_by_date)+']'
+        to_return += ' [AN: '+str(self.is_anime)+']'
+        to_return += ' [whichReg: '+str(self.which_regex)+']'
 
         return to_return.encode('utf-8')
 
@@ -314,6 +363,12 @@ class ParseResult(object):
             return True
         return False
     air_by_date = property(_is_air_by_date)
+    
+    def _is_anime(self):
+        if self.ab_episode_numbers:
+            return True
+        return False
+    is_anime = property(_is_anime)
 
 class NameParserCache(object):
     #TODO: check if the fifo list can beskiped and only use one dict

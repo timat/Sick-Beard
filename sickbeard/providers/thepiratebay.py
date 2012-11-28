@@ -91,7 +91,7 @@ class ThePirateBayProvider(generic.TorrentProvider):
         
         return quality_string
 
-    def _find_season_quality(self,title,torrent_id):
+    def _find_season_quality(self,title,torrent_id,show):
         """ Rewrite the title of a Season Torrent with the quality found inspecting torrent file list """
 
         mediaExtensions = ['avi', 'mkv', 'wmv', 'divx',
@@ -126,7 +126,7 @@ class ThePirateBayProvider(generic.TorrentProvider):
             return None
 
         try:
-            myParser = NameParser()
+            myParser = NameParser(show=show)
             parse_result = myParser.parse(fileName)
         except InvalidNameException:
             return None
@@ -229,7 +229,7 @@ class ThePirateBayProvider(generic.TorrentProvider):
 
                     #Try to find the real Quality for full season torrent analyzing files in torrent 
                     if mode == 'Season' and Quality.nameQuality(title) == Quality.UNKNOWN:     
-                        title = self._find_season_quality(title,id)
+                        title = self._find_season_quality(title,id,show)
                     
                     if not title:
                         continue

@@ -475,8 +475,72 @@ class PostProcessor(object):
     
         _finalize(parse_result)
         return to_return
+
+    def _analyze_anidb(self,filePath):
+        #TODO: rewrite this
+        return (None, None, None)
+        
+        if not helpers.set_up_anidb_connection():
+            return (None, None, None)
+        
+        ep = self._build_anidb_episode(sickbeard.ADBA_CONNECTION,filePath)
+        try:
+            self._log(u"Trying to lookup "+str(filePath)+" on anidb", logger.MESSAGE)        
+            ep.load_data()
+        except Exception,e :
+            self._log(u"exception msg: "+str(e))
+            raise InvalidNameException
+        else:
+            self.anidbEpisode = ep
+        
+        #TODO: clean code. it looks like it's from hell
+        for name in ep.allNames:
+            
+            tvdb_id = name_cache.retrieveNameFromCache(name)
+            if not tvdb_id:
+                show = helpers.get_show_by_name(name, sickbeard.showList, True)
+                if show:
+                    tvdb_id = show.tvdbid
+                else:
+                    tvdb_id = 0
+
+                if tvdb_id:
+                    name_cache.addNameToCache(name, tvdb_id)
+            if tvdb_id:
+                try:
+                    show = helpers.findCertainShow(sickbeard.showList, tvdb_id)
+                    (season, episodes) = helpers.get_all_episodes_from_absolute_number(show, None, [ep.epno])
+                except exceptions.EpisodeNotFoundByAbsoluteNumerException:
+                    self._log(str(tvdb_id) + ": TVDB object absolute number " + str(ep.epno) + " is incomplete, skipping this episode")
+                else:
+                    if len(episodes):
+                        self._log(u"Lookup successful from anidb. ", logger.DEBUG)
+                        return (tvdb_id, season, episodes)
+
+        if ep.anidb_file_name:
+            self._log(u"Lookup successful, using anidb filename "+str(ep.anidb_file_name), logger.DEBUG)
+            return self._analyze_name(ep.anidb_file_name)
+        raise InvalidNameException
+
     
+    def _build_anidb_episode(self,connection,filePath):
+        ep = adba.Episode(connection,filePath=filePath,
+             paramsF=["quality","anidb_file_name","crc32"],
+             paramsA=["epno","english_name","short_name_list","other_name","synonym_list"])
+
+        return ep
     
+    def _add_to_anidb_mylist(self,filePath):
+        if helpers.set_up_anidb_connection():
+            if not self.anidbEpisode: # seams like we could parse the name before, now lets build the anidb object
+                self.anidbEpisode = self._build_anidb_episode(sickbeard.ADBA_CONNECTION,filePath)
+            
+            self._log(u"Adding the file to the anidb mylist", logger.DEBUG)
+            try:
+                self.anidbEpisode.add_to_mylist(status=1) # status = 1 sets the status of the file to "internal HDD"
+            except Exception,e :
+                self._log(u"exception msg: "+str(e))
+
     def _find_info(self):
         """
         For a given file try to find the showid, season, and episode.
@@ -485,7 +549,7 @@ class PostProcessor(object):
         tvdb_id = season = None
         episodes = []
         
-                        # try to look up the nzb in history
+                # try to look up the nzb in history
         attempt_list = [self._history_lookup,
 
                         # try to analyze the nzb name
@@ -504,7 +568,7 @@ class PostProcessor(object):
                         lambda: self._analyze_name(self.folder_name + u' ' + self.file_name)
 
                         ]
-    
+
         # attempt every possible method to get our info
         for cur_attempt in attempt_list:
             
@@ -570,7 +634,7 @@ class PostProcessor(object):
                 return (tvdb_id, season, episodes)
     
         return (tvdb_id, season, episodes)
-    
+
     def _get_ep_obj(self, tvdb_id, season, episodes):
         """
         Retrieve the TVEpisode object requested.
@@ -731,6 +795,8 @@ class PostProcessor(object):
                 return False
         # reset per-file stuff
         self.in_history = False
+        # reset the anidb episode object
+        self.anidbEpisode = None
 
         # try to find the file info
         (tvdb_id, season, episodes) = self._find_info()
@@ -853,6 +919,10 @@ class PostProcessor(object):
             # if we're not renaming then there's no new base name, we'll just use the existing name
             new_base_name = None
             new_file_name = self.file_name
+
+        # add to anidb
+        if ep_obj.show.anime and sickbeard.ANIDB_USE_MYLIST:
+            self._add_to_anidb_mylist(self.file_path)
 
         try:
             # move the episode and associated files to the show dir

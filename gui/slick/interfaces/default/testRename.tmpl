@@ -37,16 +37,30 @@
 #set $curExt = $curLoc.split('.')[-1]
 #set $newLoc = $cur_ep_obj.proper_path() + '.' + $curExt
 
-#if int($cur_ep_obj.season) != $curSeason:
+#set $absolute_numbering = $show.anime and $show.absolute_numbering and $cur_ep_obj.season != 0
+#if int($cur_ep_obj.season) != $curSeason and not ($absolute_numbering and $curSeason != -1):
     <thead>
         <tr class="seasonheader" id="season-$cur_ep_obj.season">
             <td colspan="4">
                 <br/>
-                <h2>#if int($cur_ep_obj.season) == 0 then "Specials" else "Season "+str($cur_ep_obj.season)#</h2>
+                <h2>
+                	#if int($cur_ep_obj.season) == 0:
+	            		Special
+	            	#elif $absolute_numbering:
+	            		Episodes
+	            	#else
+	            		Season $cur_ep_obj.season
+	            	#end if
             </td>
         </tr>
         <tr id="season-$cur_ep_obj.season-cols">
-            <th width="1%"><input type="checkbox" class="seasonCheck" id="$cur_ep_obj.season" /></th>
+            <th width="1%">
+            #if $absolute_numbering:
+	  			<input type="checkbox" class="episodesCheck" />
+	   		#else:
+	   			<input type="checkbox" class="seasonCheck" id="$cur_ep_obj.season" />
+	   		#end if
+            </th>
             <th class="nowrap">Episode</th>
             <th class="nowrap">Old Location</th>
             <th class="nowrap">New Location</th>
@@ -57,7 +71,11 @@
     <tbody>
 #set $odd = not $odd
 #set $epStr = str($cur_ep_obj.season) + "x" + str($cur_ep_obj.episode)
-#set $epList = sorted([cur_ep_obj.episode] + [x.episode for x in cur_ep_obj.relatedEps])
+#if $absolute_numbering:
+	#set $epList = sorted([cur_ep_obj.absolute_number] + [x.absolute_number for x in cur_ep_obj.relatedEps])
+#else
+	#set $epList = sorted([cur_ep_obj.episode] + [x.episode for x in cur_ep_obj.relatedEps])
+#end if
 #if len($epList) > 1:
     #set $epList = [$min($epList), $max($epList)]
 #end if

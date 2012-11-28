@@ -305,7 +305,23 @@ def findEpisode(episode, manualSearch=False):
             logger.log(u"Should we stop searching after finding "+cur_result.name+": "+str(done_searching), logger.DEBUG)
             if done_searching:
                 break
-        
+
+            # if we are searching an anime we are a little more loose
+            # this means we check every turn for a possible result
+            # in contrast the isFinalResultlooks function looks for a perfect result (best quality)
+            # but this will accept any result that would have been picked in the end -> pickBestResult
+            # and then stop and use that
+            if episode.show.anime:
+                logger.log(u"We are searching an anime. i am checking if we got a good result with search provider "+curProvider.name, logger.DEBUG)
+                bestResult = pickBestResult(curFoundResults, show=episode.show)
+                if bestResult:
+                    return bestResult
+
+            foundResults += curFoundResults
+            # if we did find a result that's good enough to stop then don't continue
+            # this breaks the turn loop
+            if done_searching:
+                break
         foundResults += curFoundResults
 
         # if we did find a result that's good enough to stop then don't continue

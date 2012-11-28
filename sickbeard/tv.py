@@ -74,6 +74,8 @@ class TVShow(object):
         self.air_by_date = 0
         self.subtitles = int(sickbeard.SUBTITLES_DEFAULT)
         self.lang = lang
+        self.anime = 0
+        self.absolute_numbering = 0
 
         self.lock = threading.Lock()
         self._isDirGood = False
@@ -161,9 +163,26 @@ class TVShow(object):
         return ep_list
 
 
-    def getEpisode(self, season, episode, file=None, noCreate=False):
+    def getEpisode(self, season, episode, file=None, noCreate=False, absolute_number=None):
 
         #return TVEpisode(self, season, episode)
+
+        # if we get an anime get the real season and episode
+        if self.anime and absolute_number != None and season == None and episode == None:
+            myDB = db.DBConnection()
+            sql = "SELECT * FROM tv_episodes WHERE showid = ? and absolute_number = ? and season != 0"
+            sqlResults = myDB.select(sql, [self.tvdbid, absolute_number])
+                
+            if len(sqlResults) == 1:
+                episode = int(sqlResults[0]["episode"])
+                season = int(sqlResults[0]["season"])
+                logger.log("Found episode by absolute_number:"+str(absolute_number)+" which is "+str(season)+"x"+str(episode), logger.DEBUG)
+            elif len(sqlResults) > 1:
+                logger.log("Multiple entries for absolute episode: "+str(absolute_number)+" in show: "+self.name+" found ", logger.ERROR)
+                return None
+            else:
+                logger.log("No entries for absolute episode: "+str(absolute_number)+" in show: "+self.name+" found.", logger.DEBUG)
+                return None
 
         if not season in self.episodes:
             self.episodes[season] = {}
@@ -630,6 +649,14 @@ class TVShow(object):
 
             if self.lang == "":
                 self.lang = sqlResults[0]["lang"]
+            
+            self.anime = sqlResults[0]["anime"]
+            if self.anime == None:
+                self.anime = 0
+                
+            self.absolute_numbering = sqlResults[0]["absolute_numbering"]
+            if self.absolute_numbering == None:
+                self.absolute_numbering = 0
 
 
     def loadFromTVDB(self, cache=True, tvapi=None, cachedSeason=None):
@@ -873,10 +900,13 @@ class TVShow(object):
 						"subtitles": self.subtitles,
                         "startyear": self.startyear,
                         "tvr_name": self.tvrname,
-                        "lang": self.lang
+                        "lang": self.lang,
+                        "anime": self.anime,
+                        "absolute_numbering": self.absolute_numbering
                         }
 
         myDB.upsert("tv_shows", newValueDict, controlValueDict)
+        helpers.update_anime_support()
 
 
     def __str__(self):
@@ -894,6 +924,7 @@ class TVShow(object):
         toReturn += "genre: " + self.genre + "\n"
         toReturn += "runtime: " + str(self.runtime) + "\n"
         toReturn += "quality: " + str(self.quality) + "\n"
+        toReturn += "anime: " + str(self.anime) + "\n"
         return toReturn
 
 
@@ -991,6 +1022,7 @@ class TVEpisode(object):
         self._name = ""
         self._season = season
         self._episode = episode
+        self._absolute_number = 0
         self._description = ""
         self._subtitles = list()
         self._subtitles_searchcount = 0
@@ -1020,6 +1052,7 @@ class TVEpisode(object):
     name = property(lambda self: self._name, dirty_setter("_name"))
     season = property(lambda self: self._season, dirty_setter("_season"))
     episode = property(lambda self: self._episode, dirty_setter("_episode"))
+    absolute_number = property(lambda self: self._absolute_number, dirty_setter("_absolute_number"))
     description = property(lambda self: self._description, dirty_setter("_description"))
     subtitles = property(lambda self: self._subtitles, dirty_setter("_subtitles"))
     subtitles_searchcount = property(lambda self: self._subtitles_searchcount, dirty_setter("_subtitles_searchcount"))
@@ -1168,6 +1201,7 @@ class TVEpisode(object):
                 self.name = sqlResults[0]["name"]
             self.season = season
             self.episode = episode
+            self.absolute_number = sqlResults[0]["absolute_number"]
             self.description = sqlResults[0]["description"]
             if self.description == None:
                 self.description = ""
@@ -1253,6 +1287,12 @@ class TVEpisode(object):
                 self.deleteEpisode()
             return False
 
+        if myEp["absolute_number"] == None or myEp["absolute_number"] == "":
+            logger.log(u"This episode ("+self.show.name+" - "+str(season)+"x"+str(episode)+") has no absolute number on TVDB", logger.DEBUG)
+        else: 
+            logger.log(str(self.show.tvdbid) + ": The absolute_number for " + str(season) + "x" + str(episode)+" is : "+myEp["absolute_number"], logger.DEBUG)
+            self.absolute_number = int(myEp["absolute_number"])
+        
         #NAMEIT logger.log(u"BBBBBBBB from " + str(self.season)+"x"+str(self.episode) + " -" +self.name+" to "+myEp["episodename"])
         self.name = myEp["episodename"]
         self.season = season
@@ -1478,6 +1518,7 @@ class TVEpisode(object):
                         "hastbn": self.hastbn,
                         "status": self.status,
                         "location": self.location,
+                        "absolute_number": self.absolute_number,
                         "file_size": self.file_size,
                         "release_name": self.release_name}
         controlValueDict = {"showid": self.show.tvdbid,
@@ -1605,8 +1646,10 @@ class TVEpisode(object):
                    '%Q_N': us(Quality.qualityStrings[epQual]),
                    '%S': str(self.season),
                    '%0S': '%02d' % self.season,
-                   '%E': str(self.episode),
+                   '%E':  str(self.episode),
                    '%0E': '%02d' % self.episode,
+                   '%AE':  str(self.absolute_number),
+                   '%0AE': '%03d' % self.absolute_number,
                    '%RN': release_name(self.release_name),
                    '%RG': release_group(self.release_name),
                    '%AD': str(self.airdate).replace('-', ' '),
@@ -1759,7 +1802,7 @@ class TVEpisode(object):
         result = self.formatted_filename()
 
         # if they want us to flatten it and we're allowed to flatten it then we will
-        if self.show.flatten_folders and not sickbeard.NAMING_FORCE_FOLDERS:
+        if self.show.flatten_folders and not sickbeard.NAMING_FORCE_FOLDERS or self.show.anime and self.show.absolute_numbering and self.season != 0:
             return result
         
         # if not we append the folder on and use that
@@ -1801,6 +1844,8 @@ class TVEpisode(object):
                 pattern = sickbeard.NAMING_ABD_PATTERN
             else:
                 pattern = sickbeard.NAMING_PATTERN
+                if self.show.anime and self.show.absolute_numbering and self.season != 0:
+                    pattern = pattern.replace('%Sx', 'x').replace('%0Sx', 'x').replace('x%E', '%AE').replace('x%0E', '%0AE')
             
         # split off the filename only, if they exist
         name_groups = re.split(r'[\\/]', pattern)
@@ -1816,7 +1861,6 @@ class TVEpisode(object):
         proper_path = self.proper_path()
         absolute_proper_path = ek.ek(os.path.join, self.show.location, proper_path)
         absolute_current_path_no_ext, file_ext = os.path.splitext(self.location)
-        related_subs = []
         
         related_subs = []
 

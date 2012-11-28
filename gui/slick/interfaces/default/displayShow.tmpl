@@ -30,8 +30,19 @@
 <div class="align-left"><b>Change Show:</b>
 <div class="navShow"><img id="prevShow" src="$sbRoot/images/prev.gif" alt="&lt;&lt;" title="Prev Show" /></div>
 <select id="pickShow">
-#for $curShow in $sortedShowList:
-<option value="$curShow.tvdbid" #if $curShow == $show then "selected=\"selected\"" else ""#>$curShow.name</option>
+#for $curShowList in $sortedShowLists:
+#set $curShowType = $curShowList[0]
+#set $curShowList = $curShowList[1]
+
+#if len($sortedShowLists) > 1:
+    <optgroup label="$curShowType">
+#end if
+	#for $curShow in $curShowList:
+	<option value="$curShow.tvdbid" #if $curShow == $show then "selected=\"selected\"" else ""#>$curShow.name</option>
+	#end for
+#if len($sortedShowLists) > 1:
+    </optgroup>
+#end if
 #end for
 </select>
 <div class="navShow"><img id="nextShow" src="$sbRoot/images/next.gif" alt="&gt;&gt;" title="Next Show" /></div>
@@ -42,7 +53,14 @@
 
 <div class="showInfo">
 <h1 class="title">$header</h1>
-#if (len($seasonResults) > 14):
+#if $show.anime and $show.absolute_numbering:
+	<a href="#episodes">Episodes</a>
+    #for $seasonNum in $seasonResults:
+        #if int($seasonNum["season"]) == 0:
+            | <a href="#season-0">Specials</a>
+        #end if
+    #end for
+#elif (len($seasonResults) > 14):
     <select id="seasonJump">
         <option value="jump">Jump to Season</option>
     #for $seasonNum in $seasonResults:
@@ -100,10 +118,11 @@ replace with: <b><%=", ".join([Quality.qualityStrings[x] for x in bestQualities]
     <tr><td>&nbsp</td></tr>
 #end if    
     </td></tr>
+    <tr><td class="showLegend">Language:</td><td><img src="$sbRoot/images/flags/${show.lang}.png" width="16" height="11" alt="$show.lang" title="$show.lang" /></td></tr>
     </table>
     <td>
     <table>
-    <tr><td class="showLegend">Language:</td><td><img src="$sbRoot/images/flags/${show.lang}.png" width="16" height="11" alt="$show.lang" title="$show.lang" /></td></tr>
+    <tr><td class="showLegend">Anime: </td><td><img src="$sbRoot/images/#if int($show.anime) == 1 then "yes16.png\" alt=\"Y" else "no16.png\" alt=\"N"#" width="16" height="16" /></td></tr>
 #if $sickbeard.USE_SUBTITLES
     <tr><td class="showLegend">Subtitles: </td><td><img src="$sbRoot/images/#if int($show.subtitles) == 1 then "yes16.png\" alt=\"Y" else "no16.png\" alt=\"N"#" width="16" height="16" /></td></tr>
 #end if
@@ -155,16 +174,31 @@ $Quality.DOWNLOADED.sort()
 <table class="sickbeardTable" cellspacing="1" border="0" cellpadding="0">
     
 #for $epResult in $sqlResults:
-
-    #if int($epResult["season"]) != $curSeason:
-  <tr><td colspan="9"  style="height: 0px; padding:0; margin:0;"><a name="season-$epResult["season"]"></a></td></tr>
-  <tr class="seasonheader" id="season-$epResult["season"]" >
-    <td colspan="9">
-        <h2>#if int($epResult["season"]) == 0 then "Specials" else "Season "+str($epResult["season"])#</h2>
-    </td>
-  </tr>
-  <tr id="season-$epResult["season"]-cols"><th width="1%"><input type="checkbox" class="seasonCheck" id="$epResult["season"]" /></th><th>NFO</th><th>TBN</th><th>Episode</th><th>Name</th><th class="nowrap">Airdate</th><th>Filename</th>#if $sickbeard.USE_SUBTITLES and $show.subtitles then "<th>Subtitles</th>" else ""#<th>Status</th><th>Search</th></tr>
-        #set $curSeason = int($epResult["season"])
+	#set $absolute_numbering = $show.anime and $show.absolute_numbering and $epResult["season"] != 0
+    #if int($epResult["season"]) != $curSeason and not ($absolute_numbering and $curSeason  != -1):
+    	
+    	#set $curSeason = int($epResult["season"])
+	    <tr><td colspan="9"  style="height: 0px; padding:0; margin:0;"><a name="#if $absolute_numbering then 'episodes' else 'season-'+str($epResult['season'])#"></a></td></tr>
+	    <tr class="seasonheader" id="season-$epResult["season"]" >
+	        <td colspan="9">
+	            <h2>
+	            	#if int($epResult["season"]) == 0:
+	            		Special
+	            	#elif $absolute_numbering:
+	            		Episodes
+	            	#else
+	            		Season $epResult["season"]
+	            	#end if
+	            </h2>
+	        </td>
+	    </tr>
+	   	#if $absolute_numbering:
+	  		<tr id="episodes-cols"><th width="1%"><input type="checkbox" class="episodesCheck" />
+	   	#else:
+	   		<tr id="season-$epResult["season"]-cols"><th width="1%"><input type="checkbox" class="seasonCheck" id="$epResult["season"]" />
+	  	#end if
+	  	</th><th>NFO</th><th>TBN</th><th>Episode</th><th>Name</th><th class="nowrap">Airdate</th><th>Filename</th>#if $sickbeard.USE_SUBTITLES and $show.subtitles then "<th>Subtitles</th>" else ""#<th>Status</th><th>Search</th></tr>
+        
     #end if    
 
   #set $epStr = str($epResult["season"]) + "x" + str($epResult["episode"])
@@ -177,7 +211,7 @@ $Quality.DOWNLOADED.sort()
     </td>
     <td align="center"><img src="$sbRoot/images/#if $epResult["hasnfo"] == 1 then "nfo.gif\" alt=\"Y" else "nfo-no.gif\" alt=\"N"#" width="23" height="11" /></td>
     <td align="center"><img src="$sbRoot/images/#if $epResult["hastbn"] == 1 then "tbn.gif\" alt=\"Y" else "tbn-no.gif\" alt=\"N"#" width="23" height="11" /></td>
-    <td align="center">$epResult["episode"]</td>
+    <td align="center">#if $absolute_numbering then $epResult["absolute_number"] else $epResult["episode"]#</td>
     <td class="title">
     #if $epResult["description"] != "" and $epResult["description"] != None:
     <img style="padding-top: 3px;" src="$sbRoot/images/info32.png" height="16" class="plotInfo" alt="" id="plot_info_$show.tvdbid<%="_"+str(epResult["season"])+"_"+str(epResult["episode"])%>" />

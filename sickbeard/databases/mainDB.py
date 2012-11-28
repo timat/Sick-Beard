@@ -563,3 +563,16 @@ class AddSubtitlesSupport(RenameSeasonFolders):
         self.addColumn("tv_episodes", "subtitles_searchcount")
         self.addColumn("tv_episodes", "subtitles_lastsearch", "TIMESTAMP", str(datetime.datetime.min))
         self.incDBVersion()
+        
+class AddAnimeSupport(RenameSeasonFolders):
+    def test(self):
+        return self.checkDBVersion() >= 13
+
+    def execute(self):
+        self.addColumn("tv_shows", "anime")
+        self.addColumn("tv_shows", "absolute_numbering")
+        self.addColumn("tv_episodes", "absolute_number")
+        self.connection.action("CREATE TABLE whitelist (show_id INTEGER, range TEXT, keyword TEXT)")
+        self.connection.action("CREATE TABLE blacklist (show_id INTEGER, range TEXT, keyword TEXT)")
+        
+        self.incDBVersion()

@@ -36,6 +36,7 @@ from sickbeard.exceptions import ex
 from lib.hachoir_parser import createParser
 
 from sickbeard.name_parser.parser import NameParser, InvalidNameException
+from sickbeard.completparser import CompleteParser
 
 class GenericProvider:
 
@@ -50,6 +51,7 @@ class GenericProvider:
         self.url = ''
 
         self.supportsBacklog = False
+        self.supportsAbsoluteNumbering = False
 
         self.cache = tvcache.TVCache(self)
 
@@ -245,7 +247,7 @@ class GenericProvider:
 
             # parse the file name
             try:
-                myParser = NameParser()
+                myParser = NameParser(show=episode.show)
                 parse_result = myParser.parse(title)
             except InvalidNameException:
                 logger.log(u"Unable to parse the filename "+title+" into a valid episode", logger.WARNING)
