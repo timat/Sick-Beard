@@ -3164,11 +3164,11 @@ class Home:
 
         # return the correct json value
         if previous_subtitles != ep_obj.subtitles:
-            status = 'New subtitles downloaded: %s' % ','.join([x for x in sorted(list(set(ep_obj.subtitles).difference(previous_subtitles)))])
+            status = 'New subtitles downloaded: %s' % ','.join([subliminal.language.Language(x) for x in sorted(list(set(ep_obj.subtitles).difference(previous_subtitles)))])
         else:
             status = 'No subtitles downloaded'
         ui.notifications.message('Subtitles Search', status)
-        return json.dumps({'result': status, 'subtitles': ','.join([x for x in ep_obj.subtitles])})
+        return json.dumps({'result': status, 'subtitles': ','.join([subliminal.language.Language(x) for x in ep_obj.subtitles])})
 
     @cherrypy.expose
     def mergeEpisodeSubtitles(self, show=None, season=None, episode=None):
