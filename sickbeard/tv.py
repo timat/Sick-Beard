@@ -927,9 +927,12 @@ class TVShow(object):
 
         # if it's one of these then we want it as long as it's in our allowed initial qualities
         if quality in anyQualities + bestQualities:
-            if epStatus in (WANTED, UNAIRED, SKIPPED):
-                logger.log(u"Ep is wanted/unaired/skipped, definitely get it", logger.DEBUG)
+            if epStatus in (WANTED, SKIPPED):
+                logger.log(u"Ep is wanted/skipped, definitely get it", logger.DEBUG)
                 return True
+            elif epStatus == UNAIRED:
+                logger.log(u"Ep is unaired, it must be a fake so I'm skipping it", logger.DEBUG)
+                return False
             elif manualSearch:
                 logger.log(u"Usually I would ignore this ep but because you forced the search I'm overriding the default and allowing the quality", logger.DEBUG)
                 return True
