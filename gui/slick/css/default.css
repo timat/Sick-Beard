@@ -1737,3 +1737,7 @@ pre {
      -moz-border-radius: 4px;
           border-radius: 4px;
 }
+
+.ui-pnotify-text img {
+	padding-top: 3px;
+}
