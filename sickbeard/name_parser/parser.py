@@ -353,7 +353,7 @@ class ParseResult(object):
             to_return += ' (' + self.release_group + ')'
 
         to_return += ' [ABD: '+str(self.air_by_date)+']'
-        to_return += ' [AN: '+str(self.is_anime)+']'
+        to_return += ' [AN: '+str(self.absolute_numbering)+']'
         to_return += ' [whichReg: '+str(self.which_regex)+']'
 
         return to_return.encode('utf-8')
@@ -364,11 +364,11 @@ class ParseResult(object):
         return False
     air_by_date = property(_is_air_by_date)
     
-    def _is_anime(self):
+    def _is_absolute_numbering(self):
         if self.ab_episode_numbers:
             return True
         return False
-    is_anime = property(_is_anime)
+    absolute_numbering = property(_is_absolute_numbering)
 
 class NameParserCache(object):
     #TODO: check if the fifo list can beskiped and only use one dict

@@ -472,7 +472,7 @@ class TVShow(object):
             logger.log(u"Unable to parse the filename "+file+" into a valid episode", logger.ERROR)
             return None
 
-        if len(parse_result.episode_numbers) == 0 and not parse_result.air_by_date:
+        if len(parse_result.episode_numbers) == 0 and not parse_result.air_by_date and not parse_result.absolute_numbering:
             logger.log("parse_result: "+str(parse_result))
             logger.log(u"No episode number found in "+file+", ignoring it", logger.ERROR)
             return None
@@ -503,6 +503,27 @@ class TVShow(object):
             except tvdb_exceptions.tvdb_error, e:
                 logger.log(u"Unable to contact TVDB: "+ex(e), logger.WARNING)
                 return None
+        elif parse_result.absolute_numbering:
+            for absolute_number in parse_result.ab_episode_numbers:
+                try:
+                    # There's gotta be a better way of doing this but we don't wanna
+                    # change the cache value elsewhere
+                    ltvdb_api_parms = sickbeard.TVDB_API_PARMS.copy()
+    
+                    if self.lang:
+                        ltvdb_api_parms['language'] = self.lang
+    
+                    t = tvdb_api.Tvdb(**ltvdb_api_parms)
+    
+                    epObj = t[self.tvdbid].absoluteNumber(absolute_number)[0]
+                    season = int(epObj["seasonnumber"])
+                    episodes.append(int(epObj["episodenumber"]))
+                except tvdb_exceptions.tvdb_episodenotfound:
+                    logger.log(u"Unable to find episode with date " + str(parse_result.air_date) + " for show " + self.name + ", skipping", logger.WARNING)
+                    return None
+                except tvdb_exceptions.tvdb_error, e:
+                    logger.log(u"Unable to contact TVDB: "+ex(e), logger.WARNING)
+                    return None
 
         for curEpNum in episodes:
 
@@ -1720,7 +1741,7 @@ class TVEpisode(object):
                                 (%0?E(?![._]?N))
                                 (?P<post_sep>[ _.-]*)
                               '''
-            ep_only_regex = '(E?%0?E(?![._]?N))'
+            ep_only_regex = '(E?%0?E(?![._]?N))|(E?%0?AE(?![._]?N))'
         
             # try the normal way
             season_ep_match = re.search(season_ep_regex, cur_name_group, re.I|re.X)
@@ -1747,7 +1768,7 @@ class TVEpisode(object):
             elif ep_only_match:
                 season_format = ''
                 ep_sep = '-'
-                ep_format = ep_only_match.group(1)
+                ep_format = ep_only_match.group(1) or ep_only_match.group(2)
                 sep = ''
                 regex_used = ep_only_regex
 

@@ -36,7 +36,6 @@ from sickbeard.exceptions import ex
 from lib.hachoir_parser import createParser
 
 from sickbeard.name_parser.parser import NameParser, InvalidNameException
-from sickbeard.completparser import CompleteParser
 
 class GenericProvider:
 

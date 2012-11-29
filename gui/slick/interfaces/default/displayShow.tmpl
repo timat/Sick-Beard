@@ -112,13 +112,11 @@ initially download: <b><%=", ".join([Quality.qualityStrings[x] for x in anyQuali
 replace with: <b><%=", ".join([Quality.qualityStrings[x] for x in bestQualities])%></b>
 #end if 
 #end if
+    <tr><td class="showLegend">Language:</td><td><img src="$sbRoot/images/flags/${show.lang}.png" width="16" height="11" alt="$show.lang" title="$show.lang" /></td></tr>
 #if $show.exceptions:
 	<tr><td class="showLegend">Scene Name: </td><td>$exceptions_string</td></tr>
-#else:
-    <tr><td>&nbsp</td></tr>
-#end if    
+#end if
     </td></tr>
-    <tr><td class="showLegend">Language:</td><td><img src="$sbRoot/images/flags/${show.lang}.png" width="16" height="11" alt="$show.lang" title="$show.lang" /></td></tr>
     </table>
     <td>
     <table>
