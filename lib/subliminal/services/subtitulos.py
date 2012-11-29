@@ -35,7 +35,7 @@ class Subtitulos(ServiceBase):
     site_url = 'http://www.subtitulos.es'
     api_based = False
     languages = language_set(['eng-US', 'eng-GB', 'eng', 'fre', 'por-BR', 'por', 'spa-ES', u'spa', u'ita', u'cat'])
-    language_map = {u'Español': Language('spa'), u'Español (España)': Language('spa'), u'Español (Latinoamérica)': Language('spa'),
+    language_map = {u'Español': Language('spa'), u'Español (España)': Language('spa'), #u'Español (Latinoamérica)': Language('spa'),
                     u'Català': Language('cat'), u'Brazilian': Language('por-BR'), u'English (US)': Language('eng-US'),
                     u'English (UK)': Language('eng-GB'), 'Galego': Language('glg')}
     language_code = 'name'
@@ -75,7 +75,10 @@ class Subtitulos(ServiceBase):
         for sub in soup('div', {'id': 'version'}):
             sub_keywords = split_keyword(self.release_pattern.search(sub.find('p', {'class': 'title-sub'}).contents[1]).group(1).lower())
             # extract extra compatible keywords
-            extra = sub.find('span', {'class': 'comentario'}).contents[2]
+            try:
+                extra = sub.find('span', {'class': 'comentario'}).contents[2]
+            except AttributeError:
+                extra = None
             if extra != None:
                 search_res = self.extra_keywords_pattern.search(extra)
                 if search_res != None:
