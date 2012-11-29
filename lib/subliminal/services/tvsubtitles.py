@@ -36,6 +36,11 @@ def match(pattern, string):
         logger.debug(u'Could not match %r on %r' % (pattern, string))
         return None
 
+def index_containing_substring(the_list, substring):
+        for i, s in enumerate(the_list):
+            if substring in s[0].lower():
+                return i
+        return -1
 
 class TvSubtitles(ServiceBase):
     server_url = 'http://www.tvsubtitles.net'
@@ -61,9 +66,14 @@ class TvSubtitles(ServiceBase):
             sid = int(match('tvshow-([0-9]+)\.html', elem.a['href']))
             show_name = match('(.*) \(', elem.a.text)
             results.append((show_name, sid))
-        #TODO: pick up the best one in a smart way
-        result = results[0]
-        return result[1]
+            
+        # search the series name in the results
+        index = index_containing_substring(results, name)
+        if index != -1:
+            result = results[index]
+            return result[1]
+        else:
+            return -1
 
     @cachedmethod
     def get_episode_id(self, series_id, season, number):
@@ -117,6 +127,9 @@ class TvSubtitles(ServiceBase):
         logger.debug(u'Getting subtitles for %s season %d episode %d with languages %r' % (series, season, episode, languages))
         self.init_cache()
         sid = self.get_likely_series_id(series.lower())
+        if sid == -1:
+            logger.debug(u'Could not find series id for %s' % (series))
+            return []
         try:
             ep_id = self.get_episode_id(sid, season, episode)
         except KeyError:
