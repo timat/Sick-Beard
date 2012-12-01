@@ -519,7 +519,7 @@ class TVShow(object):
                     season = int(epObj["seasonnumber"])
                     episodes.append(int(epObj["episodenumber"]))
                 except tvdb_exceptions.tvdb_episodenotfound:
-                    logger.log(u"Unable to find episode with date " + str(parse_result.air_date) + " for show " + self.name + ", skipping", logger.WARNING)
+                    logger.log(u"Unable to find episode with absolute number " + str(absolute_number) + " for show " + self.name + ", skipping", logger.WARNING)
                     return None
                 except tvdb_exceptions.tvdb_error, e:
                     logger.log(u"Unable to contact TVDB: "+ex(e), logger.WARNING)
@@ -1562,8 +1562,11 @@ class TVEpisode(object):
         
         Returns: A string representing the episode's name and season/ep numbers 
         """
-
-        return self._format_pattern('%SN - %Sx%0E - %EN')
+        if self.show.anime and self.show.absolute_numbering:
+            pattern = '%SN - %0AE - %EN'
+        else:
+            pattern = '%SN - %Sx%0E - %EN'
+        return self._format_pattern(pattern)
 
     def _ep_name(self):
         """

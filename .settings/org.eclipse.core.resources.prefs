@@ -33,3 +33,4 @@ encoding//lib/subliminal/tasks.py=utf-8
 encoding//lib/subliminal/utils.py=utf-8
 encoding//lib/subliminal/videos.py=utf-8
 encoding//lib/tvdb_api/tvdb_api.py=utf-8
+encoding//sickbeard/providers/btn.py=utf-8

@@ -44,6 +44,8 @@ from sickbeard.name_parser.parser import NameParser, InvalidNameException
 
 from lib.tvdb_api import tvdb_api, tvdb_exceptions
 
+from lib import adba
+
 class PostProcessor(object):
     """
     A class which will process a media file according to the post processing settings in the config.
@@ -388,6 +390,9 @@ class PostProcessor(object):
         if parse_result.air_by_date:
             season = -1
             episodes = [parse_result.air_date]
+        elif parse_result.absolute_numbering:
+            season = -2
+            episodes = parse_result.ab_episode_numbers
         else:
             season = parse_result.season_number
             episodes = parse_result.episode_numbers 
@@ -408,7 +413,7 @@ class PostProcessor(object):
                 self.is_proper = re.search('(^|[\. _-])(proper|repack)([\. _-]|$)', parse_result.extra_info, re.I) != None
             
             # if the result is complete then remember that for later
-            if parse_result.series_name and parse_result.season_number != None and parse_result.episode_numbers and parse_result.release_group:
+            if parse_result.series_name and (parse_result.season_number != None and parse_result.episode_numbers or parse_result.ab_episode_numbers) and parse_result.release_group:
                 test_name = os.path.basename(name)
                 if test_name == self.nzb_name:
                     self.good_results[self.NZB_NAME] = True
@@ -476,53 +481,6 @@ class PostProcessor(object):
         _finalize(parse_result)
         return to_return
 
-    def _analyze_anidb(self,filePath):
-        #TODO: rewrite this
-        return (None, None, None)
-        
-        if not helpers.set_up_anidb_connection():
-            return (None, None, None)
-        
-        ep = self._build_anidb_episode(sickbeard.ADBA_CONNECTION,filePath)
-        try:
-            self._log(u"Trying to lookup "+str(filePath)+" on anidb", logger.MESSAGE)        
-            ep.load_data()
-        except Exception,e :
-            self._log(u"exception msg: "+str(e))
-            raise InvalidNameException
-        else:
-            self.anidbEpisode = ep
-        
-        #TODO: clean code. it looks like it's from hell
-        for name in ep.allNames:
-            
-            tvdb_id = name_cache.retrieveNameFromCache(name)
-            if not tvdb_id:
-                show = helpers.get_show_by_name(name, sickbeard.showList, True)
-                if show:
-                    tvdb_id = show.tvdbid
-                else:
-                    tvdb_id = 0
-
-                if tvdb_id:
-                    name_cache.addNameToCache(name, tvdb_id)
-            if tvdb_id:
-                try:
-                    show = helpers.findCertainShow(sickbeard.showList, tvdb_id)
-                    (season, episodes) = helpers.get_all_episodes_from_absolute_number(show, None, [ep.epno])
-                except exceptions.EpisodeNotFoundByAbsoluteNumerException:
-                    self._log(str(tvdb_id) + ": TVDB object absolute number " + str(ep.epno) + " is incomplete, skipping this episode")
-                else:
-                    if len(episodes):
-                        self._log(u"Lookup successful from anidb. ", logger.DEBUG)
-                        return (tvdb_id, season, episodes)
-
-        if ep.anidb_file_name:
-            self._log(u"Lookup successful, using anidb filename "+str(ep.anidb_file_name), logger.DEBUG)
-            return self._analyze_name(ep.anidb_file_name)
-        raise InvalidNameException
-
-    
     def _build_anidb_episode(self,connection,filePath):
         ep = adba.Episode(connection,filePath=filePath,
              paramsF=["quality","anidb_file_name","crc32"],
@@ -587,8 +545,7 @@ class PostProcessor(object):
                 episodes = cur_episodes
             
             # for air-by-date shows we need to look up the season/episode from tvdb
-            if season == -1 and tvdb_id and episodes:
-                self._log(u"Looks like this is an air-by-date show, attempting to convert the date to season/episode", logger.DEBUG)
+            if season < 0 and tvdb_id and episodes:
                 
                 # try to get language set for this show
                 tvdb_lang = None
@@ -599,28 +556,54 @@ class PostProcessor(object):
                 except exceptions.MultipleShowObjectsException:
                     raise #TODO: later I'll just log this, for now I want to know about it ASAP
 
-                try:
-                    # There's gotta be a better way of doing this but we don't wanna
-                    # change the language value elsewhere
-                    ltvdb_api_parms = sickbeard.TVDB_API_PARMS.copy()
-
-                    if tvdb_lang and not tvdb_lang == 'en':
-                        ltvdb_api_parms['language'] = tvdb_lang
-
-                    t = tvdb_api.Tvdb(**ltvdb_api_parms)
-                    epObj = t[tvdb_id].airedOn(episodes[0])[0]
-                    season = int(epObj["seasonnumber"])
-                    episodes = [int(epObj["episodenumber"])]
-                    self._log(u"Got season " + str(season) + " episodes " + str(episodes), logger.DEBUG)
-                except tvdb_exceptions.tvdb_episodenotfound, e:
-                    self._log(u"Unable to find episode with date " + str(episodes[0]) + u" for show " + str(tvdb_id) + u", skipping", logger.DEBUG)
-                    # we don't want to leave dates in the episode list if we couldn't convert them to real episode numbers
+                if season == -1:
+                    self._log(u"Looks like this is an air-by-date show, attempting to convert the date to season/episode", logger.DEBUG)
+                    try:
+                        # There's gotta be a better way of doing this but we don't wanna
+                        # change the language value elsewhere
+                        ltvdb_api_parms = sickbeard.TVDB_API_PARMS.copy()
+    
+                        if tvdb_lang and not tvdb_lang == 'en':
+                            ltvdb_api_parms['language'] = tvdb_lang
+    
+                        t = tvdb_api.Tvdb(**ltvdb_api_parms)
+                        epObj = t[tvdb_id].airedOn(episodes[0])[0]
+                        season = int(epObj["seasonnumber"])
+                        episodes = [int(epObj["episodenumber"])]
+                        self._log(u"Got season " + str(season) + " episodes " + str(episodes), logger.DEBUG)
+                    except tvdb_exceptions.tvdb_episodenotfound, e:
+                        self._log(u"Unable to find episode with date " + str(episodes[0]) + u" for show " + str(tvdb_id) + u", skipping", logger.DEBUG)
+                        # we don't want to leave dates in the episode list if we couldn't convert them to real episode numbers
+                        episodes = []
+                        continue
+                    except tvdb_exceptions.tvdb_error, e:
+                        logger.log(u"Unable to contact TVDB: " + ex(e), logger.WARNING)
+                        episodes = []
+                        continue
+                elif season == -2:
+                    self._log(u"Looks like this is an anime with absolute numbering show, attempting to convert the absolute episode to season/episode", logger.DEBUG)
+                    ab_episodes = episodes
                     episodes = []
-                    continue
-                except tvdb_exceptions.tvdb_error, e:
-                    logger.log(u"Unable to contact TVDB: " + ex(e), logger.WARNING)
-                    episodes = []
-                    continue
+                    for episode in ab_episodes: 
+                        try:
+                            # There's gotta be a better way of doing this but we don't wanna
+                            # change the cache value elsewhere
+                            ltvdb_api_parms = sickbeard.TVDB_API_PARMS.copy()
+            
+                            if tvdb_lang:
+                                ltvdb_api_parms['language'] = tvdb_lang
+            
+                            t = tvdb_api.Tvdb(**ltvdb_api_parms)
+            
+                            epObj = t[tvdb_id].absoluteNumber(episode)[0]
+                            season = int(epObj["seasonnumber"])
+                            episodes.append(int(epObj["episodenumber"]))
+                        except tvdb_exceptions.tvdb_episodenotfound:
+                            logger.log(u"Unable to find episode with absolute number " + str(episode) + " for show " + self.name + ", skipping", logger.WARNING)
+                            return None
+                        except tvdb_exceptions.tvdb_error, e:
+                            logger.log(u"Unable to contact TVDB: "+ex(e), logger.WARNING)
+                            return None
 
             # if there's no season then we can hopefully just use 1 automatically
             elif season == None and tvdb_id:

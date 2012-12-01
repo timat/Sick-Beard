@@ -121,7 +121,7 @@
             <span class="pause">[paused]</span>
             #end if
         </td>
-        <td class="nowrap" align="center"><%="%02ix%02i" % (int(cur_result["season"]), int(cur_result["episode"])) %></td>
+        <td class="nowrap" align="center"><%="%03i" % (int(cur_result["absolute_number"])) if cur_result["anime"] and cur_result["absolute_numbering"] else "%ix%02i" % (int(cur_result["season"]), int(cur_result["episode"]))%></td>
         <td>
         #if $cur_result["description"] != "" and $cur_result["description"] != None:
             <img alt="" src="$sbRoot/images/info32.png" height="16" width="16" class="plotInfo" id="plot_info_<%=str(cur_result["showid"])+"_"+str(cur_result["season"])+"_"+str(cur_result["episode"])%>" style="padding-top: 6px;"/>
@@ -244,7 +244,7 @@
           	      <span><a href="$sbRoot/home/searchEpisode?show=${cur_result["showid"]}&amp;season=$cur_result["season"]&amp;episode=$cur_result["episode"]" title="Manual Search" id="forceUpdate-${cur_result["showid"]}" class="epSearch forceUpdate"><img alt="[search]" height="16" width="16" src="$sbRoot/images/search32.png" id="forceUpdateImage-${cur_result["showid"]}" /></a></span>
           	  </span>
           	</div>
-            <span class="title">Next Episode:</span> <span><%=str(cur_result["season"])+"x"+"%02i" % int(cur_result["episode"]) %> - $cur_result["name"] ($datetime.date.fromordinal(int($cur_result["airdate"])))</span>
+            <span class="title">Next Episode:</span> <span><%="%03i" % (int(cur_result["absolute_number"])) if cur_result["anime"] and cur_result["absolute_numbering"] else "%ix%02i" % (int(cur_result["season"]), int(cur_result["episode"]))%> - $cur_result["name"] ($datetime.date.fromordinal(int($cur_result["airdate"])))</span>
             <div class="clearfix">
 	            <span class="title">Airs:</span> <span>$cur_result["airs"] on $cur_result["network"]</span>
 	        </div>

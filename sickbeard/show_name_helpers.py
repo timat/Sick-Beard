@@ -250,18 +250,25 @@ def isGoodResult(name, show, log=True):
 
     all_show_names = allPossibleShowNames(show)
     showNames = map(sanitizeSceneName, all_show_names) + all_show_names
-
+    
+    if show.anime and show.absolute_numbering:
+        np = NameParser()
+        parse_result = np.parse(name)
+        bwl = BlackAndWhiteList(show.tvdbid)
+        if bwl.whiteList and parse_result.release_group not in bwl.whiteList or bwl.blackList and parse_result.release_group in bwl.blackList:
+            return False
+    
     for curName in set(showNames):
-        if not show.anime:
+        if show.anime and show.absolute_numbering:
             escaped_name = re.sub('\\\\[\\s.-]', '\W+', re.escape(curName))
             if show.startyear:
                 escaped_name += "(?:\W+"+str(show.startyear)+")?"
-            curRegex = '^' + escaped_name + '\W+(?:(?:S\d[\dE._ -])|(?:\d\d?x)|(?:\d{4}\W\d\d\W\d\d)|(?:(?:part|pt)[\._ -]?(\d|[ivx]))|Season\W+\d+\W+|E\d+\W+)'
+                curRegex = '^\[.+\]\W+' + escaped_name + '?\W+\d+(\W+\[.+\])?'
         else:
             escaped_name = re.sub('\\\\[\\s.-]', '\W+', re.escape(curName))
             if show.startyear:
                 escaped_name += "(?:\W+"+str(show.startyear)+")?"
-                curRegex = '^' + escaped_name + '\W+(?:(?:S\d[\dE._ -])|(?:\d\d?x)|(?:\d{4}\W\d\d\W\d\d)|(?:(?:part|pt)[\._ -]?(\d|[ivx]))|Season\W+\d+\W+|E\d+\W+)'
+            curRegex = '^' + escaped_name + '\W+(?:(?:S\d[\dE._ -])|(?:\d\d?x)|(?:\d{4}\W\d\d\W\d\d)|(?:(?:part|pt)[\._ -]?(\d|[ivx]))|Season\W+\d+\W+|E\d+\W+)'
 
         if log:
             logger.log(u"Checking if show "+name+" matches " + curRegex, logger.DEBUG)
