@@ -37,6 +37,7 @@ def sendTORRENT(result):
 
     host = sickbeard.TORRENT_HOST+'json'
     password = sickbeard.TORRENT_PASSWORD
+    label = sickbeard.TORRENT_LABEL.lower()
 
     # this creates a password manager
     passman = urllib2.HTTPPasswordMgrWithDefaultRealm()
@@ -102,6 +103,45 @@ def sendTORRENT(result):
         data = json.loads(buffer.read())
         if data["error"] == None:
             logger.log(u"Torrent sent to Deluge successfully", logger.DEBUG)
+            
+            torrentId = data["result"]
+            if(torrentId != None and label != None):
+                # check if label already exist and create it if not
+                post_data = json.dumps({ "method": 'label.get_labels',
+                                         "params": [],
+                                         "id": 2
+                                      })
+                try:
+                    request = urllib2.Request(url=host, data=post_data.encode('utf-8'))
+                    response = urllib2.urlopen(request)
+                    file_obj = StringIO(response.read())
+                    buffer = gzip.GzipFile(fileobj=file_obj)
+                    data = json.loads(buffer.read())
+                    if data["error"] == None:
+                        labels = data["result"]
+                        if label not in labels:
+                            logger.log(label +u" label does not exist in Deluge we must add it", logger.MESSAGE)
+                            post_data = json.dumps({ "method": 'label.add',
+                                                     "params": [label],
+                                                     "id": 2
+                                                  })
+                            request = urllib2.Request(url=host, data=post_data.encode('utf-8'))
+                            response = urllib2.urlopen(request)
+                            logger.log(label +u" label added to Deluge", logger.MESSAGE)
+                        
+                        # add label to torrent    
+                        post_data = json.dumps({ "method": 'label.set_torrent',
+                                                 "params": [torrentId, label],
+                                                 "id": 2
+                                              })
+                        request = urllib2.Request(url=host, data=post_data.encode('utf-8'))
+                        response = urllib2.urlopen(request)
+                        logger.log(label +u" label added to torrent", logger.MESSAGE)
+                    else:
+                        logger.log(u"Unknown failure getting labels from Deluge", logger.ERROR)
+                except:
+                    logger.log(u"Unknown failure adding label to Deluge torrent", logger.ERROR)
+                
             return True
         else:
             logger.log(u"Unknown failure sending Torrent to Deluge. Return text is: " + data["error"], logger.ERROR)            

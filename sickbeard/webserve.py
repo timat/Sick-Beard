@@ -930,7 +930,7 @@ class ConfigSearch:
                        sab_apikey=None, sab_category=None, sab_host=None, nzbget_password=None, nzbget_category=None, nzbget_host=None,
                        nzb_method=None, torrent_method=None, usenet_retention=None, search_frequency=None, download_propers=None,
                        torrent_dir=None, torrent_username=None, torrent_password=None, torrent_host=None, torrent_path=None, 
-                       torrent_ratio=None, torrent_paused=None, ignore_words=None):
+                       torrent_ratio=None, torrent_paused=None, torrent_label=None, ignore_words=None):
 
         results = []
 
@@ -1000,6 +1000,7 @@ class ConfigSearch:
         else:
             torrent_paused = 0
         sickbeard.TORRENT_PAUSED = torrent_paused
+        sickbeard.TORRENT_LABEL = torrent_label.replace(' ', '_')
 
         if torrent_host and not re.match('https?://.*', torrent_host):
             torrent_host = 'http://' + torrent_host
@@ -3168,11 +3169,11 @@ class Home:
 
         # return the correct json value
         if previous_subtitles != ep_obj.subtitles:
-            status = 'New subtitles downloaded: %s' % ','.join([x for x in sorted(list(set(ep_obj.subtitles).difference(previous_subtitles)))])
+            status = 'New subtitles downloaded: %s' % ' '.join(["<img src='"+sickbeard.WEB_ROOT+"/images/flags/"+subliminal.language.Language(x).alpha2+".png' alt='"+subliminal.language.Language(x).name+"'/>" for x in sorted(list(set(ep_obj.subtitles).difference(previous_subtitles)))])
         else:
             status = 'No subtitles downloaded'
         ui.notifications.message('Subtitles Search', status)
-        return json.dumps({'result': status, 'subtitles': ','.join([x for x in ep_obj.subtitles])})
+        return json.dumps({'result': status, 'subtitles': ','.join([subliminal.language.Language(x).name for x in ep_obj.subtitles])})
 
     @cherrypy.expose
     def mergeEpisodeSubtitles(self, show=None, season=None, episode=None):
