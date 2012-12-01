@@ -117,9 +117,10 @@
 #set $myShowList = $list($curShowlist[1])
 #if $curListType == "Anime":
 	<h1 class="header">Anime List</h1>
+	<table id="showListTableAnime" class="sickbeardTable tablesorter" cellspacing="1" border="0" cellpadding="0">
+#else:
+	<table id="showListTable" class="sickbeardTable tablesorter" cellspacing="1" border="0" cellpadding="0">
 #end if
-<table id="showListTable" class="sickbeardTable tablesorter" cellspacing="1" border="0" cellpadding="0">
-
   <thead><tr><th class="nowrap">Next Ep</th><th>Poster</th></td><th>Show</th><th>Network</th><th>Quality</th><th>Downloads</th><th>Active</th><th>Status</th></tr></thead>
   <tfoot>
     <tr>

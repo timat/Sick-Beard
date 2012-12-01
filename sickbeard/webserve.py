@@ -2900,7 +2900,7 @@ class Home:
             tvdb_lang = showObj.lang
 
         # if we changed the language then kick off an update
-        if tvdb_lang == showObj.lang:
+        if tvdb_lang == showObj.lang and absolute_numbering == showObj.absolute_numbering:
             do_update = False
         else:
             do_update = True
