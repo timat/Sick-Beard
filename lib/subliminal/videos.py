@@ -72,7 +72,7 @@ class Video(object):
         :rtype: :class:`Episode` or :class:`Movie` or :class:`UnknownVideo`
 
         """
-        guess = guessit.guess_file_info(os.path.basename(path), 'autodetect')
+        guess = guessit.guess_file_info(path, 'autodetect')
         result = None
         if guess['type'] == 'episode' and 'series' in guess and 'season' in guess and 'episodeNumber' in guess:
             title = None
