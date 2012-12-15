@@ -303,6 +303,7 @@ ANIDB_PASSWORD = None
 ANIDB_USE_MYLIST = 0
 ADBA_CONNECTION = None
 ANIME_SPLIT_HOME = False
+USE_ROMAJI_NAME = False
 
 USE_SYNOINDEX = False
 
@@ -394,7 +395,7 @@ def initialize(consoleLogging=True):
                 NEWZBIN, NEWZBIN_USERNAME, NEWZBIN_PASSWORD, GIT_PATH, MOVE_ASSOCIATED_FILES, \
                 GUI_NAME, COMING_EPS_LAYOUT, COMING_EPS_SORT, COMING_EPS_DISPLAY_PAUSED, METADATA_WDTV, METADATA_TIVO, IGNORE_WORDS, CREATE_MISSING_SHOW_DIRS, \
                 ADD_SHOWS_WO_DIR, USE_SUBTITLES, SUBTITLES_LANGUAGES, SUBTITLES_DIR, SUBTITLES_SERVICES_LIST, SUBTITLES_SERVICES_ENABLED, subtitlesFinderScheduler, \
-                ANIMESUPPORT, USE_ANIDB, ANIDB_USERNAME, ANIDB_PASSWORD, ANIDB_USE_MYLIST, ANIME_SPLIT_HOME
+                ANIMESUPPORT, USE_ANIDB, ANIDB_USERNAME, ANIDB_PASSWORD, ANIDB_USE_MYLIST, ANIME_SPLIT_HOME, USE_ROMAJI_NAME
 
         if __INITIALIZED__:
             return False
@@ -765,6 +766,7 @@ def initialize(consoleLogging=True):
         ANIDB_PASSWORD = check_setting_str(CFG, 'ANIME', 'anidb_password', '')
         ANIDB_USE_MYLIST = bool(check_setting_int(CFG, 'ANIME', 'anidb_use_mylist', 0))
         ANIME_SPLIT_HOME = bool(check_setting_int(CFG, 'ANIME', 'anime_split_home', 0))
+        USE_ROMAJI_NAME = bool(check_setting_int(CFG, 'ANIME', 'use_romaji_name', 0))
 
         GUI_NAME = check_setting_str(CFG, 'GUI', 'gui_name', 'slick') 
 
@@ -1315,6 +1317,7 @@ def save_config():
     new_config['ANIME']['anidb_password'] = ANIDB_PASSWORD
     new_config['ANIME']['anidb_use_mylist'] = int(ANIDB_USE_MYLIST)
     new_config['ANIME']['anime_split_home'] = int(ANIME_SPLIT_HOME)
+    new_config['ANIME']['use_romaji_name'] = int(USE_ROMAJI_NAME)
 
     new_config['GUI'] = {}
     new_config['GUI']['gui_name'] = GUI_NAME

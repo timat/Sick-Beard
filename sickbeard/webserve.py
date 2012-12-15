@@ -1857,7 +1857,7 @@ class ConfigAnime:
         return _munge(t)
 
     @cherrypy.expose
-    def saveAnime(self, use_anidb=None, anidb_username=None, anidb_password=None, anidb_use_mylist=None, split_home=None):
+    def saveAnime(self, use_anidb=None, anidb_username=None, anidb_password=None, anidb_use_mylist=None, split_home=None, use_romaji_name=None):
 
         results = []
 
@@ -1875,12 +1875,18 @@ class ConfigAnime:
             split_home = 1
         else:
             split_home = 0
+            
+        if use_romaji_name == "on":
+            use_romaji_name = 1
+        else:
+            use_romaji_name = 0
 
         sickbeard.USE_ANIDB = use_anidb
         sickbeard.ANIDB_USERNAME = anidb_username
         sickbeard.ANIDB_PASSWORD = anidb_password
         sickbeard.ANIDB_USE_MYLIST = anidb_use_mylist
         sickbeard.ANIME_SPLIT_HOME = split_home
+        sickbeard.USE_ROMAJI_NAME = use_romaji_name
 
         sickbeard.save_config()
 
@@ -2854,7 +2860,7 @@ class Home:
                     
             t.groups = []
             
-            if helpers.set_up_anidb_connection():
+            if showObj.anime and helpers.set_up_anidb_connection():
                 anime = adba.Anime(sickbeard.ADBA_CONNECTION, aid=showObj.anidbid, load=True)
                 t.groups = anime.get_groups()
                 t.highest_episode = anime.highest_episode_number
@@ -2900,7 +2906,7 @@ class Home:
             tvdb_lang = showObj.lang
 
         # if we changed the language then kick off an update
-        if tvdb_lang == showObj.lang and absolute_numbering == showObj.absolute_numbering:
+        if tvdb_lang == showObj.lang and anime == showObj.anime and absolute_numbering == showObj.absolute_numbering:
             do_update = False
         else:
             do_update = True

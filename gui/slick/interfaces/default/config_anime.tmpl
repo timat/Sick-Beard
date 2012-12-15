@@ -85,9 +85,26 @@
 	                    <fieldset class="component-group-list">
 	                        <div class="field-pair">
 	                            <input type="checkbox" class="enabler" name="split_home" id="split_home" #if $sickbeard.ANIME_SPLIT_HOME then "checked=\"checked\"" else ""# />
-	                            <label class="clearfix" for="use_notifo">
+	                            <label class="clearfix" for="split_home">
 	                                <span class="component-title">Split show lists</span>
 	                                <span class="component-desc">Separate anime and normal shows in groups</span>
+	                            </label>
+	                        </div>
+	                        <input type="submit" class="config_submitter btn" value="Save Changes" />
+	                   </fieldset>
+	                </div><!-- /component-group //-->
+	                
+	                <div id="core-component-group" class="component-group clearfix">
+	
+	                    <div class="component-group-desc">
+	                        <h3>Shows</h3>
+	                    </div>
+	                    <fieldset class="component-group-list">
+	                        <div class="field-pair">
+	                            <input type="checkbox" class="enabler" name="use_romaji_name" id="use_romaji_name" #if $sickbeard.USE_ROMAJI_NAME then "checked=\"checked\"" else ""# />
+	                            <label class="clearfix" for="use_romaji_name">
+	                                <span class="component-title">Use romaji name</span>
+	                                <span class="component-desc">Use romaji name insteadof selected language show name.</span>
 	                            </label>
 	                        </div>
 	                        <input type="submit" class="config_submitter btn" value="Save Changes" />
