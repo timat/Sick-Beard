@@ -303,6 +303,7 @@ class QueueItemAdd(ShowQueueItem):
         try:
             self.show.loadEpisodesFromTVDB()
             self.show.setTVRID()
+            self.show.setAniDBID()
 
             self.show.writeMetadata()
             self.show.populateCache()
@@ -472,7 +473,7 @@ class QueueItemUpdate(ShowQueueItem):
             self.show.loadLatestFromTVRage()
             if self.show.tvrid == 0:
                 self.show.setTVRID()
-
+                
         sickbeard.showQueueScheduler.action.refreshShow(self.show, True) #@UndefinedVariable
 
 class QueueItemForceUpdate(QueueItemUpdate):

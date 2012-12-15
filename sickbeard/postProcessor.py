@@ -590,7 +590,7 @@ class PostProcessor(object):
                             # change the cache value elsewhere
                             ltvdb_api_parms = sickbeard.TVDB_API_PARMS.copy()
             
-                            if tvdb_lang:
+                            if tvdb_lang and not tvdb_lang == 'en':
                                 ltvdb_api_parms['language'] = tvdb_lang
             
                             t = tvdb_api.Tvdb(**ltvdb_api_parms)
@@ -599,7 +599,7 @@ class PostProcessor(object):
                             season = int(epObj["seasonnumber"])
                             episodes.append(int(epObj["episodenumber"]))
                         except tvdb_exceptions.tvdb_episodenotfound:
-                            logger.log(u"Unable to find episode with absolute number " + str(episode) + " for show " + showObj.name + ", skipping", logger.WARNING)
+                            logger.log(u"Unable to find episode with absolute number " + str(episode) + " for show " + str(tvdb_id) + ", skipping", logger.WARNING)
                             return None
                         except tvdb_exceptions.tvdb_error, e:
                             logger.log(u"Unable to contact TVDB: "+ex(e), logger.WARNING)

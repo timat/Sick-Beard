@@ -34,6 +34,7 @@ from name_parser.parser import NameParser, InvalidNameException
 from lib import subliminal
 
 from lib.tvdb_api import tvdb_api, tvdb_exceptions
+from lib import adba
 
 from sickbeard import db
 from sickbeard import helpers, exceptions, logger
@@ -76,6 +77,7 @@ class TVShow(object):
         self.lang = lang
         self.anime = 0
         self.absolute_numbering = 0
+        self.anidbid = 0
 
         self.lock = threading.Lock()
         self._isDirGood = False
@@ -425,6 +427,30 @@ class TVShow(object):
         except exceptions.TVRageException, e:
             logger.log(u"Couldn't get TVRage ID because we're unable to sync TVDB and TVRage: "+ex(e), logger.DEBUG)
             return
+        
+    def setAniDBID(self, force=False):
+
+        if not self.anime:
+            logger.log(u"No need to get the AniDB ID, the show isn't an anime", logger.DEBUG)
+            return
+        
+        if self.anidbid != 0 and not force:
+            logger.log(u"No need to get the AniDB ID, it's already populated", logger.DEBUG)
+            return
+
+        logger.log(u"Attempting to retrieve the AniDB ID", logger.DEBUG)
+
+        if not helpers.set_up_anidb_connection():
+            logger.log(u"To get data from AniDB first enter your user and password on config."+self.name, logger.WARNING)
+            return
+            
+        anime = adba.Anime(sickbeard.ADBA_CONNECTION, name=self.name)
+        if anime:
+            self.anidbid = anime.aid
+            self.saveToDB()
+        else:
+            logger.log(u"AniDB doesn't found any anime with name "+self.name, logger.WARNING)
+            return
 
     def getImages(self, fanart=None, poster=None):
 
@@ -453,8 +479,6 @@ class TVShow(object):
             # make an episode out of it
         except exceptions.TVRageException, e:
             logger.log(u"Unable to add TVRage info: " + ex(e), logger.WARNING)
-
-
 
     # make a TVEpisode object from a media file
     def makeEpFromFile(self, file):
@@ -678,6 +702,9 @@ class TVShow(object):
             self.absolute_numbering = sqlResults[0]["absolute_numbering"]
             if self.absolute_numbering == None:
                 self.absolute_numbering = 0
+                
+            if self.anidbid == 0:
+                self.anidbid = int(sqlResults[0]["anidb_id"])
 
 
     def loadFromTVDB(self, cache=True, tvapi=None, cachedSeason=None):
@@ -923,7 +950,8 @@ class TVShow(object):
                         "tvr_name": self.tvrname,
                         "lang": self.lang,
                         "anime": self.anime,
-                        "absolute_numbering": self.absolute_numbering
+                        "absolute_numbering": self.absolute_numbering,
+                        "anidb_id": self.anidbid
                         }
 
         myDB.upsert("tv_shows", newValueDict, controlValueDict)

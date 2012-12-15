@@ -576,3 +576,13 @@ class AddAnimeSupport(RenameSeasonFolders):
         self.connection.action("CREATE TABLE blacklist (show_id INTEGER, range TEXT, keyword TEXT)")
         
         self.incDBVersion()
+
+#Join with previous when merge with master branch
+class AddAnimeSupport2(AddAnimeSupport):
+    def test(self):
+        return self.checkDBVersion() >= 14
+
+    def execute(self):
+        self.addColumn("tv_shows", "anidb_id")
+        
+        self.incDBVersion()
