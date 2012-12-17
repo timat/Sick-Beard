@@ -51,6 +51,8 @@ $(document).ready(function(){
             $('#host_desc').text('uTorrent Host');
             $('#username_desc').text('uTorrent Username');
             $('#password_desc').text('uTorrent Password');
+            $('#deluge_label_warning').hide();
+            $('#Torrent_label').hide();
         } else if (selectedProvider == "transmission"){
             $('#t_blackhole_settings').hide();
             $('#torrent_settings').show();
@@ -62,6 +64,8 @@ $(document).ready(function(){
             $('#username_desc').text('Transmission Username');
             $('#password_desc').text('Transmission Password');
             $('#directory_desc').text('Transmission Directory');
+            $('#deluge_label_warning').hide();
+            $('#Torrent_label').hide();
         } else if (selectedProvider == "deluge"){
             $('#t_blackhole_settings').hide();
             $('#torrent_settings').show();
@@ -72,6 +76,8 @@ $(document).ready(function(){
             $('#host_desc').text('Deluge Host');
             $('#username_desc').text('Deluge Username');
             $('#password_desc').text('Deluge Password');
+            $('#deluge_label_warning').show();
+            $('#Torrent_label').show();
         }
     }
 

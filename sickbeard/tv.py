@@ -49,8 +49,8 @@ from sickbeard import encodingKludge as ek
 
 from common import Quality, Overview
 from common import DOWNLOADED, SNATCHED, SNATCHED_PROPER, ARCHIVED, IGNORED, UNAIRED, WANTED, SKIPPED, UNKNOWN
+from common import NAMING_DUPLICATE, NAMING_EXTEND, NAMING_LIMITED_EXTEND, NAMING_SEPARATED_REPEAT, NAMING_LIMITED_EXTEND_E_PREFIXED
 
-from common import NAMING_DUPLICATE, NAMING_EXTEND, NAMING_LIMITED_EXTEND, NAMING_SEPARATED_REPEAT
 
 class TVShow(object):
 
@@ -62,6 +62,7 @@ class TVShow(object):
         self.name = ""
         self.tvrid = 0
         self.tvrname = ""
+        self.imdbid = "" 
         self.network = ""
         self.genre = ""
         self.runtime = 0
@@ -706,6 +707,8 @@ class TVShow(object):
             if self.anidbid == 0:
                 self.anidbid = int(sqlResults[0]["anidb_id"])
 
+            if self.imdbid == "":
+                self.imdbid = sqlResults[0]["imdb_id"]                    
 
     def loadFromTVDB(self, cache=True, tvapi=None, cachedSeason=None):
 
@@ -733,6 +736,8 @@ class TVShow(object):
 
         self.genre = myEp['genre']
         self.network = myEp['network']
+        self.runtime = myEp['runtime']
+        self.imdbid = myEp['imdb_id']
 
         if myEp["airs_dayofweek"] != None and myEp["airs_time"] != None:
             self.airs = myEp["airs_dayofweek"] + " " + myEp["airs_time"]
@@ -949,11 +954,11 @@ class TVShow(object):
                         "startyear": self.startyear,
                         "tvr_name": self.tvrname,
                         "lang": self.lang,
+                        "imdb_id": self.imdbid,
                         "anime": self.anime,
                         "absolute_numbering": self.absolute_numbering,
                         "anidb_id": self.anidbid
                         }
-
         myDB.upsert("tv_shows", newValueDict, controlValueDict)
         helpers.update_anime_support()
 
@@ -1007,9 +1012,12 @@ class TVShow(object):
 
         # if it's one of these then we want it as long as it's in our allowed initial qualities
         if quality in anyQualities + bestQualities:
-            if epStatus in (WANTED, UNAIRED, SKIPPED):
-                logger.log(u"Ep is wanted/unaired/skipped, definitely get it", logger.DEBUG)
+            if epStatus in (WANTED, SKIPPED):
+                logger.log(u"Ep is wanted/skipped, definitely get it", logger.DEBUG)
                 return True
+            elif epStatus == UNAIRED:
+                logger.log(u"Ep is unaired, it must be a fake so I'm skipping it", logger.DEBUG)
+                return False
             elif manualSearch:
                 logger.log(u"Usually I would ignore this ep but because you forced the search I'm overriding the default and allowing the quality", logger.DEBUG)
                 return True
@@ -1138,14 +1146,14 @@ class TVEpisode(object):
             return
         logger.log(str(self.show.tvdbid) + ": Downloading subtitles for episode " + str(self.season) + "x" + str(self.episode), logger.DEBUG)
         
-        #TODO: Add support for custom keywords
+        #Add support for custom keywords
         myDB = db.DBConnection()
         sqlResults = myDB.select("SELECT provider FROM history WHERE showid = ? AND season = ? AND episode = ? AND action LIKE '%4' ORDER BY date DESC", [self.show.tvdbid, self.season, self.episode])
         if len(sqlResults) > 0:
-            provider = sqlResults[0]["provider"]
-            logger.log(str(self.show.tvdbid) + ": Provider " + provider + " found for episode " + str(self.season) + "x" + str(self.episode), logger.DEBUG)
+            provider = [sqlResults[0]["provider"]]
+            logger.log(str(self.show.tvdbid) + ": Provider " + provider[0] + " found for episode " + str(self.season) + "x" + str(self.episode), logger.DEBUG)
         else:
-            provider = ''
+            provider = None
             logger.log(str(self.show.tvdbid) + ": No provider found for episode " + str(self.season) + "x" + str(self.episode), logger.DEBUG)
         
         try:
@@ -1827,6 +1835,10 @@ class TVEpisode(object):
 
                 # add "E04"
                 ep_string += ep_sep
+                
+                if multi == NAMING_LIMITED_EXTEND_E_PREFIXED:
+                    ep_string += 'E'
+                
                 ep_string += other_ep._format_string(ep_format.upper(), other_ep._replace_map())
 
             if season_ep_match:
