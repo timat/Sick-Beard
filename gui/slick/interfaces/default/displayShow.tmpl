@@ -57,6 +57,9 @@
 	<span class="tvshowLink" style="vertical-align: text-top">
 		<a href="http://www.imdb.com/title/$show.imdbid" onclick="window.open(this.href, '_blank'); return false;" title="http://www.imdb.com/title/$show.imdbid"><img alt="[imdb]" height="16" width="16" src="$sbRoot/images/imdb.png" /> 
 	    <a href="http://www.thetvdb.com/?tab=series&amp;id=$show.tvdbid" onclick="window.open(this.href, '_blank'); return false;" title="http://www.thetvdb.com/?tab=series&amp;id=$show.tvdbid"><img alt="[tvdb]" height="16" width="16" src="$sbRoot/images/thetvdb16.png" /></a>
+	    #if $show.anime:
+	    	<a href="http://anidb.net/perl-bin/animedb.pl?show=anime&aid=$show.anidbid" onclick="window.open(this.href, '_blank'); return false;" title="http://anidb.net/perl-bin/animedb.pl?show=anime&aid=$show.anidbid"><img alt="[anidb]" height="16" width="16" src="$sbRoot/images/anidb16.png" /></a>
+	    #end if
 	</span>
 </span> 
 
