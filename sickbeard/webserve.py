@@ -453,12 +453,12 @@ class Manage:
             epCounts[Overview.GOOD] = 0
             epCounts[Overview.UNAIRED] = 0
 
-            sqlResults = myDB.select("SELECT * FROM tv_episodes WHERE showid = ? ORDER BY season*1000+episode DESC", [curShow.tvdbid])
-
+            sqlResults = myDB.select("SELECT * FROM tv_episodes WHERE showid = ? ORDER BY season DESC, episode DESC", [curShow.tvdbid])
+            
             for curResult in sqlResults:
 
                 curEpCat = curShow.getOverview(int(curResult["status"]))
-                epCats[str(curResult["season"])+"x"+str(curResult["episode"])] = curEpCat
+                epCats[str(curResult["season"]) + "x" + str(curResult["episode"])] = curEpCat
                 epCounts[curEpCat] += 1
 
             showCounts[curShow.tvdbid] = epCounts
@@ -1848,10 +1848,10 @@ class Config:
     subtitles = ConfigSubtitles()
 
 def haveXBMC():
-    return sickbeard.XBMC_HOST
+    return sickbeard.USE_XBMC and sickbeard.XBMC_UPDATE_LIBRARY
 
 def havePLEX():
-    return sickbeard.PLEX_SERVER_HOST
+    return sickbeard.USE_PLEX and sickbeard.PLEX_UPDATE_LIBRARY
 
 def HomeMenu():
     return [
@@ -2475,21 +2475,31 @@ class Home:
     def testXBMC(self, host=None, username=None, password=None):
         cherrypy.response.headers['Cache-Control'] = "max-age=0,no-cache,no-store"
 
-        result = notifiers.xbmc_notifier.test_notify(urllib.unquote_plus(host), username, password)
-        if len(result.split(":")) > 2 and 'OK' in result.split(":")[2]:
-            return "Test notice sent successfully to "+urllib.unquote_plus(host)
-        else:
-            return "Test notice failed to "+urllib.unquote_plus(host)
+        finalResult = ''
+        for curHost in [x.strip() for x in host.split(",")]:
+            curResult = notifiers.xbmc_notifier.test_notify(urllib.unquote_plus(curHost), username, password)
+            if len(curResult.split(":")) > 2 and 'OK' in curResult.split(":")[2]:
+                finalResult += "Test XBMC notice sent successfully to " + urllib.unquote_plus(curHost)
+            else:
+                finalResult += "Test XBMC notice failed to " + urllib.unquote_plus(curHost)
+            finalResult += "<br />\n"
+
+        return finalResult
 
     @cherrypy.expose
     def testPLEX(self, host=None, username=None, password=None):
         cherrypy.response.headers['Cache-Control'] = "max-age=0,no-cache,no-store"
 
-        result = notifiers.plex_notifier.test_notify(urllib.unquote_plus(host), username, password)
-        if result:
-            return "Test notice sent successfully to "+urllib.unquote_plus(host)
-        else:
-            return "Test notice failed to "+urllib.unquote_plus(host)
+        finalResult = ''
+        for curHost in [x.strip() for x in host.split(",")]:
+            curResult = notifiers.plex_notifier.test_notify(urllib.unquote_plus(curHost), username, password)
+            if len(curResult.split(":")) > 2 and 'OK' in curResult.split(":")[2]:
+                finalResult += "Test Plex notice sent successfully to " + urllib.unquote_plus(curHost)
+            else:
+                finalResult += "Test Plex notice failed to " + urllib.unquote_plus(curHost)
+            finalResult += "<br />\n"
+
+        return finalResult
 
     @cherrypy.expose
     def testLibnotify(self):
@@ -2592,6 +2602,7 @@ class Home:
             showObj = sickbeard.helpers.findCertainShow(sickbeard.showList, int(show))
 
             if showObj == None:
+                return _genericMessage("Error", "Show not in show list")
 
                 return _genericMessage("Error", "Show not in show list")
 
@@ -2901,7 +2912,6 @@ class Home:
 
         redirect("/home/displayShow?show="+str(showObj.tvdbid))
 
-
     @cherrypy.expose
     def subtitleShow(self, show=None, force=0):
 
@@ -2923,24 +2933,21 @@ class Home:
     
     @cherrypy.expose
     def updateXBMC(self, showName=None):
-
-        for curHost in [x.strip() for x in sickbeard.XBMC_HOST.split(",")]:
-            if notifiers.xbmc_notifier._update_library(curHost, showName=showName):
-                ui.notifications.message("Command sent to XBMC host " + curHost + " to update library")
-            else:
-                ui.notifications.error("Unable to contact XBMC host " + curHost)
+        # TODO: configure that each host can have different options / username / pw
+        # only send update to first host in the list -- workaround for xbmc sql backend users
+        firstHost = sickbeard.XBMC_HOST.split(",")[0].strip()
+        if notifiers.xbmc_notifier.update_library(showName=showName):
+            ui.notifications.message("Library update command sent to XBMC host: " + firstHost)
+        else:
+            ui.notifications.error("Unable to contact XBMC host: " + firstHost)
         redirect('/home')
-
 
     @cherrypy.expose
     def updatePLEX(self):
-
-        if notifiers.plex_notifier._update_library():
-            ui.notifications.message("Command sent to Plex Media Server host " + sickbeard.PLEX_HOST + " to update library")
-            logger.log(u"Plex library update initiated for host " + sickbeard.PLEX_HOST, logger.DEBUG)
+        if notifiers.plex_notifier.update_library():
+            ui.notifications.message("Library update command sent to Plex Media Server host: " + sickbeard.PLEX_SERVER_HOST)
         else:
-            ui.notifications.error("Unable to contact Plex Media Server host " + sickbeard.PLEX_HOST)
-            logger.log(u"Plex library update failed for host " + sickbeard.PLEX_HOST, logger.ERROR)
+            ui.notifications.error("Unable to contact Plex Media Server host: " + sickbeard.PLEX_SERVER_HOST)
         redirect('/home')
 
     @cherrypy.expose
@@ -3116,6 +3123,7 @@ class Home:
 
         redirect("/home/displayShow?show=" + show)
 
+
     @cherrypy.expose
     def searchEpisode(self, show=None, season=None, episode=None):
 
@@ -3223,23 +3231,8 @@ class WebInterface:
     @cherrypy.expose
     def showPoster(self, show=None, which=None):
 
-        REMOTE_DBG = False
-        
-        if REMOTE_DBG:
-                # Make pydev debugger works for auto reload.
-                # Note pydevd module need to be copied in XBMC\system\python\Lib\pysrc
-            try:
-                import pysrc.pydevd as pydevd
-                # stdoutToServer and stderrToServer redirect stdout and stderr to eclipse console
-                pydevd.settrace('localhost', port=5678, stdoutToServer=True, stderrToServer=True)
-            except ImportError:
-                sys.stderr.write("Error: " +
-                        "You must add org.python.pydev.debug.pysrc to your PYTHONPATH.")
-                sys.exit(1) 
-
-        if which == 'poster':
-            default_image_name = 'poster.png'
-        elif which == 'thumbnail':
+        #Redirect initial poster/banner thumb to default images       
+        if which[0:6] == 'poster':
             default_image_name = 'poster.png'
         else:
             default_image_name = 'banner.png'
@@ -3257,38 +3250,35 @@ class WebInterface:
         
         if which == 'poster':
             image_file_name = cache_obj.poster_path(showObj.tvdbid)
-        elif which == 'thumbnail':
-            image_file_name = cache_obj.thumbnail_path(showObj.tvdbid)
-        # this is for 'banner' but also the default case
-        else:
+        if which == 'poster_thumb':
+            image_file_name = cache_obj.poster_thumb_path(showObj.tvdbid)
+        if which == 'banner':
             image_file_name = cache_obj.banner_path(showObj.tvdbid)
+        if which == 'banner_thumb':     
+            image_file_name = cache_obj.banner_thumb_path(showObj.tvdbid)
 
         if ek.ek(os.path.isfile, image_file_name):
-            try:
-                from PIL import Image
-                from cStringIO import StringIO
-            except ImportError: # PIL isn't installed
-                return cherrypy.lib.static.serve_file(image_file_name, content_type="image/jpeg")
-            else:
-                im = Image.open(image_file_name)
-                if im.mode == 'P': # Convert GIFs to RGB
-                    im = im.convert('RGB')
-                if which == 'banner':
-                    size = 606, 112
-                elif which == 'poster':
-                    size = 136, 200
-                elif which == 'thumbnail':
-                    size = 136, 200
-                else:
-                    return cherrypy.lib.static.serve_file(image_file_name, content_type="image/jpeg")
-                im = im.resize(size, Image.ANTIALIAS)
-                buffer = StringIO()
-                im.save(buffer, 'JPEG', quality=85)
-                cherrypy.response.headers['Content-Type'] = 'image/jpeg'
-                return buffer.getvalue()
+            return cherrypy.lib.static.serve_file(image_file_name, content_type="image/jpeg")
         else:
             return cherrypy.lib.static.serve_file(default_image_path, content_type="image/png")
 
+    @cherrypy.expose
+    def setHomeLayout(self, layout):
+
+        if layout not in ('poster', 'banner'):
+            layout = 'poster'
+
+        sickbeard.HOME_LAYOUT = layout
+            
+        redirect("/home")  
+    
+    @cherrypy.expose
+    def toggleDisplayShowSpecials(self, show):
+
+        sickbeard.DISPLAY_SHOW_SPECIALS = not sickbeard.DISPLAY_SHOW_SPECIALS
+        
+        redirect("/home/displayShow?show=" + show)
+    
     @cherrypy.expose
     def setComingEpsLayout(self, layout):
         if layout not in ('poster', 'banner', 'list'):

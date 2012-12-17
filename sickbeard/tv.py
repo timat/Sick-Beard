@@ -48,8 +48,8 @@ from sickbeard import encodingKludge as ek
 
 from common import Quality, Overview
 from common import DOWNLOADED, SNATCHED, SNATCHED_PROPER, ARCHIVED, IGNORED, UNAIRED, WANTED, SKIPPED, UNKNOWN
+from common import NAMING_DUPLICATE, NAMING_EXTEND, NAMING_LIMITED_EXTEND, NAMING_SEPARATED_REPEAT, NAMING_LIMITED_EXTEND_E_PREFIXED
 
-from common import NAMING_DUPLICATE, NAMING_EXTEND, NAMING_LIMITED_EXTEND, NAMING_SEPARATED_REPEAT
 
 class TVShow(object):
 
@@ -61,6 +61,7 @@ class TVShow(object):
         self.name = ""
         self.tvrid = 0
         self.tvrname = ""
+        self.imdbid = "" 
         self.network = ""
         self.genre = ""
         self.runtime = 0
@@ -631,6 +632,8 @@ class TVShow(object):
             if self.lang == "":
                 self.lang = sqlResults[0]["lang"]
 
+            if self.imdbid == "":
+                self.imdbid = sqlResults[0]["imdb_id"]                    
 
     def loadFromTVDB(self, cache=True, tvapi=None, cachedSeason=None):
 
@@ -658,6 +661,8 @@ class TVShow(object):
 
         self.genre = myEp['genre']
         self.network = myEp['network']
+        self.runtime = myEp['runtime']
+        self.imdbid = myEp['imdb_id']
 
         if myEp["airs_dayofweek"] != None and myEp["airs_time"] != None:
             self.airs = myEp["airs_dayofweek"] + " " + myEp["airs_time"]
@@ -873,7 +878,8 @@ class TVShow(object):
 						"subtitles": self.subtitles,
                         "startyear": self.startyear,
                         "tvr_name": self.tvrname,
-                        "lang": self.lang
+                        "lang": self.lang,
+                        "imdb_id": self.imdbid
                         }
 
         myDB.upsert("tv_shows", newValueDict, controlValueDict)
@@ -1735,6 +1741,10 @@ class TVEpisode(object):
 
                 # add "E04"
                 ep_string += ep_sep
+                
+                if multi == NAMING_LIMITED_EXTEND_E_PREFIXED:
+                    ep_string += 'E'
+                
                 ep_string += other_ep._format_string(ep_format.upper(), other_ep._replace_map())
 
             if season_ep_match:
