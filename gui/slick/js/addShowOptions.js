@@ -11,6 +11,7 @@ $(document).ready(function () {
                                                              bestQualities: bestQualArray.join(','),
                                                              defaultFlattenFolders: $('#flatten_folders').prop('checked')},
                                                              subtitles: $('#subtitles').prop('checked')} );
+                                                             
         $(this).attr('disabled', true);
         $.pnotify({
             pnotify_title: 'Saved Defaults',
