@@ -90,6 +90,10 @@ class NMJNotifier:
     def notify_download(self, ep_name):
         if sickbeard.USE_NMJ:
             self._notifyNMJ()
+            
+    def notify_subtitle_download(self, ep_name, lang):
+        if sickbeard.USE_NMJ:
+            self._notifyNMJ()
 
     def test_notify(self, host, database, mount):
         return self._sendNMJ(host, database, mount)

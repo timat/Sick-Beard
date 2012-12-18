@@ -13,6 +13,7 @@ $(document).ready(function () {
                                                              subtitles: $('#subtitles').prop('checked'),
                                                              anime: $('#anime').prop('checked')
                                                              } );
+
         $(this).attr('disabled', true);
         $.pnotify({
             pnotify_title: 'Saved Defaults',
