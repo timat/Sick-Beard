@@ -180,7 +180,7 @@ class GenericProvider:
         self.cache.updateCache()
         return self.cache.findNeededEpisodes()
 
-    def getQuality(self, item):
+    def getQuality(self, item, anime=False):
         """
         Figures out the quality of the given RSS item node
         
@@ -189,7 +189,7 @@ class GenericProvider:
         Returns a Quality value obtained from the node's data 
         """
         (title, url) = self._get_title_and_url(item) #@UnusedVariable
-        quality = Quality.nameQuality(title)
+        quality = Quality.nameQuality(title, anime)
         return quality
 
     def _doSearch(self):
@@ -264,7 +264,7 @@ class GenericProvider:
                 logger.log("Episode "+title+" isn't "+str(episode.season)+"x"+str(episode.episode)+", skipping it", logger.DEBUG)
                 continue
 
-            quality = self.getQuality(item)
+            quality = self.getQuality(item, episode.show.anime)
 
             if not episode.show.wantEpisode(episode.season, episode.episode, quality, manualSearch):
                 logger.log(u"Ignoring result "+title+" because we don't want an episode that is "+Quality.qualityStrings[quality], logger.DEBUG)
@@ -295,7 +295,7 @@ class GenericProvider:
 
             (title, url) = self._get_title_and_url(item)
 
-            quality = self.getQuality(item)
+            quality = self.getQuality(item, show.anime)
 
             # parse the file name
             try:

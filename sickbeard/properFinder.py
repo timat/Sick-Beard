@@ -109,12 +109,7 @@ class ProperFinder():
                 curProper.episode = parse_result.air_date
             else:
                 curProper.season = parse_result.season_number if parse_result.season_number != None else 1
-                if parse_result.is_anime:
-                    logger.log(u"I am sorry '"+curProper.name+"' seams to be an anime proper seach is not yet suported", logger.DEBUG)
-                    continue
-                    curProper.episode = parse_result.ab_episode_numbers[0]
-                else:
-                    curProper.episode = parse_result.episode_numbers[0]
+                curProper.episode = parse_result.episode_numbers[0]
 
             curProper.quality = Quality.nameQuality(curProper.name)
 

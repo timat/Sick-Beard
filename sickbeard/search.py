@@ -313,7 +313,7 @@ def findEpisode(episode, manualSearch=False):
             # and then stop and use that
             if episode.show.anime:
                 logger.log(u"We are searching an anime. i am checking if we got a good result with search provider "+curProvider.name, logger.DEBUG)
-                bestResult = pickBestResult(curFoundResults, show=episode.show)
+                bestResult = pickBestResult(curFoundResults)
                 if bestResult:
                     return bestResult
 
@@ -395,7 +395,7 @@ def findSeason(show, season):
     if bestSeasonNZB:
 
         # get the quality of the season nzb
-        seasonQual = Quality.nameQuality(bestSeasonNZB.name)
+        seasonQual = Quality.nameQuality(bestSeasonNZB.name, show.anime)
         seasonQual = bestSeasonNZB.quality
         logger.log(u"The quality of the season "+bestSeasonNZB.provider.providerType+" is "+Quality.qualityStrings[seasonQual], logger.DEBUG)
 

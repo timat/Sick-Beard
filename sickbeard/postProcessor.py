@@ -698,7 +698,7 @@ class PostProcessor(object):
             if not cur_name:
                 continue
 
-            ep_quality = common.Quality.nameQuality(cur_name)
+            ep_quality = common.Quality.nameQuality(cur_name, ep_obj.show.anime)
             self._log(u"Looking up quality for name "+cur_name+u", got "+common.Quality.qualityStrings[ep_quality], logger.DEBUG)
             
             # if we find a good one then use it

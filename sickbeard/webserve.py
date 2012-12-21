@@ -1266,6 +1266,7 @@ class ConfigProviders:
                       btn_api_key=None,
                       dtt_norar = None, dtt_single = None,
                       thepiratebay_trusted=None, thepiratebay_proxy=None, thepiratebay_proxy_url=None,
+                      nyaatorrents=None,
                       newzbin_username=None, newzbin_password=None,
                       provider_order=None):
 
@@ -1336,7 +1337,9 @@ class ConfigProviders:
             elif curProvider == 'dailytvtorrents':
                 sickbeard.DTT = curEnabled                
             elif curProvider == 'thepiratebay':
-                sickbeard.THEPIRATEBAY = curEnabled                   
+                sickbeard.THEPIRATEBAY = curEnabled
+            elif curProvider == 'nyaatorrents':
+                sickbeard.NYAA = curEnabled                          
             else:
                 logger.log(u"don't know what "+curProvider+" is, skipping")
 
