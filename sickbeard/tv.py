@@ -445,7 +445,7 @@ class TVShow(object):
             logger.log(u"To get data from AniDB first enter your user and password on config."+self.name, logger.WARNING)
             return
             
-        anime = adba.Anime(sickbeard.ADBA_CONNECTION, name=self.name)
+        anime = adba.Anime(sickbeard.ADBA_CONNECTION, tvdbid=self.tvdbid)
         if anime:
             self.anidbid = anime.aid
             self.saveToDB()
