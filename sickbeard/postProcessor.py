@@ -603,10 +603,12 @@ class PostProcessor(object):
                             episodes.append(int(epObj["episodenumber"]))
                         except tvdb_exceptions.tvdb_episodenotfound:
                             logger.log(u"Unable to find episode with absolute number " + str(episode) + " for show " + str(tvdb_id) + ", skipping", logger.WARNING)
-                            return None
+                            episodes = []
+                            continue
                         except tvdb_exceptions.tvdb_error, e:
                             logger.log(u"Unable to contact TVDB: "+ex(e), logger.WARNING)
-                            return None
+                            episodes = []
+                            continue
 
             # if there's no season then we can hopefully just use 1 automatically
             elif season == None and tvdb_id:
