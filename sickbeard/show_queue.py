@@ -24,7 +24,7 @@ import sickbeard
 
 from lib.tvdb_api import tvdb_exceptions, tvdb_api
 from lib import adba
-
+from lib.adba.aniDBerrors import AniDBIncorrectParameterError
 from sickbeard.common import SKIPPED, WANTED
 
 from sickbeard.tv import TVShow
@@ -487,10 +487,13 @@ class QueueItemUpdate(ShowQueueItem):
         
         # Set anidb id and set romaji name if is needed        
         self.show.setAniDBID()
-        if self.show.anime and sickbeard.USE_ROMAJI_NAME and helpers.set_up_anidb_connection():
-            anime = adba.Anime(sickbeard.ADBA_CONNECTION, aid=self.show.anidbid, load=True)
-            if anime:
-                self.show.name = anime.romaji_name
+        try:
+            if self.show.anime and sickbeard.USE_ROMAJI_NAME and helpers.set_up_anidb_connection():
+                anime = adba.Anime(sickbeard.ADBA_CONNECTION, aid=self.show.anidbid, load=True)
+                if anime:
+                    self.show.name = anime.romaji_name
+        except AniDBIncorrectParameterError:
+            logger.log(u"AniDB Id is 0 on show"+self.show.name, logger.WARNING)
                 
         sickbeard.showQueueScheduler.action.refreshShow(self.show, True) #@UndefinedVariable
 
