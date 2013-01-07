@@ -215,9 +215,12 @@ class NyaaCache(tvcache.TVCache):
 
     def _getRSSData(self):
 
-        params = {"order" : '1'} #Sort Descending By Date 
+        params = {
+                    "page" : 'rss', # Use RSS page
+                    "order" : '1'   #Sort Descending By Date
+                  }
       
-        url = self.provider.url + '?page=rss' + urllib.urlencode(params)        
+        url = self.provider.url + '?' + urllib.urlencode(params)        
 
         logger.log(u"NyaaTorrents cache update URL: "+ url, logger.DEBUG)
 
