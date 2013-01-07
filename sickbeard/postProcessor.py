@@ -754,8 +754,9 @@ class PostProcessor(object):
         self._log(u"Is ep a priority download: " + str(priority_download), logger.DEBUG)
 
         # set the status of the episodes
-        for curEp in [ep_obj] + ep_obj.relatedEps:
-            curEp.status = common.Quality.compositeStatus(common.SNATCHED, new_ep_quality)
+        # I think that this isn't needed
+        #for curEp in [ep_obj] + ep_obj.relatedEps:
+        #    curEp.status = common.Quality.compositeStatus(common.SNATCHED, new_ep_quality)
 
         # check for an existing file
         existing_file_status = self._checkForExistingFile(ep_obj.location)
