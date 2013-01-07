@@ -105,7 +105,7 @@ def sendTORRENT(result):
             logger.log(u"Torrent sent to Deluge successfully", logger.DEBUG)
             
             torrentId = data["result"]
-            if(torrentId != None and label != None):
+            if(torrentId != None and label):
                 # check if label already exist and create it if not
                 post_data = json.dumps({ "method": 'label.get_labels',
                                          "params": [],

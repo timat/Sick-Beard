@@ -1148,7 +1148,7 @@ class TVEpisode(object):
         
         #Add support for custom keywords
         myDB = db.DBConnection()
-        sqlResults = myDB.select("SELECT provider FROM history WHERE showid = ? AND season = ? AND episode = ? AND action LIKE '%4' ORDER BY date DESC", [self.show.tvdbid, self.season, self.episode])
+        sqlResults = myDB.select("SELECT provider FROM history WHERE showid = ? AND season = ? AND episode = ? AND action LIKE '%4' AND provider != -1 ORDER BY date DESC", [self.show.tvdbid, self.season, self.episode])
         if len(sqlResults) > 0:
             provider = [sqlResults[0]["provider"]]
             logger.log(str(self.show.tvdbid) + ": Provider " + provider[0] + " found for episode " + str(self.season) + "x" + str(self.episode), logger.DEBUG)
