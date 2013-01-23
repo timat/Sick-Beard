@@ -107,6 +107,13 @@
 	                                <span class="component-desc">Use romaji name insteadof selected language show name.</span>
 	                            </label>
 	                        </div>
+	                        <div class="field-pair">
+	                            <input type="checkbox" class="enabler" name="use_anidb_posters" id="use_anidb_posters" #if $sickbeard.USE_ANIDB_POSTERS then "checked=\"checked\"" else ""# />
+	                            <label class="clearfix" for="use_anidb_posters">
+	                                <span class="component-title">Use AniDB posters</span>
+	                                <span class="component-desc">Download posters from AniDB insteadof TVDB.</span>
+	                            </label>
+	                        </div>
 	                        <input type="submit" class="config_submitter btn" value="Save Changes" />
 	                   </fieldset>
 	                </div><!-- /component-group //-->

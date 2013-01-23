@@ -582,3 +582,13 @@ class AddAnimeSupport2(AddAnimeSupport):
         self.addColumn("tv_shows", "anidb_id")
         
         self.incDBVersion()
+
+class AddAnimeSupport3(AddAnimeSupport2):
+    def test(self):
+        return self.checkDBVersion() >= 15
+
+    def execute(self):
+        self.connection.action("CREATE TABLE anime_seasons_data (show_id INTEGER, season INTEGER, anidb_id, name TEXT)")
+        
+        self.incDBVersion()
+

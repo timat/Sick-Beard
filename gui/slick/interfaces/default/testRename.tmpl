@@ -23,6 +23,11 @@
 <blockquote style="margin-bottom: 0; color: #3A87AD;">
 #if int($show.air_by_date) == 1 and $sickbeard.NAMING_CUSTOM_ABD:
     $sickbeard.NAMING_ABD_PATTERN
+#elif int($show.anime) and int($show.absolute_numbering) and int(sickbeard.NAMING_CUSTOM_AE):
+	$sickbeard.NAMING_AE_PATTERN
+#elif True and int(sickbeard.NAMING_CUSTOM_SE):
+<!-- TODO check season names -->
+	$sickbeard.NAMING_SE_PATTERN
 #else
     $sickbeard.NAMING_PATTERN
 #end if

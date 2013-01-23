@@ -50,7 +50,7 @@ import getopt
 
 import sickbeard
 
-from sickbeard import db
+from sickbeard import db, CACHE_DIR
 from sickbeard.tv import TVShow
 from sickbeard import logger
 from sickbeard.version import SICKBEARD_VERSION
@@ -58,6 +58,7 @@ from sickbeard.version import SICKBEARD_VERSION
 from sickbeard.webserveInit import initWebServer
 
 from lib.configobj import ConfigObj
+from lib.adba import aniDBfileInfo
 
 signal.signal(signal.SIGINT, sickbeard.sig_handler)
 signal.signal(signal.SIGTERM, sickbeard.sig_handler)
@@ -325,6 +326,10 @@ def main():
     # Start an update if we're supposed to
     if forceUpdate:
         sickbeard.showUpdateScheduler.action.run(force=True)  # @UndefinedVariable
+        
+    # Download AniDB xml
+    aniDBfileInfo.download_anidb_xml(os.path.join(sickbeard.CACHE_DIR, "animetitles.xml"))
+    aniDBfileInfo.download_tvdb_map_xml(os.path.join(sickbeard.CACHE_DIR, "anime-list.xml"))
 
     # Stay alive while my threads do the work
     while (True):

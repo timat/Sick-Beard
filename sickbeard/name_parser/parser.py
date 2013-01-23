@@ -115,6 +115,9 @@ class NameParser(object):
                 if result.series_name:
                     result.series_name = self.clean_series_name(result.series_name)
             
+            if 'season_name' in named_groups:
+                result.season_name = match.group('season_name')
+            
             if 'season_num' in named_groups:
                 tmp_season = int(match.group('season_num'))
                 if cur_regex_name == 'bare' and tmp_season in (19,20):
@@ -255,6 +258,7 @@ class NameParser(object):
         
         # if the dirname has a release group/show name I believe it over the filename
         final_result.series_name = self._combine_results(dir_name_result, file_name_result, 'series_name')
+        final_result.season_name = self._combine_results(dir_name_result, file_name_result, 'season_name')
         final_result.extra_info = self._combine_results(dir_name_result, file_name_result, 'extra_info')
         final_result.release_group = self._combine_results(dir_name_result, file_name_result, 'release_group')
 
@@ -281,6 +285,7 @@ class ParseResult(object):
     def __init__(self,
                  original_name,
                  series_name=None,
+                 season_name=None,
                  season_number=None,
                  episode_numbers=None,
                  extra_info=None,
@@ -292,6 +297,7 @@ class ParseResult(object):
         self.original_name = original_name
         
         self.series_name = series_name
+        self.season_name = season_name
         self.season_number = season_number
         if not episode_numbers:
             self.episode_numbers = []
@@ -315,6 +321,8 @@ class ParseResult(object):
             return False
         
         if self.series_name != other.series_name:
+            return False
+        if self.season_name != other.season_name:
             return False
         if self.season_number != other.season_number:
             return False

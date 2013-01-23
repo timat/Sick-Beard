@@ -54,6 +54,7 @@ from lib.tvdb_api import tvdb_api
 
 from lib import subliminal
 from lib import adba
+from lib.adba.aniDBtvDBmaper import TvDBMap
 
 try:
     import json
@@ -1067,7 +1068,7 @@ class ConfigPostProcessing:
     def savePostProcessing(self, naming_pattern=None, naming_multi_ep=None,
                     xbmc_data=None, mediabrowser_data=None, synology_data=None, sony_ps3_data=None, wdtv_data=None, tivo_data=None,
                     use_banner=None, keep_processed_dir=None, process_automatically=None, rename_episodes=None,
-                    move_associated_files=None, tv_download_dir=None, naming_custom_abd=None, naming_abd_pattern=None, naming_strip_year=None, naming_anime=None,):
+                    move_associated_files=None, tv_download_dir=None, naming_custom_abd=None, naming_abd_pattern=None, naming_custom_ae=None, naming_ae_pattern=None, naming_custom_sn=None, naming_sn_pattern=None, naming_strip_year=None):
 
         results = []
 
@@ -1103,24 +1104,30 @@ class ConfigPostProcessing:
             naming_custom_abd = 1
         else:
             naming_custom_abd = 0
+        
+        if naming_custom_ae == "on":
+            naming_custom_ae = 1
+        else:
+            naming_custom_ae = 0
+            
+        if naming_custom_sn == "on":
+            naming_custom_sn = 1
+        else:
+            naming_custom_sn = 0
             
         if naming_strip_year == "on":
             naming_strip_year = 1
         else:
             naming_strip_year = 0
             
-        if naming_anime == "on":
-            naming_anime = 1
-        else:
-            naming_anime = 0
-
         sickbeard.PROCESS_AUTOMATICALLY = process_automatically
         sickbeard.KEEP_PROCESSED_DIR = keep_processed_dir
         sickbeard.RENAME_EPISODES = rename_episodes
         sickbeard.MOVE_ASSOCIATED_FILES = move_associated_files
         sickbeard.NAMING_CUSTOM_ABD = naming_custom_abd
+        sickbeard.NAMING_CUSTOM_AE = naming_custom_ae
+        sickbeard.NAMING_CUSTOM_SN = naming_custom_sn
         sickbeard.NAMING_STRIP_YEAR = naming_strip_year
-        sickbeard.NAMING_ANIME = naming_anime
 
         sickbeard.metadata_provider_dict['XBMC'].set_config(xbmc_data)
         sickbeard.metadata_provider_dict['MediaBrowser'].set_config(mediabrowser_data)
@@ -1140,6 +1147,16 @@ class ConfigPostProcessing:
             sickbeard.NAMING_ABD_PATTERN = naming_abd_pattern
         else:
             results.append("You tried saving an invalid air-by-date naming config, not saving your air-by-date settings")
+            
+        if self.isNamingValid(naming_ae_pattern, naming_multi_ep, ae=True) != "invalid":
+            sickbeard.NAMING_AE_PATTERN = naming_ae_pattern
+        else:
+            results.append("You tried saving an invalid absolute-episode naming config, not saving your absolute-episode settings")
+            
+        if self.isNamingValid(naming_sn_pattern, naming_multi_ep, sn=True) != "invalid":
+            sickbeard.NAMING_SN_PATTERN = naming_sn_pattern
+        else:
+            results.append("You tried saving an invalid season-name naming config, not saving your season-name settings")
 
         sickbeard.USE_BANNER = use_banner
 
@@ -1156,19 +1173,19 @@ class ConfigPostProcessing:
         redirect("/config/postProcessing/")
 
     @cherrypy.expose
-    def testNaming(self, pattern=None, multi=None, abd=False):
+    def testNaming(self, pattern=None, multi=None, abd=False, ae=False, sn=False):
 
         if multi != None:
             multi = int(multi)
 
-        result = naming.test_name(pattern, multi, abd)
+        result = naming.test_name(pattern, multi, abd, ae, sn)
 
         result = ek.ek(os.path.join, result['dir'], result['name']) 
 
         return result
     
     @cherrypy.expose
-    def isNamingValid(self, pattern=None, multi=None, abd=False):
+    def isNamingValid(self, pattern=None, multi=None, abd=False, ae=False, sn=False):
         if pattern == None:
             return "invalid"
         
@@ -1176,7 +1193,16 @@ class ConfigPostProcessing:
         if abd:
             is_valid = naming.check_valid_abd_naming(pattern)
             require_season_folders = False
-
+        # absolute episode shows just need one check, we don't need to worry about season folders 
+        elif ae:
+            is_valid = naming.check_valid_ae_naming(pattern)
+            require_season_folders = False
+        # air by date shows just need one check, we don't need to worry about season folders 
+        elif sn:
+            is_valid = naming.check_valid_sn_naming(pattern)
+            
+            # check validity of single and multi ep cases for only the file name
+            require_season_folders = naming.check_force_season_folders(pattern, multi, sn=True)
         else:
             # check validity of single and multi ep cases for the whole path
             is_valid = naming.check_valid_naming(pattern, multi)
@@ -1267,6 +1293,7 @@ class ConfigProviders:
                       dtt_norar = None, dtt_single = None,
                       thepiratebay_trusted=None, thepiratebay_proxy=None, thepiratebay_proxy_url=None,
                       nyaatorrents=None,
+                      frozenlayer=None,
                       newzbin_username=None, newzbin_password=None,
                       provider_order=None):
 
@@ -1339,7 +1366,9 @@ class ConfigProviders:
             elif curProvider == 'thepiratebay':
                 sickbeard.THEPIRATEBAY = curEnabled
             elif curProvider == 'nyaatorrents':
-                sickbeard.NYAA = curEnabled                          
+                sickbeard.NYAA = curEnabled
+            elif curProvider == 'frozen_layer':
+                sickbeard.FROZENLAYER = curEnabled                          
             else:
                 logger.log(u"don't know what "+curProvider+" is, skipping")
 
@@ -1856,7 +1885,7 @@ class ConfigAnime:
         return _munge(t)
 
     @cherrypy.expose
-    def saveAnime(self, use_anidb=None, anidb_username=None, anidb_password=None, anidb_use_mylist=None, split_home=None, use_romaji_name=None):
+    def saveAnime(self, use_anidb=None, anidb_username=None, anidb_password=None, anidb_use_mylist=None, split_home=None, use_romaji_name=None, use_anidb_posters=None):
 
         results = []
 
@@ -1879,6 +1908,11 @@ class ConfigAnime:
             use_romaji_name = 1
         else:
             use_romaji_name = 0
+            
+        if use_anidb_posters == "on":
+            use_anidb_posters = 1
+        else:
+            use_anidb_posters = 0
 
         sickbeard.USE_ANIDB = use_anidb
         sickbeard.ANIDB_USERNAME = anidb_username
@@ -1886,6 +1920,7 @@ class ConfigAnime:
         sickbeard.ANIDB_USE_MYLIST = anidb_use_mylist
         sickbeard.ANIME_SPLIT_HOME = split_home
         sickbeard.USE_ROMAJI_NAME = use_romaji_name
+        sickbeard.USE_ANIDB_POSTERS = use_anidb_posters
 
         sickbeard.save_config()
 
@@ -2722,15 +2757,15 @@ class Home:
         myDB = db.DBConnection()
 
         seasonResults = myDB.select(
-            "SELECT DISTINCT season FROM tv_episodes WHERE showid = ? ORDER BY season desc",
+            "SELECT DISTINCT tv_episodes.season, anime_seasons_data.name,  anime_seasons_data.anidb_id FROM tv_episodes LEFT OUTER JOIN anime_seasons_data ON show_id = showid AND tv_episodes.season = anime_seasons_data.season WHERE showid = ? ORDER BY tv_episodes.season desc",
             [showObj.tvdbid]
         )
-
+        
         sqlResults = myDB.select(
             "SELECT * FROM tv_episodes WHERE showid = ? ORDER BY season DESC, episode DESC",
             [showObj.tvdbid]
         )
-
+        
         t = PageTemplate(file="displayShow.tmpl")
         t.submenu = [ { 'title': 'Edit', 'path': 'home/editShow?show=%d'%showObj.tvdbid } ]
 
@@ -2869,7 +2904,7 @@ class Home:
             t.groups = []
             
             if showObj.anime and helpers.set_up_anidb_connection():
-                anime = adba.Anime(sickbeard.ADBA_CONNECTION, aid=showObj.anidbid, load=True)
+                anime = adba.Anime(sickbeard.ADBA_CONNECTION, aid=showObj.anidbid, load=True, anidbMapPath=sickbeard.CACHE_DIR, tvdbMapPath=sickbeard.CACHE_DIR)
                 t.groups = anime.get_groups()
                 t.highest_episode = anime.highest_episode_number
             

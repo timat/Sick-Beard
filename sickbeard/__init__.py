@@ -30,7 +30,7 @@ from threading import Lock
 
 # apparently py2exe won't build these unless they're imported somewhere
 from sickbeard import providers, metadata
-from providers import ezrss, tvtorrents, btn, nzbmatrix, nzbsrus, newznab, womble, newzbin, nzbs_org_old, thepiratebay, dtt, nyaatorrents
+from providers import ezrss, tvtorrents, btn, nzbmatrix, nzbsrus, newznab, womble, newzbin, nzbs_org_old, thepiratebay, dtt, nyaatorrents, frozenlayer
 from sickbeard.config import CheckSection, check_setting_int, check_setting_str, ConfigMigrator
 
 from sickbeard import searchCurrent, searchBacklog, showUpdater, versionChecker, properFinder, autoPostProcesser, subtitles
@@ -135,6 +135,10 @@ NAMING_MULTI_EP = None
 NAMING_PATTERN = None
 NAMING_ABD_PATTERN = None
 NAMING_CUSTOM_ABD = None
+NAMING_AE_PATTERN = None
+NAMING_CUSTOM_AE = None
+NAMING_SN_PATTERN = None
+NAMING_CUSTOM_SN = None
 NAMING_FORCE_FOLDERS = False
 NAMING_STRIP_YEAR = None
 NAMING_ANIME = None
@@ -180,6 +184,8 @@ THEPIRATEBAY_PROXY_URL = None
 THEPIRATEBAY_BLACKLIST = None
 
 NYAA = False
+
+FROZENLAYER = False
 
 ADD_SHOWS_WO_DIR = None
 CREATE_MISSING_SHOW_DIRS = None
@@ -307,6 +313,7 @@ ANIDB_USE_MYLIST = 0
 ADBA_CONNECTION = None
 ANIME_SPLIT_HOME = False
 USE_ROMAJI_NAME = False
+USE_ANIDB_POSTERS = False
 
 USE_SYNOINDEX = False
 
@@ -387,7 +394,7 @@ def initialize(consoleLogging=True):
                 NZBMATRIX_APIKEY, versionCheckScheduler, VERSION_NOTIFY, PROCESS_AUTOMATICALLY, \
                 KEEP_PROCESSED_DIR, TV_DOWNLOAD_DIR, TVDB_BASE_URL, MIN_SEARCH_FREQUENCY, \
                 showQueueScheduler, searchQueueScheduler, ROOT_DIRS, CACHE_DIR, ACTUAL_CACHE_DIR, TVDB_API_PARMS, \
-                NAMING_PATTERN, NAMING_MULTI_EP, NAMING_FORCE_FOLDERS, NAMING_ABD_PATTERN, NAMING_CUSTOM_ABD, NAMING_STRIP_YEAR, NAMING_ANIME, \
+                NAMING_PATTERN, NAMING_MULTI_EP, NAMING_FORCE_FOLDERS, NAMING_ABD_PATTERN, NAMING_CUSTOM_ABD, NAMING_AE_PATTERN, NAMING_CUSTOM_AE, NAMING_SN_PATTERN, NAMING_CUSTOM_SN, NAMING_STRIP_YEAR, NAMING_ANIME, \
                 RENAME_EPISODES, properFinderScheduler, PROVIDER_ORDER, autoPostProcesserScheduler, \
                 NZBSRUS, NZBSRUS_UID, NZBSRUS_HASH, WOMBLE, providerList, newznabProviderList, \
                 EXTRA_SCRIPTS, USE_TWITTER, TWITTER_USERNAME, TWITTER_PASSWORD, TWITTER_PREFIX, \
@@ -400,7 +407,7 @@ def initialize(consoleLogging=True):
                 NEWZBIN, NEWZBIN_USERNAME, NEWZBIN_PASSWORD, GIT_PATH, MOVE_ASSOCIATED_FILES, \
                 GUI_NAME, HOME_LAYOUT, DISPLAY_SHOW_SPECIALS, COMING_EPS_LAYOUT, COMING_EPS_SORT, COMING_EPS_DISPLAY_PAUSED, METADATA_WDTV, METADATA_TIVO, IGNORE_WORDS, CREATE_MISSING_SHOW_DIRS, \
                 ADD_SHOWS_WO_DIR, USE_SUBTITLES, SUBTITLES_LANGUAGES, SUBTITLES_DIR, SUBTITLES_SERVICES_LIST, SUBTITLES_SERVICES_ENABLED, subtitlesFinderScheduler, \
-                ANIMESUPPORT, USE_ANIDB, ANIDB_USERNAME, ANIDB_PASSWORD, ANIDB_USE_MYLIST, ANIME_SPLIT_HOME, USE_ROMAJI_NAME
+                ANIMESUPPORT, USE_ANIDB, ANIDB_USERNAME, ANIDB_PASSWORD, ANIDB_USE_MYLIST, ANIME_SPLIT_HOME, USE_ROMAJI_NAME, USE_ANIDB_POSTERS
 
         if __INITIALIZED__:
             return False
@@ -499,10 +506,13 @@ def initialize(consoleLogging=True):
         NAMING_PATTERN = check_setting_str(CFG, 'General', 'naming_pattern', '')
         NAMING_ABD_PATTERN = check_setting_str(CFG, 'General', 'naming_abd_pattern', '')
         NAMING_CUSTOM_ABD = check_setting_int(CFG, 'General', 'naming_custom_abd', 0)
+        NAMING_AE_PATTERN = check_setting_str(CFG, 'General', 'naming_ae_pattern', '')
+        NAMING_CUSTOM_AE = check_setting_int(CFG, 'General', 'naming_custom_ae', 0)
+        NAMING_SN_PATTERN = check_setting_str(CFG, 'General', 'naming_sn_pattern', '')
+        NAMING_CUSTOM_SN = check_setting_int(CFG, 'General', 'naming_custom_sn', 0)
         NAMING_MULTI_EP = check_setting_int(CFG, 'General', 'naming_multi_ep', 1)
         NAMING_FORCE_FOLDERS = naming.check_force_season_folders()
         NAMING_STRIP_YEAR = bool(check_setting_int(CFG, 'General', 'naming_strip_year', 0))
-        NAMING_ANIME = check_setting_int(CFG, 'General', 'naming_anime', 1)
 
         TVDB_BASE_URL = 'http://www.thetvdb.com/api/' + TVDB_API_KEY
 
@@ -558,6 +568,8 @@ def initialize(consoleLogging=True):
         THEPIRATEBAY_BLACKLIST = check_setting_str(CFG, 'THEPIRATEBAY', 'thepiratebay_blacklist', '')        
         
         NYAA = bool(check_setting_int(CFG, 'NYAATORRENTS', 'nyaa', 0))
+        
+        FROZENLAYER = bool(check_setting_int(CFG, 'FROZENLAYER', 'frozenlayer', 0))
 
         NZBS = bool(check_setting_int(CFG, 'NZBs', 'nzbs', 0))
         NZBS_UID = check_setting_str(CFG, 'NZBs', 'nzbs_uid', '')
@@ -775,6 +787,7 @@ def initialize(consoleLogging=True):
         ANIDB_USE_MYLIST = bool(check_setting_int(CFG, 'ANIME', 'anidb_use_mylist', 0))
         ANIME_SPLIT_HOME = bool(check_setting_int(CFG, 'ANIME', 'anime_split_home', 0))
         USE_ROMAJI_NAME = bool(check_setting_int(CFG, 'ANIME', 'use_romaji_name', 0))
+        USE_ANIDB_POSTERS = bool(check_setting_int(CFG, 'ANIME', 'use_anidb_posters', 0))
 
         GUI_NAME = check_setting_str(CFG, 'GUI', 'gui_name', 'slick') 
 
@@ -1105,8 +1118,11 @@ def save_config():
     new_config['General']['naming_pattern'] = NAMING_PATTERN
     new_config['General']['naming_custom_abd'] = int(NAMING_CUSTOM_ABD)
     new_config['General']['naming_abd_pattern'] = NAMING_ABD_PATTERN
+    new_config['General']['naming_custom_ae'] = int(NAMING_CUSTOM_AE)
+    new_config['General']['naming_ae_pattern'] = NAMING_AE_PATTERN
+    new_config['General']['naming_custom_sn'] = int(NAMING_CUSTOM_SN)
+    new_config['General']['naming_sn_pattern'] = NAMING_SN_PATTERN
     new_config['General']['naming_multi_ep'] = int(NAMING_MULTI_EP)
-    new_config['General']['naming_anime'] = int(NAMING_ANIME)
     new_config['General']['launch_browser'] = int(LAUNCH_BROWSER)
     new_config['General']['update_shows_on_start'] = int(UPDATE_SHOWS_ON_START)
 
@@ -1163,6 +1179,9 @@ def save_config():
     
     new_config['NYAATORRENTS'] = {}
     new_config['NYAATORRENTS']['nyaa'] = int(NYAA)
+    
+    new_config['FROZENLAYER'] = {}
+    new_config['FROZENLAYER']['frozenlayer'] = int(FROZENLAYER)
 
     new_config['NZBs'] = {}
     new_config['NZBs']['nzbs'] = int(NZBS)
@@ -1332,6 +1351,7 @@ def save_config():
     new_config['ANIME']['anidb_use_mylist'] = int(ANIDB_USE_MYLIST)
     new_config['ANIME']['anime_split_home'] = int(ANIME_SPLIT_HOME)
     new_config['ANIME']['use_romaji_name'] = int(USE_ROMAJI_NAME)
+    new_config['ANIME']['use_anidb_posters'] = int(USE_ANIDB_POSTERS)
 
     new_config['GUI'] = {}
     new_config['GUI']['gui_name'] = GUI_NAME

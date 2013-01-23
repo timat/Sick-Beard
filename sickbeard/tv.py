@@ -39,6 +39,7 @@ from lib import adba
 from sickbeard import db
 from sickbeard import helpers, exceptions, logger
 from sickbeard.exceptions import ex
+from sickbeard.metadata import helpers as metadata_helpers
 from sickbeard import tvrage
 from sickbeard import image_cache
 from sickbeard import notifiers
@@ -79,6 +80,7 @@ class TVShow(object):
         self.anime = 0
         self.absolute_numbering = 0
         self.anidbid = 0
+        self.anidb_picname = ""
 
         self.lock = threading.Lock()
         self._isDirGood = False
@@ -429,25 +431,47 @@ class TVShow(object):
             logger.log(u"Couldn't get TVRage ID because we're unable to sync TVDB and TVRage: "+ex(e), logger.DEBUG)
             return
         
-    def setAniDBID(self, force=False):
+    def setAniDBData(self):
 
+        def getSeasonsData(anime, id, seasonNum):
+            season = adba.Anime(sickbeard.ADBA_CONNECTION, aid=id, paramsA=['type', 'romaji_name', 'related_aid_list', 'related_aid_type'], anidbMapPath=sickbeard.CACHE_DIR, tvdbMapPath=sickbeard.CACHE_DIR, load=True)
+            if season.type != 'TV Series':
+                return
+            
+            seasonName = str(season.romaji_name).replace(str(anime.romaji_name)+":", "").strip()
+            myDB = db.DBConnection()
+            myDB.upsert('anime_seasons_data', {'anidb_id': id, 'name': seasonName}, {'show_id': self.tvdbid, 'season': seasonNum})
+            
+            if isinstance(season.related_aid_type, int) and season.related_aid_type == 1:
+                getSeasonsData(anime, season.related_aid_list, seasonNum + 1)
+            elif 1 in season.related_aid_type:
+                seasonId = season.related_aid_list[season.related_aid_type.index(1)]
+                getSeasonsData(anime, seasonId, seasonNum + 1)
+            
         if not self.anime:
-            logger.log(u"No need to get the AniDB ID, the show isn't an anime", logger.DEBUG)
-            return
-        
-        if self.anidbid != 0 and not force:
-            logger.log(u"No need to get the AniDB ID, it's already populated", logger.DEBUG)
+            logger.log(u"No need to get the AniDB data, the show isn't an anime", logger.DEBUG)
             return
 
-        logger.log(u"Attempting to retrieve the AniDB ID", logger.DEBUG)
+        logger.log(u"Attempting to retrieve the AniDB Data", logger.DEBUG)
 
         if not helpers.set_up_anidb_connection():
             logger.log(u"To get data from AniDB first enter your user and password on config."+self.name, logger.WARNING)
             return
             
-        anime = adba.Anime(sickbeard.ADBA_CONNECTION, tvdbid=self.tvdbid, name=self.name)
+        anime = adba.Anime(sickbeard.ADBA_CONNECTION, aid=self.anidbid, tvdbid=self.tvdbid, name=self.name, paramsA=['aid', 'year', 'category_list', 'romaji_name', 'picname'], anidbMapPath=sickbeard.CACHE_DIR, tvdbMapPath=sickbeard.CACHE_DIR, load=True)
         if anime:
             self.anidbid = anime.aid
+            self.startyear = anime.year
+            if not self.absolute_numbering:
+                getSeasonsData(anime, self.anidbid, 1)
+            self.genre = "|"+anime.category_list.replace(",","|")+"|"
+            
+            if sickbeard.USE_ANIDB_POSTERS:
+                self.anidb_picname = anime.picname
+            
+            if sickbeard.USE_ROMAJI_NAME:
+                self.name = anime.romaji_name
+                
             self.saveToDB()
         else:
             logger.log(u"AniDB doesn't found any anime with name "+self.name, logger.WARNING)
@@ -1078,6 +1102,7 @@ class TVEpisode(object):
 
         self._name = ""
         self._season = season
+        self._season_name = ""
         self._episode = episode
         self._absolute_number = 0
         self._description = ""
@@ -1108,6 +1133,7 @@ class TVEpisode(object):
 
     name = property(lambda self: self._name, dirty_setter("_name"))
     season = property(lambda self: self._season, dirty_setter("_season"))
+    season_name = property(lambda self: self._season_name, dirty_setter("_season_name"))
     episode = property(lambda self: self._episode, dirty_setter("_episode"))
     absolute_number = property(lambda self: self._absolute_number, dirty_setter("_absolute_number"))
     description = property(lambda self: self._description, dirty_setter("_description"))
@@ -1283,6 +1309,11 @@ class TVEpisode(object):
             if sqlResults[0]["release_name"] != None:
                 self.release_name = sqlResults[0]["release_name"]
 
+            try:
+                self.season_name = myDB.select("SELECT name FROM anime_seasons_data WHERE show_id = ? AND season = ?", [self.show.tvdbid, self.season])[0]['name']
+            except:
+                self.season_name = ""
+            
             self.dirty = False
             return True
 
@@ -1601,7 +1632,7 @@ class TVEpisode(object):
         if self.show.anime and self.show.absolute_numbering:
             pattern = '%SN - %0AE - %EN'
         else:
-            pattern = '%SN - %Sx%0E - %EN'
+            pattern = '%SN% - %Sx%0E - %EN'
         return self._format_pattern(pattern)
 
     def _ep_name(self):
@@ -1698,6 +1729,9 @@ class TVEpisode(object):
                    '%SN': show_name,
                    '%S.N': dot(show_name),
                    '%S_N': us(show_name),
+                   '%SSN': self.season_name,
+                   '%SS.N': dot(self.season_name),
+                   '%SS_N': us(self.season_name),
                    '%EN': ep_name,
                    '%E.N': dot(ep_name),
                    '%E_N': us(ep_name),
@@ -1885,6 +1919,12 @@ class TVEpisode(object):
             # we only use ABD if it's enabled, this is an ABD show, AND this is not a multi-ep
             if self.show.air_by_date and sickbeard.NAMING_CUSTOM_ABD and not self.relatedEps:
                 pattern = sickbeard.NAMING_ABD_PATTERN
+            # we only use AN if it's enabled, this is an anime show with absolute numbering and season is not 0
+            elif sickbeard.NAMING_CUSTOM_AE and self.show.anime and self.show.absolute_numbering and self.season != 0:
+                pattern = sickbeard.NAMING_AE_PATTERN
+            # we only use Season Name if it's enabled and this show have season names
+            elif sickbeard.NAMING_CUSTOM_SN and True: #TODO check season names
+                pattern = sickbeard.NAMING_SN_PATTERN
             else:
                 pattern = sickbeard.NAMING_PATTERN
         
@@ -1894,7 +1934,7 @@ class TVEpisode(object):
         if len(name_groups) == 1:
             return ''
         else:
-            return self._format_pattern(os.sep.join(name_groups[:-1]), multi)
+            return ' '.join(self._format_pattern(os.sep.join(name_groups[:-1]), multi).split())
 
 
     def formatted_filename(self, pattern=None, multi=None):
@@ -1906,15 +1946,19 @@ class TVEpisode(object):
             # we only use ABD if it's enabled, this is an ABD show, AND this is not a multi-ep
             if self.show.air_by_date and sickbeard.NAMING_CUSTOM_ABD and not self.relatedEps:
                 pattern = sickbeard.NAMING_ABD_PATTERN
+            # we only use AN if it's enabled, this is an anime show with absolute numbering and season is not 0
+            elif sickbeard.NAMING_CUSTOM_AE and self.show.anime and self.show.absolute_numbering and self.season != 0:
+                pattern = sickbeard.NAMING_AE_PATTERN
+            # we only use Season Name if it's enabled and this show have season names
+            elif sickbeard.NAMING_CUSTOM_SN and True: #TODO check season names
+                pattern = sickbeard.NAMING_SN_PATTERN
             else:
                 pattern = sickbeard.NAMING_PATTERN
-                if self.show.anime and self.show.absolute_numbering and self.season != 0:
-                    pattern = pattern.replace('%Sx', 'x').replace('%0Sx', 'x').replace('x%E', '%AE').replace('x%0E', '%0AE')
-            
+
         # split off the filename only, if they exist
         name_groups = re.split(r'[\\/]', pattern)
         
-        return self._format_pattern(name_groups[-1], multi)
+        return ' '.join(self._format_pattern(name_groups[-1], multi).split())
 
     def rename(self):
         """

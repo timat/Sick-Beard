@@ -27,6 +27,7 @@ __all__ = ['ezrss',
            'thepiratebay',
            'dtt',
            'nyaatorrents',
+           'frozenlayer',
            ]
 
 import sickbeard

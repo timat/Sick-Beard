@@ -87,7 +87,16 @@
     <select id="seasonJump">
         <option value="jump">Jump to Season</option>
     #for $seasonNum in $seasonResults:
-        <option value="#season-$seasonNum["season"]">#if int($seasonNum["season"]) == 0 then "Specials" else "Season " + str($seasonNum["season"])#</option>
+        <option value="#season-$seasonNum["season"]">
+        	#if int($seasonNum["season"]) == 0:
+        		Specials
+        	#else:
+        		Season $seasonNum["season"]
+        		#if $seasonNum['name']:
+        			- $seasonNum['name']
+        		#end if
+        	#end if 
+        </option>
     #end for
     </select>
 #else:
@@ -96,7 +105,7 @@
         #if int($seasonNum["season"]) == 0:
             <a href="#season-$seasonNum["season"]">Specials</a>
         #else:
-            <a href="#season-$seasonNum["season"]">${str($seasonNum["season"])}</a>
+            <a href="#season-$seasonNum["season"]">${str($seasonNum["season"])} #if $seasonNum['name'] then "- " + $seasonNum['name'] else ""#</a>
         #end if
         #if $seasonNum != $seasonResults[-1]:
             <span class="separator">|</span>
@@ -223,6 +232,12 @@ $Quality.DOWNLOADED.sort()
 	            		Episodes
 	            	#else
 	            		Season $epResult["season"]
+	            		#if $show.anime:
+		            		#set $season_data = $seasonResults[len($seasonResults)-int($epResult["season"])-1]
+		            		#if $season_data['name']:
+		            			- $season_data['name'] <a href="http://anidb.net/perl-bin/animedb.pl?show=anime&aid=$season_data['anidb_id']" onclick="window.open(this.href, '_blank'); return false;" title="http://anidb.net/perl-bin/animedb.pl?show=anime&aid=$season_data['anidb_id']"><img alt="[anidb]" height="16" width="16" src="$sbRoot/images/anidb16.png" /></a>
+		            		#end if
+		            	#end if
 	            	#end if
 	            </h2>
 	        </td>

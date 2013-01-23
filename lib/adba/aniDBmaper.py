@@ -72,7 +72,7 @@ class AniDBMaper:
     
     def getAnimeMapA(self):
         # each line is one byte
-        # only chnage this if the api changes
+        # only change this if the api changes
         map = ['aid','unused','year','type','related_aid_list','related_aid_type','category_list','category_weight_list',
                  'romaji_name','kanji_name','english_name','other_name','short_name_list','synonym_list','retired','retired',
                  'episodes','highest_episode_number','special_ep_count','air_date','end_date','url','picname','category_id_list',
@@ -84,7 +84,7 @@ class AniDBMaper:
     
     def getFileMapF(self):
         # each line is one byte
-        # only chnage this if the api changes
+        # only change this if the api changes
         map = ['unused','aid','eid','gid','mylist_id','list_other_episodes','IsDeprecated','state',
                 'size','ed2k','md5','sha1','crc32','unused','unused','reserved',
                 'quality','source','audio_codec_list','audio_bitrate_list','video_codec','video_bitrate','video_resolution','file_type_extension',
@@ -94,7 +94,7 @@ class AniDBMaper:
     
     def getFileMapA(self):
         # each line is one byte
-        # only chnage this if the api changes
+        # only change this if the api changes
         map = ['anime_total_episodes','highest_episode_number','year','type','related_aid_list','related_aid_type','category_list','reserved',
                 'romaji_name','kanji_name','english_name','other_name','short_name_list','synonym_list','retired','retired',
                 'epno','ep_name','ep_romaji_name','ep_kanji_name','episode_rating','episode_vote_count','unused','unused',

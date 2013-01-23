@@ -190,9 +190,10 @@ anime_ep_regexes = [
                     
 
                ('anime_ultimate',
-                """
+                '''
                 ^(?:\[(?P<release_group>.+?)\][ ._-]*)
                 (?P<series_name>.+?)[ ._-]+
+                ((?P<season_name>.+?)[ ._-]+)?
                 (?P<ep_ab_num>\d{1,3})
                 (-(?P<extra_ab_ep_num>\d{1,3}))?[ ._-]+?
                 (?:v(?P<version>[0-9]))?
@@ -200,7 +201,7 @@ anime_ep_regexes = [
                 (?:(?:(?:[\[\(])(?P<extra_info>\d{3,4}[xp]?\d{0,4}[\.\w\s-]*)(?:[\]\)]))|(?:\d{3,4}[xp]))
                 (?:[ ._]?\[(?P<crc>\w+)\])?
                 .*?
-                """
+                '''
                 ),
                ('anime_standard',
                # [Group Name] Show Name.13-14
@@ -211,11 +212,12 @@ anime_ep_regexes = [
                # Show Name 13
                '''
                ^(\[(?P<release_group>.+?)\][ ._-]*)?                        # Release Group and separator
-               (?P<series_name>.+?)[ ._-]+                                 # Show_Name and separator
+               (?P<series_name>.+?)[ ._-]+                                  # Show_Name and separator
+               ((?P<season_name>.+?)[ ._-]+)?                               # Season_Name and separator
                (?P<ep_ab_num>\d{1,3})                                       # E01
                (-(?P<extra_ab_ep_num>\d{1,3}))?                             # E02
                (v(?P<version>[0-9]))?                                       # version
-               [ ._-]+\[(?P<extra_info>\d{3,4}[xp]?\d{0,4}[\.\w\s-]*)\]       # Source_Quality_Etc-
+               [ ._-]+\[(?P<extra_info>\d{3,4}[xp]?\d{0,4}[\.\w\s-]*)\]     # Source_Quality_Etc-
                (\[(?P<crc>\w{8})\])?                                        # CRC
                .*?                                                          # Separator and EOL
                '''),
@@ -227,6 +229,7 @@ anime_ep_regexes = [
                '''
                ^(\[(?P<release_group>.+?)\][ ._-]*)?                                    # Release Group and separator
                (?P<series_name>.+?)[ ._-]+                                              # Show_Name and separator
+               ((?P<season_name>.+?)[ ._-]+)?                                           # Season_Name and separator
                (?P<ep_ab_num>\d{1,3})                                                   # E01
                (-(?P<extra_ab_ep_num>\d{1,3}))?                                         # E02
                (v(?P<version>[0-9]))?                                                   # version
@@ -240,6 +243,7 @@ anime_ep_regexes = [
                '''
                ^(\[(?P<release_group>.+?)\][ ._-]*)? # Release Group and separator
                (?P<series_name>.+?)[ ._-]+           # Show_Name and separator
+               ((?P<season_name>.+?)[ ._-]+)?        # Season_Name and separator
                (?P<ep_ab_num>\d{1,3})                # E01
                (-(?P<extra_ab_ep_num>\d{1,3}))?      # E02
                (v(?P<version>[0-9]))?                # version
@@ -255,12 +259,13 @@ anime_ep_regexes = [
                '''
                ^(\[(?P<release_group>.+?)\][ ._-]*)?                        # Release Group and separator
                (?P<series_name>.+?)[ ._]*                                   # Show_Name and separator
+               ((?P<season_name>.+?)[ ._]*)?                                # Season_Name and separator
                ([ ._-]+-[ ._-]+[A-Z]+[ ._-]+)?[ ._-]+                       # funny stuff, this is sooo nuts ! this will kick me in the butt one day
                (?P<ep_ab_num>\d{1,3})                                       # E01
                (-(?P<extra_ab_ep_num>\d{1,3}))?                             # E02
                (v(?P<version>[0-9]))?                                       # version
-               ([ ._-](\[\w{1,2}\])?\[[a-z][.]?\w{2,4}\])?                        #codec
-               [ ._-]*\[(?P<extra_info>(\d{3,4}[xp]?\d{0,4})?[\.\w\s-]*)\]    # Source_Quality_Etc-
+               ([ ._-](\[\w{1,2}\])?\[[a-z][.]?\w{2,4}\])?                  #codec
+               [ ._-]*\[(?P<extra_info>(\d{3,4}[xp]?\d{0,4})?[\.\w\s-]*)\]  # Source_Quality_Etc-
                (\[(?P<crc>\w{8})\])?
                .*?                                                          # Separator and EOL
                '''),
@@ -271,6 +276,7 @@ anime_ep_regexes = [
                # Bleach s16e03e04 313-314
                '''
                ^(?P<series_name>.+?)[ ._-]+                 # start of string and series name and non optinal separator
+               ((?P<season_name>.+?)[ ._-]+)?               # season name and non optinal separator
                [sS](?P<season_num>\d+)[. _-]*               # S01 and optional separator
                [eE](?P<ep_num>\d+)                          # epipisode E02
                (([. _-]*e|-)                                # linking e/- char
@@ -289,7 +295,8 @@ anime_ep_regexes = [
                # Bleach s16e03e04 313-314
                '''
                ^(?P<series_name>.+?)[ ._-]+                 # start of string and series name and non optinal separator
-               (?P<season_num>\d+)[. _-]*               # S01 and optional separator
+               ((?P<season_name>.+?)[ ._-]+)?               # season name and non optinal separator
+               (?P<season_num>\d+)[. _-]*                   # S01 and optional separator
                [xX](?P<ep_num>\d+)                          # epipisode E02
                (([. _-]*e|-)                                # linking e/- char
                (?P<extra_ep_num>\d+))*                      # additional E03/etc
@@ -306,6 +313,7 @@ anime_ep_regexes = [
                # Bleach - 313-314 - s16e03-04
                '''
                ^(?P<series_name>.+?)[ ._-]+                 # start of string and series name and non optinal separator
+               ((?P<season_name>.+?)[ ._-]+)?               # sseason name and non optinal separator
                (?P<ep_ab_num>\d{1,3})                       # absolute number
                (-(?P<extra_ab_ep_num>\d{1,3}))?             # "-" as separator and anditional absolute number, all optinal
                (v(?P<version>[0-9]))?                       # the version e.g. "v2"
@@ -321,13 +329,14 @@ anime_ep_regexes = [
                ('anime_and_normal_front',
                # 165.Naruto Shippuuden.s08e014
                '''
-               ^(?P<ep_ab_num>\d{1,3})                       # start of string and absolute number
-               (-(?P<extra_ab_ep_num>\d{1,3}))?              # "-" as separator and anditional absolute number, all optinal
-               (v(?P<version>[0-9]))?[ ._-]+                 # the version e.g. "v2"
+               ^(?P<ep_ab_num>\d{1,3})                      # start of string and absolute number
+               (-(?P<extra_ab_ep_num>\d{1,3}))?             # "-" as separator and anditional absolute number, all optinal
+               (v(?P<version>[0-9]))?[ ._-]+                # the version e.g. "v2"
                (?P<series_name>.+?)[ ._-]+
-               [sS](?P<season_num>\d+)[. _-]*                 # S01 and optional separator
+               ((?P<season_name>.+?)[ ._-]+)?
+               [sS](?P<season_num>\d+)[. _-]*               # S01 and optional separator
                [eE](?P<ep_num>\d+) 
-               (([. _-]*e|-)                               # linking e/- char
+               (([. _-]*e|-)                                # linking e/- char
                (?P<extra_ep_num>\d+))*                      # additional E03/etc
                .*?
                '''
@@ -336,6 +345,7 @@ anime_ep_regexes = [
                  """
                 ^(?:\[(?P<release_group>.+?)\][ ._-]*)
                 (?P<series_name>.+?)[ ._-]+
+                ((?P<season_name>.+?)[ ._-]+)?
                 (?P<ep_ab_num>\d{1,3})
                 (-(?P<extra_ab_ep_num>\d{1,3}))?[ ._-]*?
                 (?:v(?P<version>[0-9])[ ._-]+?)?
@@ -350,10 +360,11 @@ anime_ep_regexes = [
                # [ACX]_Wolf's_Spirit_001.mkv
                '''
                ^(\[(?P<release_group>.+?)\][ ._-]*)?
-               (?P<series_name>.+?)[ ._-]+                         # Show_Name and separator
-               (?P<ep_ab_num>\d{3})                                      # E01
-               (-(?P<extra_ab_ep_num>\d{3}))?                            # E02
-               (v(?P<version>[0-9]))?                                     # v2
-               .*?                                                         # Separator and EOL
+               (?P<series_name>.+?)[ ._-]+                  # Show_Name and separator
+               ((?P<season_name>.+?)[ ._-]+)?               # Show_Name and separator
+               (?P<ep_ab_num>\d{3})                         # E01
+               (-(?P<extra_ab_ep_num>\d{3}))?               # E02
+               (v(?P<version>[0-9]))?                       # v2
+               .*?                                          # Separator and EOL
                ''')
                ]

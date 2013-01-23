@@ -310,11 +310,7 @@ class QueueItemAdd(ShowQueueItem):
         try:
             self.show.loadEpisodesFromTVDB()
             self.show.setTVRID()
-            self.show.setAniDBID()
-            if self.show.anime and sickbeard.USE_ROMAJI_NAME and helpers.set_up_anidb_connection():
-                anime = adba.Anime(sickbeard.ADBA_CONNECTION, aid=self.show.anidbid, load=True)
-                if anime:
-                    self.show.name = anime.romaji_name
+            self.show.setAniDBData()
 
             self.show.writeMetadata()
             self.show.populateCache()
@@ -485,15 +481,8 @@ class QueueItemUpdate(ShowQueueItem):
             if self.show.tvrid == 0:
                 self.show.setTVRID()
         
-        # Set anidb id and set romaji name if is needed        
-        self.show.setAniDBID()
-        try:
-            if self.show.anime and sickbeard.USE_ROMAJI_NAME and helpers.set_up_anidb_connection():
-                anime = adba.Anime(sickbeard.ADBA_CONNECTION, aid=self.show.anidbid, load=True)
-                if anime:
-                    self.show.name = anime.romaji_name
-        except AniDBIncorrectParameterError:
-            logger.log(u"AniDB Id is 0 on show"+self.show.name, logger.WARNING)
+        # Set anidb data        
+        self.show.setAniDBData()
                 
         sickbeard.showQueueScheduler.action.refreshShow(self.show, True) #@UndefinedVariable
 

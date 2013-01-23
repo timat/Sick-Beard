@@ -18,6 +18,7 @@
 from __future__ import with_statement
 import hashlib
 import os
+import requests
 import xml.etree.cElementTree as etree
 
 
@@ -51,19 +52,41 @@ def get_file_size(path):
     size = os.path.getsize(path)
     return size
 
-
-
-def read_anidb_xml(filePath):
+def read_anidb_xml(filePath, forceDownload=False):
     if not filePath:
         filePath = os.path.join(os.path.dirname(os.path.abspath( __file__ )), "animetitles.xml")
+        if not os.path.exists(filePath):
+            forceDownload = True
+    elif os.path.isdir(filePath):
+        filePath = os.path.join(filePath, "animetitles.xml")
+
+    if forceDownload:
+        download_tvdb_map_xml(filePath)
+
     return read_xml_into_etree(filePath)
 
-
-def read_tvdb_map_xml(filePath):
+def read_tvdb_map_xml(filePath, forceDownload=False):
     if not filePath:
         filePath = os.path.join(os.path.dirname(os.path.abspath( __file__ )), "anime-list.xml")
+        if not os.path.exists(filePath):
+            forceDownload = True
+    elif os.path.isdir(filePath):
+        filePath = os.path.join(filePath, "anime-list.xml")
+
+    if forceDownload:
+        download_tvdb_map_xml(filePath)
+
     return read_xml_into_etree(filePath)
 
+def download_anidb_xml(filePath):
+    r = requests.get("http://anidb.net/api/animetitles.xml.gz")
+    with open(filePath, "wb") as code:
+        code.write(r.content)
+
+def download_tvdb_map_xml(filePath):
+    r = requests.get("https://raw.github.com/ScudLee/anime-lists/master/anime-list-full.xml")
+    with open(filePath, "wb") as code:
+        code.write(r.content)
 
 def read_xml_into_etree(filePath):
         if not filePath:

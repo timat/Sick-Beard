@@ -15,15 +15,12 @@
 # You should have received a copy of the GNU General Public License
 # along with aDBa.  If not, see <http://www.gnu.org/licenses/>.
 
-from time import time, sleep
 import aniDBfileInfo as fileInfo
-import xml.etree.cElementTree as etree
-import os, re, string
+import re, string
 from aniDBmaper import AniDBMaper
 from aniDBtvDBmaper import TvDBMap
 from aniDBerrors import *
-
-
+import aniDBfileInfo
 
 class aniDBabstractObject(object):
 
@@ -103,10 +100,12 @@ class aniDBabstractObject(object):
 
 
 class Anime(aniDBabstractObject):
-    def __init__(self, aniDB, name=None, aid=None, tvdbid=None, paramsA=None, autoCorrectName=False, load=False):
+    def __init__(self, aniDB, name=None, aid=None, tvdbid=None, paramsA=None, autoCorrectName=False, load=False, anidbMapPath=None, tvdbMapPath=None):
 
         self.maper = AniDBMaper()
-        self.tvDBMap = TvDBMap()
+        self.tvDBMap = TvDBMap(tvdbMapPath)
+        self.tvdbMapPath = tvdbMapPath
+        self.anidbMapPath = anidbMapPath
         self.allAnimeXML = None
 
         self.name = name
@@ -166,7 +165,7 @@ class Anime(aniDBabstractObject):
     #TODO: refactor and use the new functions in anidbFileinfo
     def _get_aid_from_xml(self, name):
         if not self.allAnimeXML:
-            self.allAnimeXML = self._read_animetitels_xml()
+            self.allAnimeXML = aniDBfileInfo.read_anidb_xml(self.anidbMapPath)
 
         regex = re.compile('( \(\d{4}\))|[%s]' % re.escape(string.punctuation)) # remove any punctuation and e.g. ' (2011)'
         #regex = re.compile('[%s]'  % re.escape(string.punctuation)) # remove any punctuation and e.g. ' (2011)'
@@ -185,7 +184,7 @@ class Anime(aniDBabstractObject):
     #TODO: refactor and use the new functions in anidbFileinfo
     def _get_name_from_xml(self, aid, onlyMain=True):
         if not self.allAnimeXML:
-            self.allAnimeXML = self._read_animetitels_xml()
+            self.allAnimeXML = aniDBfileInfo.read_anidb_xml(self.anidbMapPath)
 
         for anime in self.allAnimeXML.findall("anime"):
             if int(anime.get("aid", False)) == aid:
@@ -195,15 +194,6 @@ class Anime(aniDBabstractObject):
                     if (currentLang == "en" and not onlyMain) or currentType == "main":
                         return title.text
         return ""
-
-
-    def _read_animetitels_xml(self, path=None):
-        if not path:
-            path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "animetitles.xml")
-
-        f = open(path, "r")
-        allAnimeXML = etree.ElementTree(file=f)
-        return allAnimeXML
 
     def _builPreSequal(self):
         if self.related_aid_list and self.related_aid_type:

@@ -101,6 +101,88 @@ $(document).ready(function () {
             });
 
     }
+    
+    function fill_ae_examples() {
+        var pattern = $('#naming_ae_pattern').val();
+
+        $.get(sbRoot + '/config/postProcessing/testNaming', {pattern: pattern, ae: 'True'},
+            function (data) {
+                if (data) {
+                    $('#naming_ae_example').text(data + '.ext');
+                    $('#naming_ae_example_div').show();
+                } else {
+                    $('#naming_ae_example_div').hide();
+                }
+            });
+
+        $.get(sbRoot + '/config/postProcessing/isNamingValid', {pattern: pattern, ae: 'True'},
+            function (data) {
+                if (data == "invalid") {
+                    $('#naming_ae_pattern').qtip('option', {
+                        'content.text': 'This pattern is invalid.',
+                        'style.classes': 'ui-tooltip-rounded ui-tooltip-shadow ui-tooltip-red'
+                    });
+                    $('#naming_ae_pattern').qtip('toggle', true);
+                    $('#naming_ae_pattern').css('background-color', '#FFDDDD');
+                } else if (data == "seasonfolders") {
+                    $('#naming_ae_pattern').qtip('option', {
+                        'content.text': 'This pattern would be invalid without the folders, using it will force "Flatten" off for all shows.',
+                        'style.classes': 'ui-tooltip-rounded ui-tooltip-shadow ui-tooltip-red'
+                    });
+                    $('#naming_ae_pattern').qtip('toggle', true);
+                    $('#naming_ae_pattern').css('background-color', '#FFFFDD');
+                } else {
+                    $('#naming_ae_pattern').qtip('option', {
+                        'content.text': 'This pattern is valid.',
+                        'style.classes': 'ui-tooltip-rounded ui-tooltip-shadow ui-tooltip-green'
+                    });
+                    $('#naming_ae_pattern').qtip('toggle', false);
+                    $('#naming_ae_pattern').css('background-color', '#FFFFFF');
+                }
+            });
+
+    }
+    
+    function fill_sn_examples() {
+        var pattern = $('#naming_sn_pattern').val();
+
+        $.get(sbRoot + '/config/postProcessing/testNaming', {pattern: pattern, sn: 'True'},
+            function (data) {
+                if (data) {
+                    $('#naming_sn_example').text(data + '.ext');
+                    $('#naming_sn_example_div').show();
+                } else {
+                    $('#naming_sn_example_div').hide();
+                }
+            });
+
+        $.get(sbRoot + '/config/postProcessing/isNamingValid', {pattern: pattern, sn: 'True'},
+            function (data) {
+                if (data == "invalid") {
+                    $('#naming_sn_pattern').qtip('option', {
+                        'content.text': 'This pattern is invalid.',
+                        'style.classes': 'ui-tooltip-rounded ui-tooltip-shadow ui-tooltip-red'
+                    });
+                    $('#naming_sn_pattern').qtip('toggle', true);
+                    $('#naming_sn_pattern').css('background-color', '#FFDDDD');
+                } else if (data == "seasonfolders") {
+                    $('#naming_sn_pattern').qtip('option', {
+                        'content.text': 'This pattern would be invalid without the folders, using it will force "Flatten" off for all shows.',
+                        'style.classes': 'ui-tooltip-rounded ui-tooltip-shadow ui-tooltip-red'
+                    });
+                    $('#naming_sn_pattern').qtip('toggle', true);
+                    $('#naming_sn_pattern').css('background-color', '#FFFFDD');
+                } else {
+                    $('#naming_sn_pattern').qtip('option', {
+                        'content.text': 'This pattern is valid.',
+                        'style.classes': 'ui-tooltip-rounded ui-tooltip-shadow ui-tooltip-green'
+                    });
+                    $('#naming_sn_pattern').qtip('toggle', false);
+                    $('#naming_sn_pattern').css('background-color', '#FFFFFF');
+                }
+            });
+
+    }
 
     function setup_naming() {
         // if it is a custom selection then show the text box
@@ -123,6 +205,28 @@ $(document).ready(function () {
         }
         fill_abd_examples();
     }
+    
+    function setup_ae_naming() {
+        // if it is a custom selection then show the text box
+        if ($('#name_ae_presets :selected').val() == "Custom...") {
+            $('#naming_ae_custom').show();
+        } else {
+            $('#naming_ae_custom').hide();
+            $('#naming_ae_pattern').val($('#name_ae_presets :selected').attr('id'));
+        }
+        fill_ae_examples();
+    }
+    
+    function setup_sn_naming() {
+        // if it is a custom selection then show the text box
+        if ($('#name_sn_presets :selected').val() == "Custom...") {
+            $('#naming_sn_custom').show();
+        } else {
+            $('#naming_sn_custom').hide();
+            $('#naming_sn_pattern').val($('#name_sn_presets :selected').attr('id'));
+        }
+        fill_sn_examples();
+    }
 
     $('#name_presets').change(function () {
         setup_naming();
@@ -134,6 +238,22 @@ $(document).ready(function () {
 
     $('#naming_custom_abd').change(function () {
         setup_abd_naming();
+    });
+    
+    $('#name_ae_presets').change(function () {
+        setup_ae_naming();
+    });
+
+    $('#naming_custom_ae').change(function () {
+        setup_ae_naming();
+    });
+    
+    $('#name_sn_presets').change(function () {
+        setup_sn_naming();
+    });
+
+    $('#naming_custom_sn').change(function () {
+        setup_sn_naming();
     });
 
     $('#naming_multi_ep').change(fill_examples);
@@ -151,11 +271,31 @@ $(document).ready(function () {
         }, 500);
     });
 
+	$('#naming_ae_pattern').focusout(fill_examples);
+    $('#naming_ae_pattern').keyup(function () {
+        typewatch(function () {
+            fill_ae_examples();
+        }, 500);
+    });
+    
+    $('#naming_sn_pattern').focusout(fill_examples);
+    $('#naming_sn_pattern').keyup(function () {
+        typewatch(function () {
+            fill_sn_examples();
+        }, 500);
+    });
+
     $('#show_naming_key').click(function () {
         $('#naming_key').toggle();
     });
     $('#show_naming_abd_key').click(function () {
         $('#naming_abd_key').toggle();
+    });
+    $('#show_naming_ae_key').click(function () {
+        $('#naming_ae_key').toggle();
+    });
+    $('#show_naming_sn_key').click(function () {
+        $('#naming_sn_key').toggle();
     });
     $('#do_custom').click(function () {
         $('#naming_pattern').val($('#name_presets :selected').attr('id'));
@@ -164,6 +304,8 @@ $(document).ready(function () {
     });
     setup_naming();
     setup_abd_naming();
+    setup_ae_naming();
+    setup_sn_naming();
 
     // -- start of metadata options div toggle code --
     $('#metadataType').change(function () {
