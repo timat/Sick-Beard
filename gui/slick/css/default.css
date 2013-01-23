@@ -68,9 +68,9 @@ img {
     border: 3px solid #FFFFFF;
     box-shadow: 1px 1px 2px 0 #555555;
     float: left;
-    height: 50px;
+    height: 52px;
     overflow: hidden;
-/*    border-radius: 4px;*/
+    border-radius: 8px;
 }
 .imgHomeWrapper .poster {
     float: left;
@@ -78,11 +78,13 @@ img {
     height: auto;
     position: relative;
     vertical-align: middle;
+    border-radius: 8px;
 }
 .imgHomeWrapper .banner {
     vertical-align: top;
     height: auto;
     width: 300px;
+    border-radius: 8px;
 }
 
 html {
@@ -661,7 +663,7 @@ div#summary {
   margin: 3px 0 10px 0;
 }
 div#summary .infoTable {
-  width: 85%;
+  width: 90%;
 }
 div#summary tr {
   line-height: 17px;
@@ -678,7 +680,7 @@ div#summary tr td {
 }
 #SubMenu {
   float: right;
-  margin-top: -30px;
+  margin-top: -35px;
   position: relative;
   z-index: 99;
 }
@@ -1028,6 +1030,11 @@ span.true {
 .ui-progressbar {
   height: 18px !important;
   line-height: 17px;
+}
+
+.pull-left {
+    float: left;
+    padding-right: 2px
 }
 
 .pull-right {

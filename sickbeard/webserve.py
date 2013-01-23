@@ -929,8 +929,8 @@ class ConfigSearch:
     def saveSearch(self, use_nzbs=None, use_torrents=None, nzb_dir=None, sab_username=None, sab_password=None,
                        sab_apikey=None, sab_category=None, sab_host=None, nzbget_password=None, nzbget_category=None, nzbget_host=None,
                        nzb_method=None, torrent_method=None, usenet_retention=None, search_frequency=None, download_propers=None,
-                       torrent_dir=None, torrent_username=None, torrent_password=None, torrent_host=None, torrent_path=None, 
-                       torrent_ratio=None, torrent_paused=None, torrent_label=None, ignore_words=None):
+                       torrent_dir=None, torrent_username=None, torrent_password=None, torrent_host=None, torrent_label=None, torrent_path=None, 
+                       torrent_ratio=None, torrent_paused=None, ignore_words=None):
 
         results = []
 
@@ -993,6 +993,7 @@ class ConfigSearch:
 
         sickbeard.TORRENT_USERNAME = torrent_username
         sickbeard.TORRENT_PASSWORD = torrent_password
+        sickbeard.TORRENT_LABEL = torrent_label
         sickbeard.TORRENT_PATH = torrent_path
         sickbeard.TORRENT_RATIO = torrent_ratio
         if torrent_paused == "on":
@@ -1000,7 +1001,6 @@ class ConfigSearch:
         else:
             torrent_paused = 0
         sickbeard.TORRENT_PAUSED = torrent_paused
-        sickbeard.TORRENT_LABEL = torrent_label.replace(' ', '_')
 
         if torrent_host and not re.match('https?://.*', torrent_host):
             torrent_host = 'http://' + torrent_host
@@ -1339,12 +1339,6 @@ class ConfigProviders:
 
         sickbeard.NZBSRUS_UID = nzbs_r_us_uid.strip()
         sickbeard.NZBSRUS_HASH = nzbs_r_us_hash.strip()
-
-        sickbeard.NZBMATRIX_USERNAME = nzbmatrix_username
-        sickbeard.NZBMATRIX_APIKEY = nzbmatrix_apikey.strip()
-
-        sickbeard.NEWZBIN_USERNAME = newzbin_username
-        sickbeard.NEWZBIN_PASSWORD = newzbin_password
 
         sickbeard.PROVIDER_ORDER = provider_list
 
@@ -1903,7 +1897,7 @@ class NewHomeAddShows:
         if 'en' in result:
             del result[result.index('en')]
         result.sort()
-        result.insert(0,'en')
+        result.insert(0, 'en')
 
         return json.dumps({'results': result})
 
@@ -1916,7 +1910,7 @@ class NewHomeAddShows:
         if not lang or lang == 'null':
                 lang = "en"
 
-        baseURL = "http://thetvdb.com/api/GetSeries.php?"
+        baseURL = "http://www.thetvdb.com/api/GetSeries.php?"
         nameUTF8 = name.encode('utf-8')
 
         logger.log(u"Trying to find Show on thetvdb.com with: " + nameUTF8.decode('utf-8'), logger.DEBUG)
@@ -1938,7 +1932,7 @@ class NewHomeAddShows:
 
             finalURL = baseURL + urllib.urlencode(params)
 
-            logger.log(u"Searching for Show with searchterm: \'" + searchTerm.decode('utf-8')+ u"\' on URL " + finalURL, logger.DEBUG)
+            logger.log(u"Searching for Show with searchterm: \'" + searchTerm.decode('utf-8') + u"\' on URL " + finalURL, logger.DEBUG)
             urlData = helpers.getURL(finalURL)
 
             if urlData is None:
@@ -1952,7 +1946,7 @@ class NewHomeAddShows:
 
                 except Exception, e:
                     # use finalURL in log, because urlData can be too much information
-                    logger.log(u"Unable to parse XML for some reason: "+ex(e)+" from XML: "+finalURL, logger.ERROR)
+                    logger.log(u"Unable to parse XML for some reason: " + ex(e) + " from XML: " + finalURL, logger.ERROR)
                     series = ''
 
                 # add each result to our list

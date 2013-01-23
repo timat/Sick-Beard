@@ -92,7 +92,7 @@ class ThePirateBayProvider(generic.TorrentProvider):
         return quality_string
 
     def _find_season_quality(self,title,torrent_id):
-        """ Rewrite the title of a Season Torrent with the quality found inspecting torrent file list """
+        """ Return the modified title of a Season Torrent with the quality found inspecting torrent file list """
 
         mediaExtensions = ['avi', 'mkv', 'wmv', 'divx',
                            'vob', 'dvr-ms', 'wtv', 'ts'
@@ -185,7 +185,7 @@ class ThePirateBayProvider(generic.TorrentProvider):
                 ep_string = show_name_helpers.sanitizeSceneName(show_name) +' '+ \
                 sickbeard.config.naming_ep_type[2] % {'seasonnumber': ep_obj.season, 'episodenumber': ep_obj.episode} +'|'+\
                 sickbeard.config.naming_ep_type[0] % {'seasonnumber': ep_obj.season, 'episodenumber': ep_obj.episode} +'|'+\
-                sickbeard.config.naming_ep_type[3] % {'seasonnumber': ep_obj.season, 'episodenumber': ep_obj.episode} +'|'\
+                sickbeard.config.naming_ep_type[3] % {'seasonnumber': ep_obj.season, 'episodenumber': ep_obj.episode} \
 
                 search_string['Episode'].append(ep_string)
     
