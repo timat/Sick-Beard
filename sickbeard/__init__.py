@@ -30,7 +30,7 @@ from threading import Lock
 
 # apparently py2exe won't build these unless they're imported somewhere
 from sickbeard import providers, metadata
-from providers import torrentday, ezrss, tvtorrents, btn, nzbmatrix, nzbsrus, newznab, womble, newzbin, nzbs_org_old, thepiratebay, dtt
+from providers import torrentday, ezrss, tvtorrents, btn, nzbsrus, newznab, womble, thepiratebay, dtt
 from sickbeard.config import CheckSection, check_setting_int, check_setting_str, ConfigMigrator
 
 from sickbeard import searchCurrent, searchBacklog, showUpdater, versionChecker, properFinder, autoPostProcesser, subtitles
@@ -225,7 +225,6 @@ TORRENT_PATH = ''
 TORRENT_RATIO = ''
 TORRENT_PAUSED = False
 TORRENT_LABEL = None
-
 USE_XBMC = False
 XBMC_NOTIFY_ONSNATCH = False
 XBMC_NOTIFY_ONDOWNLOAD = False
@@ -345,7 +344,7 @@ EXTRA_SCRIPTS = []
 
 GIT_PATH = None
 
-IGNORE_WORDS = "german,french,core2hd,dutch,swedish,reenc"
+IGNORE_WORDS = "german,french,core2hd,dutch,swedish,reenc,MrLss"
 
 __INITIALIZED__ = False
 
