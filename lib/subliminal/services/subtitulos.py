@@ -35,7 +35,7 @@ class Subtitulos(ServiceBase):
     site_url = 'http://www.subtitulos.es'
     api_based = False
     languages = language_set(['eng-US', 'eng-GB', 'eng', 'fre', 'por-BR', 'por', 'spa-ES', u'spa', u'ita', u'cat'])
-    language_map = {u'Español': Language('spa'), u'Español (España)': Language('spa'), #u'Español (Latinoamérica)': Language('spa'),
+    language_map = {u'Español': Language('spa'), u'Español (España)': Language('spa'), u'Español (Latinoamérica)': Language('spa'),
                     u'Català': Language('cat'), u'Brazilian': Language('por-BR'), u'English (US)': Language('eng-US'),
                     u'English (UK)': Language('eng-GB'), 'Galego': Language('glg')}
     language_code = 'name'
@@ -47,12 +47,12 @@ class Subtitulos(ServiceBase):
     # code chars into their equivalent unicode char
     release_pattern = re.compile('Versi.+n (.+) ([0-9]+).([0-9])+ megabytes')
     extra_keywords_pattern = re.compile("(?:con|para)\s(?:720p)?(?:\-|\s)?([A-Za-z]+)(?:\-|\s)?(?:720p)?(?:\s|\.)(?:y\s)?(?:720p)?(?:\-\s)?([A-Za-z]+)?(?:\-\s)?(?:720p)?(?:\.)?");
-
+    
     def list_checked(self, video, languages):
         return self.query(video.path or video.release, languages, get_keywords(video.guess), video.series, video.season, video.episode)
 
     def query(self, filepath, languages, keywords, series, season, episode):
-        request_series = series.lower().replace(' ', '_').replace('&', '@')
+        request_series = series.lower().replace(' ', '_')
         if isinstance(request_series, unicode):
             request_series = unicodedata.normalize('NFKD', request_series).encode('ascii', 'ignore')
         logger.debug(u'Getting subtitles for %s season %d episode %d with languages %r' % (series, season, episode, languages))
@@ -64,22 +64,15 @@ class Subtitulos(ServiceBase):
             logger.error(u'Request %s returned status code %d' % (r.url, r.status_code))
             return []
         soup = BeautifulSoup(r.content, self.required_features)
-        
-        # custom keywords set by the user for this download task
-        custom_keywords = self.config.custom_keywords
-        if(custom_keywords != None):
-            for x in custom_keywords:
-                keywords.add(x.lower())
-        
         subtitles = []
         for sub in soup('div', {'id': 'version'}):
             sub_keywords = split_keyword(self.release_pattern.search(sub.find('p', {'class': 'title-sub'}).contents[1]).group(1).lower())
-            # extract extra compatible keywords
+			# extract extra compatible keywords
             try:
                 extra = sub.find('span', {'class': 'comentario'}).contents[2]
             except AttributeError:
                 extra = None
-            if extra != None:
+            if extra:
                 search_res = self.extra_keywords_pattern.search(extra)
                 if search_res != None:
                     extra_key1 = search_res.group(1)
@@ -89,22 +82,21 @@ class Subtitulos(ServiceBase):
                         sub_keywords.add(extra_key1.lower())
                     if extra_key2 != None:
                         sub_keywords.add(extra_key2.lower())
-                        
             if keywords and not keywords & sub_keywords:
                 logger.debug(u'None of subtitle keywords %r in %r' % (sub_keywords, keywords))
                 continue
-            for html_language in sub.find_all_next('ul', {'class': 'sslist'}):
-                language = self.get_language(html_language.find_next('li', {'class': 'li-idioma'}).find('strong').contents[0].string.strip())
+            for html_language in sub.findAllNext('ul', {'class': 'sslist'}):
+                language = self.get_language(html_language.findNext('li', {'class': 'li-idioma'}).find('strong').contents[0].string.strip())
                 if language not in languages:
                     logger.debug(u'Language %r not in wanted languages %r' % (language, languages))
                     continue
-                html_status = html_language.find_next('li', {'class': 'li-estado'})
+                html_status = html_language.findNext('li', {'class': 'li-estado green'})
                 status = html_status.contents[0].string.strip()
                 if status != 'Completado':
                     logger.debug(u'Wrong subtitle status %s' % status)
                     continue
                 path = get_subtitle_path(filepath, language, self.config.multi)
-                subtitle = ResultSubtitle(path, language, self.__class__.__name__.lower(), html_status.find_next('span', {'class': 'descargar green'}).find('a')['href'],
+                subtitle = ResultSubtitle(path, language, self.__class__.__name__.lower(), html_status.findNext('span', {'class': 'descargar green'}).find('a')['href'],
                                           keywords=sub_keywords)
                 subtitles.append(subtitle)
         return subtitles

@@ -219,16 +219,14 @@ class ServiceBase(object):
                 # TODO: could check if maybe we already have a text file and
                 # download it directly
                 raise DownloadFailedError('Downloaded file is not a zip file')
-            zipsub = zipfile.ZipFile(zippath)
-            for subfile in zipsub.namelist():
-                if os.path.splitext(subfile)[1] in EXTENSIONS:
-                    with open(filepath, 'w') as f:
-                        f.write(zipsub.open(subfile).read())
-                    break
-            else:
-                zipsub.close()
-                raise DownloadFailedError('No subtitles found in zip file')
-            zipsub.close()
+            with zipfile.ZipFile(zippath) as zipsub:
+                for subfile in zipsub.namelist():
+                    if os.path.splitext(subfile)[1] in EXTENSIONS:
+                        with open(filepath, 'w') as f:
+                            f.write(zipsub.open(subfile).read())
+                        break
+                else:
+                    raise DownloadFailedError('No subtitles found in zip file')
             os.remove(zippath)
         except Exception as e:
             logger.error(u'Download %s failed: %s' % (url, e))
@@ -245,16 +243,14 @@ class ServiceConfig(object):
 
     :param bool multi: whether to download one subtitle per language or not
     :param string cache_dir: cache directory
-    :param string or list custom_keywords: custom keywords to use for checking with subtitle keywords
 
     """
-    def __init__(self, multi=False, cache_dir=None, custom_keywords=None):
+    def __init__(self, multi=False, cache_dir=None):
         self.multi = multi
         self.cache_dir = cache_dir
         self.cache = None
         if cache_dir is not None:
             self.cache = Cache(cache_dir)
-        self.custom_keywords = custom_keywords
 
     def __repr__(self):
-        return 'ServiceConfig(%r, %s, %s)' % (self.multi, self.cache_dir, self.custom_keywords)
+        return 'ServiceConfig(%r, %s)' % (self.multi, self.cache.cache_dir)
