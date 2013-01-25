@@ -89,13 +89,6 @@ class Addic7ed(ServiceBase):
             if sub_language not in languages:
                 logger.debug(u'Language %r not in wanted languages %r' % (sub_language, languages))
                 continue
-            
-            # custom keywords set by the user for this download task
-            custom_keywords = self.config.custom_keywords
-            if(custom_keywords != None):
-                for x in custom_keywords:
-                    keywords.add(x.lower())
-            
             sub_keywords = split_keyword(cells[4].text.strip().lower())
             #TODO: Maybe allow empty keywords here? (same in Subtitulos)
             if keywords and not keywords & sub_keywords:
