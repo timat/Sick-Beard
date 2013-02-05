@@ -828,6 +828,8 @@ class PostProcessor(object):
                 
                 cur_ep.is_proper = self.is_proper
                 
+                cur_ep.is_proper = self.is_proper
+                
                 cur_ep.saveToDB()
 
         # find the destination folder

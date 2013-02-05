@@ -82,8 +82,14 @@ class ThePirateBayProvider(generic.TorrentProvider):
             quality_string = 'HDTV x264'
         elif quality == Quality.HDTV:    
             quality_string = '720p HDTV x264'
+        elif quality == Quality.RAWHDTV:
+            quality_string = '720p HDTV mpeg2'
+        elif quality == Quality.FULLHDTV:
+            quality_string = '1080p HDTV x264'        
         elif quality == Quality.HDWEBDL:
             quality_string = '720p WEB-DL'
+        elif quality == Quality.FULLHDWEBDL:
+            quality_string = '1080p WEB-DL'            
         elif quality == Quality.HDBLURAY:
             quality_string = '720p Bluray x264'
         elif quality == Quality.FULLHDBLURAY:
@@ -150,7 +156,7 @@ class ThePirateBayProvider(generic.TorrentProvider):
         wantedEp = [x for x in seasonEp if show.getOverview(x.status) in (Overview.WANTED, Overview.QUAL)]          
 
         #If Every episode in Season is a wanted Episode then search for Season first
-        if wantedEp == seasonEp:
+        if wantedEp == seasonEp and not show.air_by_date:
             search_string = {'Season': [], 'Episode': []}
             for show_name in set(show_name_helpers.allPossibleShowNames(show)):
                 ep_string = show_name +' S%02d' % int(season) #1) ShowName SXX   

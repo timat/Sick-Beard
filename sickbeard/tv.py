@@ -1708,7 +1708,7 @@ class TVEpisode(object):
                    '%D': str(self.airdate.day),
                    '%0M': '%02d' % self.airdate.month,
                    '%0D': '%02d' % self.airdate.day,
-                   '%RT': "proper" if self.is_proper else "",
+                   '%RT': "PROPER" if self.is_proper else "",
                    }
 
     def _format_string(self, pattern, replace_map):
