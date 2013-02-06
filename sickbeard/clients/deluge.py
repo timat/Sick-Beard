@@ -66,8 +66,8 @@ class DelugeAPI(GenericClient):
         
         try:
             label = sickbeard.TORRENT_LABEL.lower()
-            if(label):
-                # check if label already exist and create it if not
+            if label:
+                # check if label already exists and create it if not
                 post_data = json.dumps({"method": 'label.get_labels',
                                         "params": [],
                                         "id": 3
