@@ -67,26 +67,37 @@ class DelugeAPI(GenericClient):
         return self.response.json['result']
     
     def _set_torrent_label(self, result):
-
-        if sickbeard.TORRENT_LABEL != '':
-            
-            # First add the label
-            post_data = json.dumps({"method": "label.add",
-                                    "params": [sickbeard.TORRENT_LABEL],
+        
+        label = sickbeard.TORRENT_LABEL.lower()
+        if(label):
+            # check if label already exist and create it if not
+            post_data = json.dumps({"method": 'label.get_labels',
+                                    "params": [],
                                     "id": 3
+                                    })
+            self._request(method='post', data=post_data)
+            labels = self.response.json['result']
+            if label not in labels:
+                logger.log(label +u" label does not exist in Deluge we must add it", logger.MESSAGE)
+                post_data = json.dumps({ "method": 'label.add',
+                                         "params": [label],
+                                         "id": 4
+                                         })
+                self._request(method='post', data=post_data)
+                logger.log(label +u" label added to Deluge", logger.MESSAGE)
+                        
+            # add label to torrent    
+            post_data = json.dumps({ "method": 'label.set_torrent',
+                                     "params": [result.hash, label],
+                                     "id": 5
                                      })
             self._request(method='post', data=post_data)
-    
-            # Then set the label to torrent    
-            post_data = json.dumps({"method": "label.set_torrent",
-                                    "params": [result.hash, sickbeard.TORRENT_LABEL],
-                                    "id": 4
-                                    })             
-            self._request(method='post', data=post_data)
+            logger.log(label +u" label added to torrent", logger.MESSAGE)
             
             return self.response.json['result']
-
+        
         return True
+
     
     def _set_torrent_ratio(self, result):
 
