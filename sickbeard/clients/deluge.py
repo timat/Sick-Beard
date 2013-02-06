@@ -127,13 +127,13 @@ class DelugeAPI(GenericClient):
 
         try:
             if sickbeard.TORRENT_PATH:
-                post_data = json.dumps({"method": "core.set_torrent_move_on_completed",
+                post_data = json.dumps({"method": "core.set_torrent_move_completed",
                                         "params": [result.hash, True],
                                         "id": 7
                                        })        
                 self._request(method='post', data=post_data)
                 
-                post_data = json.dumps({"method": "core.set_torrent_move_on_completed_path",
+                post_data = json.dumps({"method": "core.set_torrent_move_completed_path",
                                         "params": [result.hash, sickbeard.TORRENT_PATH],
                                         "id": 8
                                        })        
