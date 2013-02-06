@@ -74,22 +74,27 @@ class DelugeAPI(GenericClient):
                                         })
                 self._request(method='post', data=post_data)
                 labels = self.response.json['result']
-                if label not in labels:
-                    logger.log(label +u" label does not exist in Deluge we must add it", logger.MESSAGE)
-                    post_data = json.dumps({ "method": 'label.add',
-                                             "params": [label],
-                                             "id": 4
+                
+                if labels != None:
+                    if label not in labels:
+                        logger.log(label +u" label does not exist in Deluge we must add it", logger.MESSAGE)
+                        post_data = json.dumps({ "method": 'label.add',
+                                                 "params": [label],
+                                                 "id": 4
+                                                 })
+                        self._request(method='post', data=post_data)
+                        logger.log(label +u" label added to Deluge", logger.MESSAGE)
+                                
+                    # add label to torrent    
+                    post_data = json.dumps({ "method": 'label.set_torrent',
+                                             "params": [result.hash, label],
+                                             "id": 5
                                              })
                     self._request(method='post', data=post_data)
-                    logger.log(label +u" label added to Deluge", logger.MESSAGE)
-                            
-                # add label to torrent    
-                post_data = json.dumps({ "method": 'label.set_torrent',
-                                         "params": [result.hash, label],
-                                         "id": 5
-                                         })
-                self._request(method='post', data=post_data)
-                logger.log(label +u" label added to torrent", logger.MESSAGE)
+                    logger.log(label +u" label added to torrent", logger.MESSAGE)
+                else:
+                    logger.log(u"label plugin not detected", logger.MESSAGE)
+                    return False
         
         except Exception:
             return False
