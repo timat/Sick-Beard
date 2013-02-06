@@ -16,15 +16,11 @@
 # You should have received a copy of the GNU General Public License
 # along with Sick Beard.  If not, see <http://www.gnu.org/licenses/>.
 
-import re
-import time
 import json
 from base64 import b64encode
 
 import sickbeard
 from sickbeard import logger
-from sickbeard.exceptions import ex
-from lib import requests
 from sickbeard.clients.generic import GenericClient
 
 class DelugeAPI(GenericClient): 
@@ -68,86 +64,95 @@ class DelugeAPI(GenericClient):
     
     def _set_torrent_label(self, result):
         
-        label = sickbeard.TORRENT_LABEL.lower()
-        if(label):
-            # check if label already exist and create it if not
-            post_data = json.dumps({"method": 'label.get_labels',
-                                    "params": [],
-                                    "id": 3
-                                    })
-            self._request(method='post', data=post_data)
-            labels = self.response.json['result']
-            if label not in labels:
-                logger.log(label +u" label does not exist in Deluge we must add it", logger.MESSAGE)
-                post_data = json.dumps({ "method": 'label.add',
-                                         "params": [label],
-                                         "id": 4
+        try:
+            label = sickbeard.TORRENT_LABEL.lower()
+            if(label):
+                # check if label already exist and create it if not
+                post_data = json.dumps({"method": 'label.get_labels',
+                                        "params": [],
+                                        "id": 3
+                                        })
+                self._request(method='post', data=post_data)
+                labels = self.response.json['result']
+                if label not in labels:
+                    logger.log(label +u" label does not exist in Deluge we must add it", logger.MESSAGE)
+                    post_data = json.dumps({ "method": 'label.add',
+                                             "params": [label],
+                                             "id": 4
+                                             })
+                    self._request(method='post', data=post_data)
+                    logger.log(label +u" label added to Deluge", logger.MESSAGE)
+                            
+                # add label to torrent    
+                post_data = json.dumps({ "method": 'label.set_torrent',
+                                         "params": [result.hash, label],
+                                         "id": 5
                                          })
                 self._request(method='post', data=post_data)
-                logger.log(label +u" label added to Deluge", logger.MESSAGE)
-                        
-            # add label to torrent    
-            post_data = json.dumps({ "method": 'label.set_torrent',
-                                     "params": [result.hash, label],
-                                     "id": 5
-                                     })
-            self._request(method='post', data=post_data)
-            logger.log(label +u" label added to torrent", logger.MESSAGE)
-            
-            return self.response.json['result']
+                logger.log(label +u" label added to torrent", logger.MESSAGE)
+        
+        except Exception:
+            return False
         
         return True
 
     
     def _set_torrent_ratio(self, result):
 
-        if sickbeard.TORRENT_RATIO != '':
-            post_data = json.dumps({"method": "core.set_torrent_stop_at_ratio",
-                                    "params": [result.hash, True],
-                                    "id": 5
-                                    })        
-            self._request(method='post', data=post_data)
+        try:
+            if sickbeard.TORRENT_RATIO:
+                post_data = json.dumps({"method": "core.set_torrent_stop_at_ratio",
+                                        "params": [result.hash, True],
+                                        "id": 5
+                                        })        
+                self._request(method='post', data=post_data)
+                
+                post_data = json.dumps({"method": "core.set_torrent_stop_ratio",
+                                        "params": [result.hash,float(sickbeard.TORRENT_RATIO)],
+                                        "id": 6
+                                        })        
+                self._request(method='post', data=post_data)
+                
+        except Exception:
+            return False
             
-            post_data = json.dumps({"method": "core.set_torrent_stop_ratio",
-                                    "params": [result.hash,float(sickbeard.TORRENT_RATIO)],
-                                    "id": 6
-                                    })        
-            self._request(method='post', data=post_data)
-            
-            return self.response.json['result']
-        
         return True
 
     def _set_torrent_path(self, result):
 
-        if sickbeard.TORRENT_PATH != '':
-            post_data = json.dumps({"method": "core.set_torrent_move_on_completed",
-                                    "params": [result.hash, True],
-                                    "id": 7
-                                   })        
-            self._request(method='post', data=post_data)
-            
-            post_data = json.dumps({"method": "core.set_torrent_move_on_completed_path",
-                                    "params": [result.hash, sickbeard.TORRENT_PATH],
-                                    "id": 8
-                                   })        
-            self._request(method='post', data=post_data)
-            
-            return self.response.json['result']
-
+        try:
+            if sickbeard.TORRENT_PATH:
+                post_data = json.dumps({"method": "core.set_torrent_move_on_completed",
+                                        "params": [result.hash, True],
+                                        "id": 7
+                                       })        
+                self._request(method='post', data=post_data)
+                
+                post_data = json.dumps({"method": "core.set_torrent_move_on_completed_path",
+                                        "params": [result.hash, sickbeard.TORRENT_PATH],
+                                        "id": 8
+                                       })        
+                self._request(method='post', data=post_data)
+         
+        except Exception:
+            return False    
+        
         return True
         
     def _set_torrent_pause(self, result):
         
-        if sickbeard.TORRENT_PAUSED:
-            post_data = json.dumps({"method": "core.pause_torrent",
-                                    "params": [result.hash],
-                                    "id": 9
-                                   })
-            self._request(method='post', data=post_data)
+        try:
             
-            return self.response.json['result']
+            if sickbeard.TORRENT_PAUSED:
+                post_data = json.dumps({"method": "core.pause_torrent",
+                                        "params": [[result.hash]],
+                                        "id": 9
+                                       })
+                self._request(method='post', data=post_data)
         
+        except Exception:
+            return False
+            
         return True  
 
 api = DelugeAPI()
