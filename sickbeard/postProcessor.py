@@ -173,9 +173,6 @@ class PostProcessor(object):
             # only add associated to list
             if associated_file_path == file_path:
                 continue
-            # only list it if the only non-shared part is the extension
-            if '.' in associated_file_path[len(base_name):]:
-                continue
             # only list it if the only non-shared part is the extension or if it is a subtitle
             if '.' in associated_file_path[len(base_name):] and not associated_file_path.endswith('srt'):
                 continue
@@ -825,8 +822,6 @@ class PostProcessor(object):
                     logger.log("good results: " + repr(self.good_results), logger.DEBUG)
 
                 cur_ep.status = common.Quality.compositeStatus(common.DOWNLOADED, new_ep_quality)
-                
-                cur_ep.is_proper = self.is_proper
                 
                 cur_ep.is_proper = self.is_proper
                 
