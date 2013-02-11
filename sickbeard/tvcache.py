@@ -385,7 +385,7 @@ class TVCache():
                 result.url = url
                 result.name = title
                 result.quality = curQuality
-                result.content = helpers.getURL(url) \
+                result.content = self.provider.getURL(url) \
                             if self.provider.providerType == sickbeard.providers.generic.GenericProvider.TORRENT \
                             and not url.startswith('magnet') else None
 
