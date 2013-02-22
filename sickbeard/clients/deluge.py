@@ -23,6 +23,7 @@ import sickbeard
 from sickbeard import logger
 from sickbeard.clients.generic import GenericClient
 
+# Deluge API http://deluge-torrent.org/docs/master/modules/__rpcapi.html
 class DelugeAPI(GenericClient): 
 
     def __init__(self, host=None, username=None, password=None):
