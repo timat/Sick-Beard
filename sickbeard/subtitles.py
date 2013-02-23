@@ -24,7 +24,7 @@ from sickbeard import logger
 from sickbeard import helpers
 from sickbeard import encodingKludge as ek
 from sickbeard import db
-
+from sickbeard import history
 from lib import subliminal
 
 SINGLE = 'und'
@@ -106,7 +106,7 @@ class SubtitlesFinder():
         myDB = db.DBConnection()
         today = datetime.date.today().toordinal()
         # you have 5 minutes to understand that one. Good luck
-        sqlResults = myDB.select('SELECT s.show_name, e.showid, e.season, e.episode, e.subtitles_searchcount AS searchcount, e.subtitles_lastsearch AS lastsearch, e.location, (? - e.airdate) AS airdate_daydiff FROM tv_episodes AS e INNER JOIN tv_shows AS s ON (e.showid = s.tvdb_id) WHERE s.subtitles = 1 AND e.subtitles NOT LIKE (?) AND ((e.subtitles_searchcount <= 2 AND (? - e.airdate) > 7) OR (e.subtitles_searchcount <= 7 AND (? - e.airdate) <= 7)) AND (e.status IN ('+','.join([str(x) for x in Quality.DOWNLOADED + [ARCHIVED]])+') OR (e.status IN ('+','.join([str(x) for x in Quality.SNATCHED + Quality.SNATCHED_PROPER])+') AND e.location != ""))', [today, wantedLanguages(True), today, today])
+        sqlResults = myDB.select('SELECT s.show_name, e.showid, e.season, e.episode, e.status, e.subtitles, e.subtitles_searchcount AS searchcount, e.subtitles_lastsearch AS lastsearch, e.location, (? - e.airdate) AS airdate_daydiff FROM tv_episodes AS e INNER JOIN tv_shows AS s ON (e.showid = s.tvdb_id) WHERE s.subtitles = 1 AND e.subtitles NOT LIKE (?) AND ((e.subtitles_searchcount <= 2 AND (? - e.airdate) > 7) OR (e.subtitles_searchcount <= 7 AND (? - e.airdate) <= 7)) AND (e.status IN ('+','.join([str(x) for x in Quality.DOWNLOADED + [ARCHIVED]])+') OR (e.status IN ('+','.join([str(x) for x in Quality.SNATCHED + Quality.SNATCHED_PROPER])+') AND e.location != ""))', [today, wantedLanguages(True), today, today])
         if len(sqlResults) == 0:
             logger.log('No subtitles to download', logger.MESSAGE)
             return
@@ -125,10 +125,11 @@ class SubtitlesFinder():
                 logger.log('Downloading subtitles for episode %dx%d of show %s' % (epToSub['season'], epToSub['episode'], epToSub['show_name']), logger.DEBUG)
                 helpers.findCertainShow(sickbeard.showList, int(epToSub['showid'])).getEpisode(int(epToSub["season"]), int(epToSub["episode"])).downloadSubtitles()
             
+
     def _getRules(self):
         """
         Define the hours to wait between 2 subtitles search depending on:
         - the episode: new or old
         - the number of searches done so far (searchcount), represented by the index of the list
         """
-        return {'old': [0, 24], 'new': [0, 4, 8, 16, 24, 24, 24]}
+        return {'old': [0, 24], 'new': [0, 4, 8, 4, 16, 24, 24]}

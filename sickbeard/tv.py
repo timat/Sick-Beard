@@ -45,6 +45,7 @@ from sickbeard import image_cache
 from sickbeard import notifiers
 from sickbeard import postProcessor
 from sickbeard import subtitles
+from sickbeard import history
 
 from sickbeard import encodingKludge as ek
 
@@ -620,8 +621,10 @@ class TVShow(object):
                 self.air_by_date = 0
             
             self.subtitles = sqlResults[0]["subtitles"]
-            if self.subtitles == None:
-                self.subtitles = 0
+            if self.subtitles:
+                self.subtitles = 1
+            else:
+                self.subtitles = 0    
 
             self.quality = int(sqlResults[0]["quality"])
             self.flatten_folders = int(sqlResults[0]["flatten_folders"])
@@ -743,12 +746,12 @@ class TVShow(object):
             #Get only the production country certificate if any 
             if imdb_info['certificates'] and imdb_info['countries']:
                 dct = {}
-                for item in imdb_info['certificates']:
-                    dct[item.split(':')[0]] = item.split(':')[1]
-    
                 try:
+                    for item in imdb_info['certificates']:
+                        dct[item.split(':')[0]] = item.split(':')[1]
+        
                     imdb_info['certificates'] = dct[imdb_info['countries']]
-                except KeyError:
+                except:
                     imdb_info['certificates'] = ''    
     
             else:
@@ -972,7 +975,7 @@ class TVShow(object):
 
         myDB.upsert("tv_shows", newValueDict, controlValueDict)
         
-        if not self.imdb_info == {}:
+        if self.imdbid:
             controlValueDict = {"tvdb_id": self.tvdbid}
             newValueDict = self.imdb_info
             
@@ -1163,12 +1166,25 @@ class TVEpisode(object):
         previous_subtitles = self.subtitles
 
         try:
-            subtitles = subliminal.download_subtitles([self.location], languages=sickbeard.SUBTITLES_LANGUAGES, services=sickbeard.subtitles.getEnabledServiceList(), force=False, multi=True, cache_dir=sickbeard.CACHE_DIR)
+            need_languages = set(sickbeard.SUBTITLES_LANGUAGES) - set(self.subtitles)
+            subtitles = subliminal.download_subtitles([self.location], languages=need_languages, services=sickbeard.subtitles.getEnabledServiceList(), force=False, multi=True, cache_dir=sickbeard.CACHE_DIR)
             
         except Exception as e:
             logger.log("Error occurred when downloading subtitles: " + str(e), logger.DEBUG)
             return
         
+        if subtitles:
+            subtitleList = []
+            for video in subtitles:
+                for subtitle in subtitles.get(video):
+                    subtitleList.append(subtitle.language.name)
+                    history.logSubtitle(self.show.tvdbid, self.season, self.episode, self.status, subtitle)
+                    
+            logger.log(str(self.show.tvdbid) + ": Downloaded " + ", ".join(subtitleList) + " subtitles for episode " + str(self.season) + "x" + str(self.episode), logger.DEBUG)
+            notifiers.notify_subtitle_download(self.prettyName(), ", ".join(subtitleList))
+        else:
+            logger.log(str(self.show.tvdbid) + ": No subtitles downloaded for episode " + str(self.season) + "x" + str(self.episode), logger.DEBUG)
+
         self.refreshSubtitles()
         self.subtitles_searchcount = self.subtitles_searchcount + 1
         self.subtitles_lastsearch = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -1181,6 +1197,9 @@ class TVEpisode(object):
             logger.log(str(self.show.tvdbid) + ": Downloaded " + ", ".join(subtitleList) + " subtitles for episode " + str(self.season) + "x" + str(self.episode), logger.DEBUG)
             
             notifiers.notify_subtitle_download(self.prettyName(), ", ".join(subtitleList))
+            
+            for subtitle in newsubtitles:
+                history.logSubtitle(self.show.tvdbid, self.season, self.episode, self.status, subliminal.language.Language(subtitle))
         else:
             logger.log(str(self.show.tvdbid) + ": No subtitles downloaded for episode " + str(self.season) + "x" + str(self.episode), logger.DEBUG)
         
@@ -1682,7 +1701,7 @@ class TVEpisode(object):
         epStatus, epQual = Quality.splitCompositeStatus(self.status) #@UnusedVariable
 
         if sickbeard.NAMING_STRIP_YEAR:
-            show_name = re.sub("\(\w+\)$", "", self.show.name).rstrip()
+            show_name = re.sub("\(\d+\)$", "", self.show.name).rstrip()
         else:
             show_name = self.show.name 
         

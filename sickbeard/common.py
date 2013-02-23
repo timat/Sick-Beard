@@ -17,7 +17,8 @@
 # along with Sick Beard.  If not, see <http://www.gnu.org/licenses/>.
 
 import os.path
-import operator, platform
+import operator
+import platform
 import re
 
 from sickbeard import version
@@ -29,6 +30,8 @@ mediaExtensions = ['avi', 'mkv', 'mpg', 'mpeg', 'wmv',
                    'm2ts', 'm4v', 'ts', 'flv', 'f4v',
                    'mov', 'rmvb', 'vob', 'dvr-ms', 'wtv',
                    'ogv', '3gp']
+
+subtitleExtensions = ['srt', 'sub', 'ass', 'idx', 'ssa']
 
 ### Other constants
 MULTI_EP_RESULT = -1
@@ -54,6 +57,7 @@ SKIPPED = 5 # episodes we don't want
 ARCHIVED = 6 # episodes that you don't have locally (counts toward download completion stats)
 IGNORED = 7 # episodes that you don't want included in your download stats
 SNATCHED_PROPER = 9 # qualified with quality
+SUBTITLED = 10 # qualified with quality
 
 NAMING_REPEAT = 1
 NAMING_EXTEND = 2
@@ -158,27 +162,23 @@ class Quality:
 
         checkName = lambda list, func: func([re.search(x, name, re.I) for x in list])
 
-        if checkName(["(pdtv|hdtv|dsr|tvrip).(xvid|x264)"], all) and not checkName(["(720|1080)[pi]"], all):
-            return Quality.SDTV
-        elif checkName(["(web.dl|webrip).(x264|h.?264)"], any) and not checkName(["(720|1080)[pi]"], all):
+        if checkName(["(pdtv|hdtv|dsr|tvrip|web.dl|webrip).(xvid|x264)"], all) and not checkName(["(720|1080)[pi]"], all):
             return Quality.SDTV
         elif checkName(["(dvdrip|bdrip)(.ws)?.(xvid|divx|x264)"], any) and not checkName(["(720|1080)[pi]"], all):
             return Quality.SDDVD
         elif checkName(["720p", "hdtv", "x264"], all) or checkName(["hr.ws.pdtv.x264"], any) and not checkName(["(1080)[pi]"], all):          
             return Quality.HDTV                                                                        
-        elif checkName(["720p", "hdtv", "mpeg2"], all) or checkName(["1080i", "hdtv", "mpeg2"], all):  
+        elif checkName(["720p|1080i", "hdtv", "mpeg2"], all):
             return Quality.RAWHDTV                                                                     
         elif checkName(["1080p", "hdtv", "x264"], all):         
             return Quality.FULLHDTV                                                                    
-        elif checkName(["720p", "web.dl"], all) or checkName(["720p", "itunes", "h.?264"], all):       
+        elif checkName(["720p", "web.dl|webrip"], all) or checkName(["720p", "itunes", "h.?264"], all):
             return Quality.HDWEBDL                                                                     
-        elif checkName(["720p", "webrip", "(x264|h.?264)"], all):
-            return Quality.HDWEBDL
-        elif checkName(["1080p", "web.dl"], all) or checkName(["1080p", "itunes", "h.?264"], all):     
+        elif checkName(["1080p", "web.dl|webrip"], all) or checkName(["1080p", "itunes", "h.?264"], all):     
             return Quality.FULLHDWEBDL                                                                 
-        elif checkName(["720p", "bluray", "x264"], all) or checkName(["720p", "hddvd", "x264"], all):  
+        elif checkName(["720p", "bluray|hddvd", "x264"], all):
             return Quality.HDBLURAY                                                                    
-        elif checkName(["1080p", "bluray", "x264"], all) or checkName(["1080p", "hddvd", "x264"], all):
+        elif checkName(["1080p", "bluray|hddvd", "x264"], all):
             return Quality.FULLHDBLURAY
         else:
             return Quality.UNKNOWN
@@ -205,6 +205,9 @@ class Quality:
     @staticmethod
     def splitCompositeStatus(status):
         """Returns a tuple containing (status, quality)"""
+        if status == UNKNOWN:
+            return (UNKNOWN, Quality.UNKNOWN)
+        
         for x in sorted(Quality.qualityStrings.keys(), reverse=True):
             if status > x * 100:
                 return (status - x * 100, x)
@@ -252,7 +255,8 @@ class StatusStrings:
                               SNATCHED_PROPER: "Snatched (Proper)",
                               WANTED: "Wanted",
                               ARCHIVED: "Archived",
-                              IGNORED: "Ignored"}
+                              IGNORED: "Ignored",
+                              SUBTITLED: "Subtitled"}
 
     def __getitem__(self, name):
         if name in Quality.DOWNLOADED + Quality.SNATCHED + Quality.SNATCHED_PROPER:

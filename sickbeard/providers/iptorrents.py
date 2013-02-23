@@ -1,5 +1,5 @@
-# Author: Idan Gutman
-# URL: http://code.google.com/p/sickbeard/
+# Author: seedboy
+# URL: https://github.com/seedboy
 #
 # This file is part of Sick Beard.
 #
@@ -30,34 +30,34 @@ from lib import requests
 from bs4 import BeautifulSoup
 
 
-class TorrentLeechProvider(generic.TorrentProvider):
+class IPTorrentsProvider(generic.TorrentProvider):
 
-    urls = {'base_url' : 'http://torrentleech.org/',
-            'login' : 'http://torrentleech.org/user/account/login/',
-            'detail' : 'http://torrentleech.org/torrent/%s',
-            'search' : 'http://torrentleech.org/torrents/browse/index/query/%s/categories/%s',
-            'download' : 'http://torrentleech.org%s',
+    urls = {'base_url' : 'http://www.iptorrents.com/',
+            'login' : 'http://www.iptorrents.com/torrents/',
+            'detail' : 'http://www.iptorrents.com/details.php?id=%s',
+            'search' : 'http://www.iptorrents.com/torrents/?l%d=1%s&q=%s&qf=ti',
+            'download' : 'http://www.iptorrents.com/download.php/%s/%s.torrent',
             }
 
     def __init__(self):
 
-        generic.TorrentProvider.__init__(self, "TorrentLeech")
+        generic.TorrentProvider.__init__(self, "IPTorrents")
         
         self.supportsBacklog = True
 
-        self.cache = TorrentLeechCache(self)
+        self.cache = IPTorrentsCache(self)
         
         self.url = self.urls['base_url']
         
-        self.categories = "2,26,32"
-        
         self.session = None
 
+        self.categories = 73
+
     def isEnabled(self):
-        return sickbeard.TORRENTLEECH
+        return sickbeard.IPTORRENTS
         
     def imageName(self):
-        return 'torrentleech.png'
+        return 'iptorrents.png'
     
     def getQuality(self, item):
         
@@ -66,9 +66,8 @@ class TorrentLeechProvider(generic.TorrentProvider):
 
     def _doLogin(self):
 
-        login_params = {'username': sickbeard.TORRENTLEECH_USERNAME,
-                        'password': sickbeard.TORRENTLEECH_PASSWORD,
-                        'remember_me': 'on',
+        login_params = {'username': sickbeard.IPTORRENTS_USERNAME,
+                        'password': sickbeard.IPTORRENTS_PASSWORD,
                         'login': 'submit',
                         }
         
@@ -80,8 +79,8 @@ class TorrentLeechProvider(generic.TorrentProvider):
             logger.log(u'Unable to connect to ' + self.name + ' provider: ' +ex(e), logger.ERROR)
             return False
         
-        if re.search('Invalid Username/password', response.text) \
-        or re.search('<title>Login :: TorrentLeech.org</title>', response.text) \
+        if re.search('tries left', response.text) \
+        or re.search('<title>IPT</title>', response.text) \
         or response.status_code == 401:
             logger.log(u'Invalid username or password for ' + self.name + ' Check your settings', logger.ERROR)       
             return False
@@ -143,11 +142,13 @@ class TorrentLeechProvider(generic.TorrentProvider):
         
         if not self._doLogin():
             return 
+
+        freeleech = '&free=on' if sickbeard.IPTORRENTS_FREELEECH else ''
         
         for mode in search_params.keys():
             for search_string in search_params[mode]:
-                
-                searchURL = self.urls['search'] % (search_string, self.categories)
+
+                searchURL = self.urls['search'] % (self.categories, freeleech, search_string)
 
                 logger.log(u"Search string: " + searchURL, logger.DEBUG)
         
@@ -158,31 +159,36 @@ class TorrentLeechProvider(generic.TorrentProvider):
                 html = BeautifulSoup(data)
                 
                 try:
-                    torrent_table = html.find('table', attrs = {'id' : 'torrenttable'})
-                    
-                    if not torrent_table:
+                    if html.find(text='Nothing found!'):
                         logger.log(u"No results found for: " + search_string + "(" + searchURL + ")", logger.DEBUG)
                         return []
+                    
+                    result_table = html.find('table', attrs = {'class' : 'torrents'})
+                    
+                    if not result_table:
+                        logger.log(u"No results found for: " + search_string + "(" + searchURL + ")", logger.DEBUG)
+                        return []
+                    
+                    entries = result_table.find_all('tr')
 
-                    for result in torrent_table.find_all('tr')[1:]:
+                    for result in entries[1:]:
 
-                        link = result.find('td', attrs = {'class' : 'name'}).find('a')
-                        url = result.find('td', attrs = {'class' : 'quickdownload'}).find('a')
-
-                        title = link.string
-                        download_url = self.urls['download'] % url['href']
-                        id = int(link['href'].replace('/torrent/', ''))
-                        seeders = int(result.find('td', attrs = {'class' : 'seeders'}).string)
-                        leechers = int(result.find('td', attrs = {'class' : 'leechers'}).string)
+                        torrent = result.find_all('td')[1].find('a')
+                        
+                        torrent_id = int(torrent['href'].replace('/details.php?id=', ''))
+                        torrent_name = torrent.string
+                        torrent_download_url = self.urls['download'] % (torrent_id, torrent_name.replace(' ', '.'))
+                        torrent_details_url = self.urls['detail'] % (torrent_id)
+                        torrent_seeders = int(result.find('td', attrs = {'class' : 'ac t_seeders'}).string)
+                        torrent_leechers = int(result.find('td', attrs = {'class' : 'ac t_leechers'}).string)
 
                         #Filter unseeded torrent
-                        if seeders == 0 or not title \
-                        or not show_name_helpers.filterBadReleases(title):
+                        if torrent_seeders == 0 or not torrent_name \
+                        or not show_name_helpers.filterBadReleases(torrent_name):
                             continue 
 
-                        item = title, download_url, id, seeders, leechers
-                        logger.log(u"Found result: " + title + "(" + searchURL + ")", logger.DEBUG)
-
+                        item = torrent_name, torrent_download_url, torrent_id, torrent_seeders, torrent_leechers
+                        logger.log(u"Found result: " + torrent_name + "(" + searchURL + ")", logger.DEBUG)
                         items[mode].append(item)
 
                 except:
@@ -220,21 +226,23 @@ class TorrentLeechProvider(generic.TorrentProvider):
 
         return response.content
        
-class TorrentLeechCache(tvcache.TVCache):
+class IPTorrentsCache(tvcache.TVCache):
 
     def __init__(self, provider):
 
         tvcache.TVCache.__init__(self, provider)
 
-        # only poll TorrentLeech every 20 minutes max
+        # only poll IPTorrents every 20 minutes max
         self.minTime = 20
 
     def _getData(self):
        
+        freeleech = '&free=on' if sickbeard.IPTORRENTS_FREELEECH else ''
+       
         #url for the last 50 tv-show
-        url = self.provider.urls['search'] % ("", self.provider.categories)
+        url = self.provider.urls['search'] % (self.provider.categories, freeleech, "")
 
-        logger.log(u"TorrentLeech cache update URL: "+ url, logger.DEBUG)
+        logger.log(u"IPTorrents cache update URL: "+ url, logger.DEBUG)
 
         data = self.provider.getURL(url)
 
@@ -251,4 +259,4 @@ class TorrentLeechCache(tvcache.TVCache):
 
         self._addCacheEntry(title, url)
 
-provider = TorrentLeechProvider()
+provider = IPTorrentsProvider()
