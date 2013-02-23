@@ -191,10 +191,33 @@ a{
   color: #FFFFFF;
   font-family: Arial, Helvetica, sans-serif;
   font-size: 11px;
-  position: relative;
 /*  text-transform: lowercase;*/
-  top: 42px;
-  left: -5px
+  position: relative;
+  top: 36px;
+  left: -5px;
+}
+
+#releasetext {
+  color: #145623;
+  text-shadow:
+    0px -1px 0 #FFF,
+    1px 1px 0 #FFF,  
+    -1px -1px 0 #FFF,
+    -1px  1px 0 #FFF,
+    0px  1px 0 #FFF,
+    
+    0px -2px 0 #9A6C28,
+    2px 3px 0 #9A6C28,
+    -2px -2px 0 #9A6C28,
+    -2px 3px 0 #9A6C28,
+    0px 3px 0 #9A6C28;
+    font-weight: bold;
+    display: inline-block;
+  font-family: "Comic Sans MS";
+  font-size: 15px;
+  position: relative;
+  top: -4px;
+  left: -128px;
 }
 
 .update {
@@ -677,6 +700,8 @@ div#summary tr td {
   height: 58px;
   margin: 0;
   padding: 0 0 0 10px;
+  position: relative;
+  top: -22px;
 }
 #SubMenu {
   float: right;
