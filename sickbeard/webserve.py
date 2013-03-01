@@ -32,7 +32,8 @@ import cherrypy.lib
 
 import sickbeard
 
-from sickbeard import config, sab, utorrent, transmission, deluge
+from sickbeard import config, sab
+from sickbeard import clients
 from sickbeard import history, notifiers, processTV
 from sickbeard import ui
 from sickbeard import logger, helpers, exceptions, classes, db
@@ -44,8 +45,9 @@ from sickbeard import scene_exceptions
 from sickbeard import subtitles
 
 from sickbeard.providers import newznab
-from sickbeard.common import Quality, Overview, statusStrings
+from sickbeard.common import Quality, Overview, statusStrings, qualityPresetStrings
 from sickbeard.common import SNATCHED, SKIPPED, UNAIRED, IGNORED, ARCHIVED, WANTED
+from sickbeard.common import SD, HD720p, HD1080p
 from sickbeard.exceptions import ex
 from sickbeard.webapi import Api
 
@@ -412,12 +414,20 @@ class Manage:
                 if sickbeard.SUBTITLES_DIR:
                     for video in subtitles:
                         subs_new_path = ek.ek(os.path.join, os.path.dirname(video.path), sickbeard.SUBTITLES_DIR)
-                        if not ek.ek(os.path.isdir, subs_new_path):
-                            ek.ek(os.mkdir, subs_new_path)
+                        dir_exists = helpers.makeDir(subs_new_path)
+                        if not dir_exists:
+                            logger.log(u"Unable to create subtitles folder "+subs_new_path, logger.ERROR)
+                        else:
+                            helpers.chmodAsParent(subs_new_path)
                         
                         for subtitle in subtitles.get(video):
                             new_file_path = ek.ek(os.path.join, subs_new_path, os.path.basename(subtitle.path))
                             helpers.moveFile(subtitle.path, new_file_path)
+                            helpers.chmodAsParent(new_file_path)
+                else:
+                    for video in subtitles:
+                        for subtitle in subtitles.get(video):
+                            helpers.chmodAsParent(subtitle.path)
                         
         redirect('/manage/subtitleMissed')
 
@@ -1033,7 +1043,7 @@ class ConfigPostProcessing:
 
     @cherrypy.expose
     def savePostProcessing(self, naming_pattern=None, naming_multi_ep=None,
-                    xbmc_data=None, mediabrowser_data=None, synology_data=None, sony_ps3_data=None, wdtv_data=None, tivo_data=None, minidlna_data=None,
+                    xbmc_data=None, mediabrowser_data=None, synology_data=None, sony_ps3_data=None, wdtv_data=None, tivo_data=None, mede8er_data=None, minidlna_data=None,
                     use_banner=None, keep_processed_dir=None, process_automatically=None, rename_episodes=None,
                     move_associated_files=None, tv_download_dir=None, naming_custom_abd=None, naming_abd_pattern=None, naming_strip_year=None):
 
@@ -1090,6 +1100,7 @@ class ConfigPostProcessing:
         sickbeard.metadata_provider_dict['Sony PS3'].set_config(sony_ps3_data)
         sickbeard.metadata_provider_dict['WDTV'].set_config(wdtv_data)
         sickbeard.metadata_provider_dict['TIVO'].set_config(tivo_data)
+        sickbeard.metadata_provider_dict['Mede8er'].set_config(mede8er_data)
         sickbeard.metadata_provider_dict['minidlna'].set_config(minidlna_data)
         
         if self.isNamingValid(naming_pattern, naming_multi_ep) != "invalid":
@@ -1229,6 +1240,8 @@ class ConfigProviders:
                       btn_api_key=None,
                       dtt_norar = None, dtt_single = None,
                       thepiratebay_trusted=None, thepiratebay_proxy=None, thepiratebay_proxy_url=None,
+                      torrentleech_username=None, torrentleech_password=None,
+                      iptorrents_username=None, iptorrents_password=None, iptorrents_freeleech=None,
                       newzbin_username=None, newzbin_password=None,
                       provider_order=None):
 
@@ -1299,7 +1312,13 @@ class ConfigProviders:
             elif curProvider == 'dailytvtorrents':
                 sickbeard.DTT = curEnabled                
             elif curProvider == 'thepiratebay':
-                sickbeard.THEPIRATEBAY = curEnabled                   
+                sickbeard.THEPIRATEBAY = curEnabled
+            elif curProvider == 'torrentleech':
+                sickbeard.TORRENTLEECH = curEnabled
+            elif curProvider == 'nzbx':
+                sickbeard.NZBX = curEnabled
+            elif curProvider == 'iptorrents':
+                sickbeard.IPTORRENTS = curEnabled    
             else:
                 logger.log(u"don't know what "+curProvider+" is, skipping")
 
@@ -1339,7 +1358,20 @@ class ConfigProviders:
             thepiratebay_proxy = 0
             sickbeard.THEPIRATEBAY_PROXY_URL = ""
             
-        sickbeard.THEPIRATEBAY_PROXY = thepiratebay_proxy    
+        sickbeard.THEPIRATEBAY_PROXY = thepiratebay_proxy
+        
+        sickbeard.TORRENTLEECH_USERNAME = torrentleech_username
+        sickbeard.TORRENTLEECH_PASSWORD = torrentleech_password    
+
+        sickbeard.IPTORRENTS_USERNAME = iptorrents_username.strip()
+        sickbeard.IPTORRENTS_PASSWORD = iptorrents_password.strip()
+
+        if iptorrents_freeleech == "on":
+            iptorrents_freeleech = 1
+        else:
+            iptorrents_freeleech = 0
+
+        sickbeard.IPTORRENTS_FREELEECH = iptorrents_freeleech
 
         sickbeard.NZBSRUS_UID = nzbs_r_us_uid.strip()
         sickbeard.NZBSRUS_HASH = nzbs_r_us_hash.strip()
@@ -1379,7 +1411,7 @@ class ConfigNotifications:
                           use_pushover=None, pushover_notify_onsnatch=None, pushover_notify_ondownload=None, pushover_notify_onsubtitledownload=None, pushover_userkey=None,
                           use_libnotify=None, libnotify_notify_onsnatch=None, libnotify_notify_ondownload=None, libnotify_notify_onsubtitledownload=None,
                           use_nmj=None, nmj_host=None, nmj_database=None, nmj_mount=None, use_synoindex=None,
-                          use_trakt=None, trakt_username=None, trakt_password=None, trakt_api=None,
+                          use_trakt=None, trakt_username=None, trakt_password=None, trakt_api=None, trakt_remove_watchlist=None, trakt_use_watchlist=None, trakt_method_add=None, trakt_start_paused=None,
                           use_synologynotifier=None, synologynotifier_notify_onsnatch=None, synologynotifier_notify_ondownload=None, synologynotifier_notify_onsubtitledownload=None,
                           use_pytivo=None, pytivo_notify_onsnatch=None, pytivo_notify_ondownload=None, pytivo_notify_onsubtitledownload=None, pytivo_update_library=None, 
                           pytivo_host=None, pytivo_share_name=None, pytivo_tivo_name=None,
@@ -1597,6 +1629,21 @@ class ConfigNotifications:
         else:
             use_trakt = 0
 
+        if trakt_remove_watchlist == "on":
+            trakt_remove_watchlist = 1
+        else:
+            trakt_remove_watchlist = 0
+
+        if trakt_use_watchlist == "on":
+            trakt_use_watchlist = 1
+        else:
+            trakt_use_watchlist = 0
+
+        if trakt_start_paused == "on":
+            trakt_start_paused = 1
+        else:
+            trakt_start_paused = 0
+
         if use_pytivo == "on":
             use_pytivo = 1
         else:
@@ -1721,6 +1768,10 @@ class ConfigNotifications:
         sickbeard.TRAKT_USERNAME = trakt_username
         sickbeard.TRAKT_PASSWORD = trakt_password
         sickbeard.TRAKT_API = trakt_api
+        sickbeard.TRAKT_REMOVE_WATCHLIST = trakt_remove_watchlist
+        sickbeard.TRAKT_USE_WATCHLIST = trakt_use_watchlist
+        sickbeard.TRAKT_METHOD_ADD = trakt_method_add
+        sickbeard.TRAKT_START_PAUSED = trakt_start_paused
 
         sickbeard.USE_PYTIVO = use_pytivo
         sickbeard.PYTIVO_NOTIFY_ONSNATCH = pytivo_notify_onsnatch == "off"
@@ -2378,12 +2429,9 @@ class Home:
         if not host.endswith("/"):
             host = host + "/"
         
-        if torrent_method == 'utorrent':
-            connection, accesMsg = utorrent.testAuthentication(host, username, password)
-        elif torrent_method == 'transmission':
-            connection, accesMsg = transmission.testAuthentication(host, username, password)
-        elif torrent_method == 'deluge':
-            connection, accesMsg = deluge.testAuthentication(host, "admin", password)
+        client = clients.getClientIstance(torrent_method)
+        
+        connection, accesMsg = client(host, username, password).testAuthentication()
 
         return accesMsg     
 
@@ -3140,7 +3188,17 @@ class Home:
 
         # return the correct json value
         if ep_queue_item.success:
-            return json.dumps({'result': statusStrings[ep_obj.status]})
+            #Find the quality class for the episode
+            quality_class = Quality.qualityStrings[Quality.UNKNOWN]
+            ep_status, ep_quality = Quality.splitCompositeStatus(ep_obj.status)
+            for x in (SD, HD720p, HD1080p):
+                if ep_quality in Quality.splitQuality(x)[0]: 
+                    quality_class = qualityPresetStrings[x]
+                    break 
+                
+            return json.dumps({'result': statusStrings[ep_obj.status], 
+                               'quality': quality_class 
+                               })
 
         return json.dumps({'result': 'failure'})
     
@@ -3160,12 +3218,20 @@ class Home:
             if sickbeard.SUBTITLES_DIR:
                 for video in subtitles:
                     subs_new_path = ek.ek(os.path.join, os.path.dirname(video.path), sickbeard.SUBTITLES_DIR)
-                    if not ek.ek(os.path.isdir, subs_new_path):
-                        ek.ek(os.mkdir, subs_new_path)
+                    dir_exists = helpers.makeDir(subs_new_path)
+                    if not dir_exists:
+                        logger.log(u"Unable to create subtitles folder "+subs_new_path, logger.ERROR)
+                    else:
+                        helpers.chmodAsParent(subs_new_path)
                     
                     for subtitle in subtitles.get(video):
                         new_file_path = ek.ek(os.path.join, subs_new_path, os.path.basename(subtitle.path))
                         helpers.moveFile(subtitle.path, new_file_path)
+                        helpers.chmodAsParent(new_file_path)
+            else:
+                for video in subtitles:
+                    for subtitle in subtitles.get(video):
+                        helpers.chmodAsParent(subtitle.path)
         except:
             return json.dumps({'result': 'failure'})
 
@@ -3263,7 +3329,7 @@ class WebInterface:
     @cherrypy.expose
     def setHomeLayout(self, layout):
 
-        if layout not in ('poster', 'banner'):
+        if layout not in ('poster', 'banner', 'simple'):
             layout = 'poster'
 
         sickbeard.HOME_LAYOUT = layout
@@ -3309,7 +3375,7 @@ class WebInterface:
         
         today = datetime.date.today().toordinal()
         next_week = (datetime.date.today() + datetime.timedelta(days=7)).toordinal()
-        recently = (datetime.date.today() - datetime.timedelta(days=3)).toordinal()
+        recently = (datetime.date.today() - datetime.timedelta(days=sickbeard.COMING_EPS_MISSED_RANGE)).toordinal()
 
         done_show_list = []
         qualList = Quality.DOWNLOADED + Quality.SNATCHED + [ARCHIVED, IGNORED]

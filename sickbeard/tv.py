@@ -45,6 +45,7 @@ from sickbeard import image_cache
 from sickbeard import notifiers
 from sickbeard import postProcessor
 from sickbeard import subtitles
+from sickbeard import history
 
 from sickbeard import encodingKludge as ek
 
@@ -745,12 +746,12 @@ class TVShow(object):
             #Get only the production country certificate if any 
             if imdb_info['certificates'] and imdb_info['countries']:
                 dct = {}
-                for item in imdb_info['certificates']:
-                    dct[item.split(':')[0]] = item.split(':')[1]
-    
                 try:
+                    for item in imdb_info['certificates']:
+                        dct[item.split(':')[0]] = item.split(':')[1]
+        
                     imdb_info['certificates'] = dct[imdb_info['countries']]
-                except KeyError:
+                except:
                     imdb_info['certificates'] = ''    
     
             else:
@@ -927,12 +928,20 @@ class TVShow(object):
                 if sickbeard.SUBTITLES_DIR:
                     for video in subtitles:
                         subs_new_path = ek.ek(os.path.join, os.path.dirname(video.path), sickbeard.SUBTITLES_DIR)
-                        if not ek.ek(os.path.isdir, subs_new_path):
-                            ek.ek(os.mkdir, subs_new_path)
+                        dir_exists = helpers.makeDir(subs_new_path)
+                        if not dir_exists:
+                            logger.log(u"Unable to create subtitles folder "+subs_new_path, logger.ERROR)
+                        else:
+                            helpers.chmodAsParent(subs_new_path)
                         
                         for subtitle in subtitles.get(video):
                             new_file_path = ek.ek(os.path.join, subs_new_path, os.path.basename(subtitle.path))
                             helpers.moveFile(subtitle.path, new_file_path)
+                            helpers.chmodAsParent(new_file_path)
+                else:
+                    for video in subtitles:
+                        for subtitle in subtitles.get(video):
+                            helpers.chmodAsParent(subtitle.path)
                 
         except Exception as e:
             logger.log("Error occurred when downloading subtitles: " + str(e), logger.DEBUG)
@@ -966,7 +975,7 @@ class TVShow(object):
 
         myDB.upsert("tv_shows", newValueDict, controlValueDict)
         
-        if not self.imdb_info == {}:
+        if self.imdbid:
             controlValueDict = {"tvdb_id": self.tvdbid}
             newValueDict = self.imdb_info
             
@@ -1154,8 +1163,11 @@ class TVEpisode(object):
             return
         logger.log(str(self.show.tvdbid) + ": Downloading subtitles for episode " + str(self.season) + "x" + str(self.episode), logger.DEBUG)
         
+        previous_subtitles = self.subtitles
+
         try:
-            subtitles = subliminal.download_subtitles([self.location], languages=sickbeard.SUBTITLES_LANGUAGES, services=sickbeard.subtitles.getEnabledServiceList(), force=False, multi=True, cache_dir=sickbeard.CACHE_DIR)
+            need_languages = set(sickbeard.SUBTITLES_LANGUAGES) - set(self.subtitles)
+            subtitles = subliminal.download_subtitles([self.location], languages=need_languages, services=sickbeard.subtitles.getEnabledServiceList(), force=False, multi=True, cache_dir=sickbeard.CACHE_DIR)
             
         except Exception as e:
             logger.log("Error occurred when downloading subtitles: " + str(e), logger.DEBUG)
@@ -1166,17 +1178,30 @@ class TVEpisode(object):
             for video in subtitles:
                 for subtitle in subtitles.get(video):
                     subtitleList.append(subtitle.language.name)
-            
+                    history.logSubtitle(self.show.tvdbid, self.season, self.episode, self.status, subtitle)
+                    
             logger.log(str(self.show.tvdbid) + ": Downloaded " + ", ".join(subtitleList) + " subtitles for episode " + str(self.season) + "x" + str(self.episode), logger.DEBUG)
-            
             notifiers.notify_subtitle_download(self.prettyName(), ", ".join(subtitleList))
         else:
             logger.log(str(self.show.tvdbid) + ": No subtitles downloaded for episode " + str(self.season) + "x" + str(self.episode), logger.DEBUG)
-        
+
         self.refreshSubtitles()
         self.subtitles_searchcount = self.subtitles_searchcount + 1
         self.subtitles_lastsearch = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         self.saveToDB()
+        
+        newsubtitles = set(self.subtitles).difference(set(previous_subtitles))
+        
+        if newsubtitles:
+            subtitleList = (subliminal.language.Language(x).name for x in newsubtitles)
+            logger.log(str(self.show.tvdbid) + ": Downloaded " + ", ".join(subtitleList) + " subtitles for episode " + str(self.season) + "x" + str(self.episode), logger.DEBUG)
+            
+            notifiers.notify_subtitle_download(self.prettyName(), ", ".join(subtitleList))
+            
+            for subtitle in newsubtitles:
+                history.logSubtitle(self.show.tvdbid, self.season, self.episode, self.status, subliminal.language.Language(subtitle))
+        else:
+            logger.log(str(self.show.tvdbid) + ": No subtitles downloaded for episode " + str(self.season) + "x" + str(self.episode), logger.DEBUG)
         
         return subtitles
 
@@ -1710,7 +1735,7 @@ class TVEpisode(object):
                    '%D': str(self.airdate.day),
                    '%0M': '%02d' % self.airdate.month,
                    '%0D': '%02d' % self.airdate.day,
-                   '%RT': "proper" if self.is_proper else "",
+                   '%RT': "PROPER" if self.is_proper else "",
                    }
 
     def _format_string(self, pattern, replace_map):
