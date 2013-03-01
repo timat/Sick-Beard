@@ -620,7 +620,9 @@ class TVShow(object):
                 self.air_by_date = 0
             
             self.subtitles = sqlResults[0]["subtitles"]
-            if self.subtitles == None:
+            if self.subtitles:
+                self.subtitles = 1
+            else:
                 self.subtitles = 0
 
             self.quality = int(sqlResults[0]["quality"])
