@@ -211,7 +211,8 @@ class PostProcessor(object):
                 file_attribute = ek.ek(os.stat, cur_file)[0]
                 if (not file_attribute & stat.S_IWRITE):
                     # File is read-only, so make it writeable
-                    ek.ek(os.chmod,cur_file,stat.S_IWRITE)
+                    self._log('Read only mode on file ' + cur_file, logger.WARNING )
+#                    ek.ek(os.chmod,cur_file,stat.S_IWRITE)
                 ek.ek(os.remove, cur_file)
                 # do the library update for synoindex
                 notifiers.synoindex_notifier.deleteFile(cur_file)
@@ -798,7 +799,8 @@ class PostProcessor(object):
             self._log(u"Show directory doesn't exist, creating it", logger.DEBUG)
             try:
                 ek.ek(os.mkdir, ep_obj.show._location)
-
+                # do the library update for synoindex
+                notifiers.synoindex_notifier.addFolder(ep_obj.show._location)
             except (OSError, IOError):
                 raise exceptions.PostProcessingFailed("Unable to create the show directory: " + ep_obj.show._location)
 

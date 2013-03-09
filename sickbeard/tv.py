@@ -966,7 +966,7 @@ class TVShow(object):
                         "flatten_folders": self.flatten_folders,
                         "paused": self.paused,
                         "air_by_date": self.air_by_date,
-						"subtitles": self.subtitles,
+                        "subtitles": self.subtitles,
                         "startyear": self.startyear,
                         "tvr_name": self.tvrname,
                         "lang": self.lang,
@@ -1071,9 +1071,11 @@ class TVShow(object):
                 maxBestQuality = None
 
             epStatus, curQuality = Quality.splitCompositeStatus(epStatus)
-
+    
+            if epStatus in (SNATCHED, SNATCHED_PROPER):
+                return Overview.SNATCHED
             # if they don't want re-downloads then we call it good if they have anything
-            if maxBestQuality == None:
+            elif maxBestQuality == None:
                 return Overview.GOOD
             # if they have one but it's not the best they want then mark it as qual
             elif curQuality < maxBestQuality:
@@ -1081,7 +1083,7 @@ class TVShow(object):
             # if it's >= maxBestQuality then it's good
             else:
                 return Overview.GOOD
-
+            
 def dirty_setter(attr_name):
     def wrapper(self, val):
         if getattr(self, attr_name) != val:
@@ -1172,23 +1174,26 @@ class TVEpisode(object):
         except Exception as e:
             logger.log("Error occurred when downloading subtitles: " + str(e), logger.DEBUG)
             return
-        
-        if subtitles:
-            subtitleList = []
-            for video in subtitles:
-                for subtitle in subtitles.get(video):
-                    subtitleList.append(subtitle.language.name)
-                    history.logSubtitle(self.show.tvdbid, self.season, self.episode, self.status, subtitle)
-                    
-            logger.log(str(self.show.tvdbid) + ": Downloaded " + ", ".join(subtitleList) + " subtitles for episode " + str(self.season) + "x" + str(self.episode), logger.DEBUG)
-            notifiers.notify_subtitle_download(self.prettyName(), ", ".join(subtitleList))
-        else:
-            logger.log(str(self.show.tvdbid) + ": No subtitles downloaded for episode " + str(self.season) + "x" + str(self.episode), logger.DEBUG)
 
         self.refreshSubtitles()
         self.subtitles_searchcount = self.subtitles_searchcount + 1
         self.subtitles_lastsearch = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         self.saveToDB()
+        
+        newsubtitles = set(self.subtitles).difference(set(previous_subtitles))
+        
+        if newsubtitles:
+            subtitleList = (subliminal.language.Language(x).name for x in newsubtitles)
+            logger.log(str(self.show.tvdbid) + ": Downloaded " + ", ".join(subtitleList) + " subtitles for episode " + str(self.season) + "x" + str(self.episode), logger.DEBUG)
+            notifiers.notify_subtitle_download(self.prettyName(), ", ".join(subtitleList))
+
+        else:
+            logger.log(str(self.show.tvdbid) + ": No subtitles downloaded for episode " + str(self.season) + "x" + str(self.episode), logger.DEBUG)
+
+        if sickbeard.SUBTITLES_HISTORY:
+            for video in subtitles:
+                for subtitle in subtitles.get(video):
+                    history.logSubtitle(self.show.tvdbid, self.season, self.episode, self.status, subtitle)
         
         newsubtitles = set(self.subtitles).difference(set(previous_subtitles))
         
@@ -1204,7 +1209,6 @@ class TVEpisode(object):
             logger.log(str(self.show.tvdbid) + ": No subtitles downloaded for episode " + str(self.season) + "x" + str(self.episode), logger.DEBUG)
         
         return subtitles
-
 
     def checkForMetaFiles(self):
 
@@ -1938,8 +1942,9 @@ class TVEpisode(object):
         proper_path = self.proper_path()
         absolute_proper_path = ek.ek(os.path.join, self.show.location, proper_path)
         absolute_current_path_no_ext, file_ext = os.path.splitext(self.location)
-        related_subs = []
         
+        related_subs = []
+
         related_subs = []
 
         current_path = absolute_current_path_no_ext

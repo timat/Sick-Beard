@@ -32,41 +32,30 @@ from sickbeard import show_name_helpers
 from sickbeard.common import Overview 
 from sickbeard.exceptions import ex
 from sickbeard import encodingKludge as ek
+#from lib import requests
+from bs4 import BeautifulSoup
 
-proxy_dict = {
-              'Getprivate.eu (NL)' : 'http://getprivate.eu/',
-              '15bb51.info (US)' : 'http://15bb51.info/',
-              'Hideme.nl (NL)' : 'http://hideme.nl/',
-              'Rapidproxy.us (GB)' : 'http://rapidproxy.us/',
-              'Proxite.eu (DE)' :'http://proxite.eu/',
-              'Shieldmagic.com (GB)' : 'http://www.shieldmagic.com/',
-              'Webproxy.cz (CZ)' : 'http://webproxy.cz/',
-              'Freeproxy.cz (CZ)' : 'http://www.freeproxy.cz/',
-             }
-
-class ThePirateBayProvider(generic.TorrentProvider):
+class KATProvider(generic.TorrentProvider):
 
     def __init__(self):
 
-        generic.TorrentProvider.__init__(self, "ThePirateBay")
+        generic.TorrentProvider.__init__(self, "KickAssTorrents")
         
         self.supportsBacklog = True
 
-        self.cache = ThePirateBayCache(self)
+        self.cache = KATCache(self)
         
-        self.proxy = ThePirateBayWebproxy() 
-        
-        self.url = 'http://thepiratebay.se/'
+        self.url = 'https://www.kat.ph/'
 
-        self.searchurl = self.url+'search/%s/0/7/200'  # order by seed       
+        self.searchurl = self.url+'usearch/%s/?field=seeders&sorder=desc'  # order by seed       
 
-        self.re_title_url =  '/torrent/(?P<id>\d+)/(?P<title>.*?)//1".+?(?P<url>magnet.*?)//1".+?(?P<seeders>\d+)</td>.+?(?P<leechers>\d+)</td>'
+#        self.re_title_url =  '/torrent/(?P<id>\d+)/(?P<title>.*?)//1".+?(?P<url>magnet.*?)//1".+?(?P<seeders>\d+)</td>.+?(?P<leechers>\d+)</td>'
 
     def isEnabled(self):
-        return sickbeard.THEPIRATEBAY
+        return sickbeard.KAT
         
     def imageName(self):
-        return 'thepiratebay.png'
+        return 'kat.png'
     
     def getQuality(self, item):
         
@@ -98,7 +87,7 @@ class ThePirateBayProvider(generic.TorrentProvider):
         
         return quality_string
 
-    def _find_season_quality(self,title,torrent_id):
+    def _find_season_quality(self,title,torrent_link):
         """ Return the modified title of a Season Torrent with the quality found inspecting torrent file list """
 
         mediaExtensions = ['avi', 'mkv', 'wmv', 'divx',
@@ -109,41 +98,42 @@ class ThePirateBayProvider(generic.TorrentProvider):
         
         fileName = None
         
-        fileURL = self.proxy._buildURL(self.url+'ajax_details_filelist.php?id='+str(torrent_id))
-      
-        data = self.getURL(fileURL)
+        data = self.getURL(torrent_link)
         
         if not data:
             return None
         
-        filesList = re.findall('<td.+>(.*?)</td>',data) 
-        
-        if not filesList: 
-            logger.log(u"Unable to get the torrent file list for "+title, logger.ERROR)
+        try: 
+            html = BeautifulSoup(data)
+            file_table = html.find('table', attrs = {'class':'torrentFileList'})
+            files = file_table.find_all('td',attrs = {'class':'torFileName'}, recursive = False)
             
-        for fileName in filter(lambda x: x.rpartition(".")[2].lower() in mediaExtensions, filesList):
-            quality = Quality.nameQuality(os.path.basename(fileName))
-            if quality != Quality.UNKNOWN: break
-
-        if fileName!=None and quality == Quality.UNKNOWN:
-            quality = Quality.assumeQuality(os.path.basename(fileName))            
-
-        if quality == Quality.UNKNOWN:
-            logger.log(u"No Season quality for "+title, logger.DEBUG)
-            return None
-
-        try:
-            myParser = NameParser()
-            parse_result = myParser.parse(fileName)
-        except InvalidNameException:
-            return None
-        
-        logger.log(u"Season quality for "+title+" is "+Quality.qualityStrings[quality], logger.DEBUG)
-        
-        if parse_result.series_name and parse_result.season_number: 
-            title = parse_result.series_name+' S%02d' % int(parse_result.season_number)+' '+self._reverseQuality(quality)
-        
-        return title
+            for fileName in filter(lambda x: x.rpartition(".")[2].lower() in mediaExtensions, files.string):
+                quality = Quality.nameQuality(os.path.basename(fileName))
+                if quality != Quality.UNKNOWN: break
+    
+            if fileName!=None and quality == Quality.UNKNOWN:
+                quality = Quality.assumeQuality(os.path.basename(fileName))            
+    
+            if quality == Quality.UNKNOWN:
+                logger.log(u"No Season quality for "+title, logger.DEBUG)
+                return None
+    
+            try:
+                myParser = NameParser()
+                parse_result = myParser.parse(fileName)
+            except InvalidNameException:
+                return None
+            
+            logger.log(u"Season quality for "+title+" is "+Quality.qualityStrings[quality], logger.DEBUG)
+            
+            if parse_result.series_name and parse_result.season_number: 
+                title = parse_result.series_name+' S%02d' % int(parse_result.season_number)+' '+self._reverseQuality(quality)
+            
+            return title
+            
+        except:
+            log.error('Failed parsing Torrent File list: %s', traceback.format_exc())                
 
     def _get_season_search_strings(self, show, season=None):
 
@@ -206,42 +196,58 @@ class ThePirateBayProvider(generic.TorrentProvider):
         for mode in search_params.keys():
             for search_string in search_params[mode]:
 
-                searchURL = self.proxy._buildURL(self.searchurl %(urllib.quote(search_string)))    
+                searchURL = self.searchurl %(urllib.quote(search_string))    
         
                 logger.log(u"Search string: " + searchURL, logger.DEBUG)
         
                 data = self.getURL(searchURL)
                 if not data:
                     return []
-        
-                re_title_url = self.proxy._buildRE(self.re_title_url)
-                
-                #Extracting torrent information from data returned by searchURL                   
-                match = re.compile(re_title_url, re.DOTALL ).finditer(urllib.unquote(data))
-                for torrent in match:
 
-                    title = torrent.group('title').replace('_','.')#Do not know why but SickBeard skip release with '_' in name
-                    url = torrent.group('url')
-                    id = int(torrent.group('id'))
-                    seeders = int(torrent.group('seeders'))
-                    leechers = int(torrent.group('leechers'))
+                table_order = ['name', 'size', 'files', 'age', 'seeds', 'leechers']
 
-                    #Filter unseeded torrent
-                    if seeders == 0 or not title:
-                        continue 
-                   
-                    #Accept Torrent only from Good People for every Episode Search
-                    if sickbeard.THEPIRATEBAY_TRUSTED and re.search('(VIP|Trusted|Helper)',torrent.group(0))== None:
-                        logger.log(u"ThePirateBay Provider found result "+torrent.group('title')+" but that doesn't seem like a trusted result so I'm ignoring it",logger.DEBUG)
-                        continue
+                try:
+                    html = BeautifulSoup(data)
 
-                    #Try to find the real Quality for full season torrent analyzing files in torrent 
-                    if mode == 'Season' and Quality.nameQuality(title) == Quality.UNKNOWN:     
-                        if not self._find_season_quality(title,id): continue
-                        
-                    item = title, url, id, seeders, leechers
+                    resultdiv = html.find('div', attrs = {'class':'tabs'})
                     
-                    items[mode].append(item)    
+                    for div in [x for x in resultdiv.find_all('div', recursive = False) if x.get('id')]:
+                        for tr in [x for x in div.find_all('tr') if x['class'] != 'firstr' and x.get['id']]:
+                            for colname, td in [(c,x) for c in range(len(table_order)) for x in tr.find_all('td')]:   
+                                 
+                                if colname is 'name':
+                                    link = self.url + td.find('div', {'class': 'torrentname'}).find_all('a')[1]
+                                    id = tr.get('id')[-8:]
+                                    title = re.sub('-t%s.html' %id, '', link.text)
+                                    url = td.find('a', 'imagnet')['href']
+                                    verified = True if td.find('a', 'iverif') else False
+                                    trusted = True if td.find('img', {'alt': 'verified'}) else False
+                                if colname is 'seeds':
+                                    seeders = int(td.text)
+                                if colname is 'leechers':
+                                    leechers = int(td.text)    
+
+                        if seeders == 0 or not title \
+                        or not show_name_helpers.filterBadReleases(title):
+                            continue 
+
+                        if sickbeard.KAT_TRUSTED and trusted:
+                            logger.log(u"KAT Provider found result "+title+" but that doesn't seem like a trusted result so I'm ignoring it",logger.DEBUG)
+                            continue
+                   
+                        if sickbeard.KAT_VERIFIED and verified:
+                            logger.log(u"KAT Provider found result "+title+" but that doesn't seem like a verified result so I'm ignoring it",logger.DEBUG)
+                            continue
+
+                        if mode == 'Season' and Quality.nameQuality(title) == Quality.UNKNOWN:
+                            if not self._find_season_quality(title,link): continue
+
+                        item = title, url, id, seeders, leechers
+
+                        items[mode].append(item)
+
+                except:
+                    logger.log(u"Failed to parsing " + self.name + " page url: " + searchURL, logger.ERROR)
 
             #For each search mode sort all the items by seeders
             items[mode].sort(key=lambda tup: tup[3], reverse=True)        
@@ -338,9 +344,6 @@ class ThePirateBayCache(tvcache.TVCache):
             title = torrent.group('title').replace('_','.')#Do not know why but SickBeard skip release with '_' in name
             url = torrent.group('url')
            
-            if not title or not url:
-                continue
-           
             #accept torrent only from Trusted people
             if sickbeard.THEPIRATEBAY_TRUSTED and re.search('(VIP|Trusted|Helper)',torrent.group(0))== None:
                 logger.log(u"ThePirateBay Provider found result "+torrent.group('title')+" but that doesn't seem like a trusted result so I'm ignoring it",logger.DEBUG)
@@ -353,9 +356,9 @@ class ThePirateBayCache(tvcache.TVCache):
     def _getData(self):
        
         #url for the last 50 tv-show
-        url = self.provider.proxy._buildURL(self.provider.url+'tv/latest/')
+        url = self.provider.url+'tv/'
 
-        logger.log(u"ThePirateBay cache update URL: "+ url, logger.DEBUG)
+        logger.log(u"KAT cache update URL: "+ url, logger.DEBUG)
 
         data = self.provider.getURL(url)
 
@@ -371,36 +374,5 @@ class ThePirateBayCache(tvcache.TVCache):
         logger.log(u"Adding item to cache: "+title, logger.DEBUG)
 
         self._addCacheEntry(title, url)
-
-class ThePirateBayWebproxy:
     
-    def __init__(self):
-        self.Type   = 'GlypeProxy'
-        self.param  = 'browse.php?u='
-        self.option = '&b=32'
-        
-    def isEnabled(self):
-        """ Return True if we Choose to call TPB via Proxy """ 
-        return sickbeard.THEPIRATEBAY_PROXY
-    
-    def getProxyURL(self):
-        """ Return the Proxy URL Choosen via Provider Setting """
-        return str(sickbeard.THEPIRATEBAY_PROXY_URL)
-    
-    def _buildURL(self,url):
-        """ Return the Proxyfied URL of the page """ 
-        if self.isEnabled():
-            url = self.getProxyURL() + self.param + url + self.option
-        
-        return url      
-
-    def _buildRE(self,regx):
-        """ Return the Proxyfied RE string """
-        if self.isEnabled():
-            regx = re.sub('//1',self.option,regx).replace('&','&amp;')
-        else:
-            regx = re.sub('//1','',regx)  
-
-        return regx    
-    
-provider = ThePirateBayProvider()
+provider = KATProvider()

@@ -79,6 +79,19 @@ $(document).ready(function(){
             $('#password_desc').text('Deluge Password');
             $('#deluge_label_warning').show();
             $('#directory_desc').text('Deluge Directory');
+        } else if (selectedProvider == "download_station"){
+            $('#t_blackhole_settings').hide();
+            $('#torrent_settings').show();
+            $('#Torrent_Label').hide();            
+            $('#Torrent_username').show();
+            $('#Torrent_Paused').hide();
+            $('#Torrent_Path').hide();
+            $('#Torrent_Ratio').hide();
+            $('#host_desc').text('Synology Host');
+            $('#username_desc').text('Synology Username');
+            $('#password_desc').text('Synology Password');
+            $('#label_desc').text('Synology Label');
+            $('#directory_desc').text('Synology Directory');
         }
     }
 
