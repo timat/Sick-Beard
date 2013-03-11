@@ -108,7 +108,7 @@ class Quality:
                       SDDVD: "SD DVD",
                       HDTV: "HD TV",
                       RAWHDTV: "RawHD TV",
-                      FULLHDTV: "1080p HDTV",
+                      FULLHDTV: "1080p HD TV",
                       HDWEBDL: "720p WEB-DL",
                       FULLHDWEBDL: "1080p WEB-DL",
                       HDBLURAY: "720p BluRay",
@@ -162,7 +162,7 @@ class Quality:
 
         checkName = lambda list, func: func([re.search(x, name, re.I) for x in list])
 
-        if checkName(["(pdtv|hdtv|dsr|tvrip|web.dl|webrip).(xvid|x264)"], all) and not checkName(["(720|1080)[pi]"], all):
+        if checkName(["(pdtv|hdtv|dsr|tvrip|web.dl|webrip).(xvid|x264|h.?264)"], all) and not checkName(["(720|1080)[pi]"], all):
             return Quality.SDTV
         elif checkName(["(dvdrip|bdrip)(.ws)?.(xvid|divx|x264)"], any) and not checkName(["(720|1080)[pi]"], all):
             return Quality.SDDVD
@@ -172,9 +172,9 @@ class Quality:
             return Quality.RAWHDTV                                                                     
         elif checkName(["1080p", "hdtv", "x264"], all):         
             return Quality.FULLHDTV                                                                    
-        elif checkName(["720p", "web.dl|webrip"], all) or checkName(["720p", "itunes", "h.?264"], all):
+        elif checkName(["720p", "web.dl|webrip", "h.?264"], all) or checkName(["720p", "itunes", "h.?264"], all):
             return Quality.HDWEBDL                                                                     
-        elif checkName(["1080p", "web.dl|webrip"], all) or checkName(["1080p", "itunes", "h.?264"], all):     
+        elif checkName(["1080p", "web.dl|webrip", "h.?264"], all) or checkName(["1080p", "itunes", "h.?264"], all):     
             return Quality.FULLHDWEBDL                                                                 
         elif checkName(["720p", "bluray|hddvd", "x264"], all):
             return Quality.HDBLURAY                                                                    
@@ -212,7 +212,7 @@ class Quality:
             if status > x * 100:
                 return (status - x * 100, x)
 
-        return (Quality.NONE, status)
+        return (status, Quality.NONE)
 
     @staticmethod
     def statusFromName(name, assume=True):
@@ -281,12 +281,16 @@ class Overview:
     WANTED = WANTED # 3
     GOOD = 4
     SKIPPED = SKIPPED # 5
-
+    
+    # For both snatched statuses. Note: SNATCHED/QUAL have same value and break dict.
+    SNATCHED = SNATCHED_PROPER # 9
+    
     overviewStrings = {SKIPPED: "skipped",
                        WANTED: "wanted",
                        QUAL: "qual",
                        GOOD: "good",
-                       UNAIRED: "unaired"}
+                       UNAIRED: "unaired",
+                       SNATCHED: "snatched"}
 
 # Get our xml namespaces correct for lxml
 XML_NSMAP = {'xsi': 'http://www.w3.org/2001/XMLSchema-instance',

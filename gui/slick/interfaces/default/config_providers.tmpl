@@ -58,6 +58,7 @@ var show_nzb_providers = #if $sickbeard.USE_NZBS then "true" else "false"#;
                         <div>
                             <h4 class="note">*</h4><p class="note">Provider does not support backlog searches at this time.</p>
                             <h4 class="note">**</h4><p class="note">Provider supports <b>limited</b> backlog searches, all episodes/qualities may not be available.</p>
+							<h4 class="note">?</h4><p class="note">Provider is <b>NOT WORKING</b>.</p>
                         </div>
                     </div>
 
@@ -76,6 +77,7 @@ var show_nzb_providers = #if $sickbeard.USE_NZBS then "true" else "false"#;
                             $curProvider.name
                             #if not $curProvider.supportsBacklog then "*" else ""#
                             #if $curProvider.name == "EZRSS" or $curProvider.name == "ThePirateBay" or $curProvider.name == "DailyTvTorrents" or $curProvider.name == "TorrentLeech" or $curProvider.name == "IPTorrents" then "**" else ""#
+                            #if $curProvider.name == "TorrentLeech" then "?" else ""#
                             <span class="ui-icon ui-icon-arrowthick-2-n-s pull-right"></span>
                           </li>
                         #end for
@@ -98,13 +100,8 @@ var show_nzb_providers = #if $sickbeard.USE_NZBS then "true" else "false"#;
                                 <span class="component-title jumbo">Configure Provider:</span>
                                 <span class="component-desc">
                                     #set $provider_config_list = []
-                                    #for $cur_provider in ("nzbs_r_us", "thepiratebay", "dailytvtorrents", "tvtorrents", "btn", "torrentleech", "iptorrents", "torrentday"):
+                                    #for $cur_provider in ("nzbs_r_us", "omgwtfnzbs", "thepiratebay", "dailytvtorrents", "tvtorrents", "btn", "torrentleech", "iptorrents", "torrentday"):
                                         #set $cur_provider_obj = $sickbeard.providers.getProviderClass($cur_provider)
-                                        #if $cur_provider_obj.providerType == $GenericProvider.NZB and not $sickbeard.USE_NZBS:
-                                            #continue
-                                        #elif $cur_provider_obj.providerType == $GenericProvider.TORRENT and not $sickbeard.USE_TORRENTS:
-                                            #continue
-                                        #end if
                                         $provider_config_list.append($cur_provider_obj)
                                     #end for
 
@@ -154,6 +151,21 @@ var show_nzb_providers = #if $sickbeard.USE_NZBS then "true" else "false"#;
                             </label>
                         </div>
 </div>
+
+                    <div class="providerDiv" id="omgwtfnzbsDiv">
+                        <div class="field-pair">
+                            <label class="clearfix">
+                                <span class="component-title">omgwtfnzbs User ID</span>
+                                <input class="component-desc" type="text" name="omgwtfnzbs_uid" value="$sickbeard.OMGWTFNZBS_UID" size="10" />
+                            </label>
+                        </div>
+                        <div class="field-pair">
+                            <label class="clearfix">
+                                <span class="component-title">omgwtfnzbs API Key</span>
+                                <input class="component-desc" type="text" name="omgwtfnzbs_key" value="$sickbeard.OMGWTFNZBS_KEY" size="40" />
+                            </label>
+                        </div>
+                    </div><!-- /omgwtfnzbsDiv //-->
 
 <div class="providerDiv" id="tvtorrentsDiv">
                         <div class="field-pair">
@@ -274,7 +286,7 @@ var show_nzb_providers = #if $sickbeard.USE_NZBS then "true" else "false"#;
                             <input type="checkbox" name="iptorrents_freeleech" id="iptorrents_freeleech" #if $sickbeard.IPTORRENTS_FREELEECH then "checked=\"checked\"" else ""#/>
                             <label class="clearfix" for="iptorrents_freeleech">
                                 <span class="component-title">FreeLeech</span>
-                                <span class="component-desc">This will only download [FreeLeech] torrents</span>
+                                <span class="component-desc">This will only download <b>[FreeLeech]</b> torrents.</span>
                             </label>
                         </div>
 </div><!-- /iptorrentsDiv //-->
@@ -335,7 +347,7 @@ var show_nzb_providers = #if $sickbeard.USE_NZBS then "true" else "false"#;
                 <input class="btn" type="button" class="newznab_save" id="newznab_add" value="Add" />
             </div>
             <div id="newznab_update_div" style="display: none;">
-                <input class="btn" type="button" class="newznab_delete" id="newznab_delete" value="Delete" />
+                <input class="btn btn-danger newznab_delete" type="button" class="newznab_delete" id="newznab_delete" value="Delete" />
             </div> 
 </div>
 
