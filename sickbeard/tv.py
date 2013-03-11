@@ -1204,7 +1204,7 @@ class TVEpisode(object):
             notifiers.notify_subtitle_download(self.prettyName(), ", ".join(subtitleList))
             
             for subtitle in newsubtitles:
-                history.logSubtitle(self.show.tvdbid, self.season, self.episode, self.status, subliminal.language.Language(subtitle))
+                history.logSubtitle(self.show.tvdbid, self.season, self.episode, self.status, subtitle)
         else:
             logger.log(str(self.show.tvdbid) + ": No subtitles downloaded for episode " + str(self.season) + "x" + str(self.episode), logger.DEBUG)
         
