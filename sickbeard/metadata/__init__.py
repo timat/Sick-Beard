@@ -16,10 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Sick Beard.  If not, see <http://www.gnu.org/licenses/>.
 
-__all__ = ['generic', 'helpers', 'xbmc', 'mediabrowser', 'synology', 'ps3', 'wdtv', 'tivo', 'minidlna']
+__all__ = ['generic', 'helpers', 'xbmc', 'mediabrowser', 'synology', 'ps3', 'wdtv', 'tivo', 'mede8er', 'minidlna']
 
 import sys
-import xbmc, mediabrowser, synology, ps3, wdtv, tivo, minidlna
+import xbmc, mediabrowser, synology, ps3, wdtv, tivo, mede8er, minidlna
 
 def available_generators():
     return filter(lambda x: x not in ('generic', 'helpers'), __all__)

@@ -1184,7 +1184,7 @@ class CMD_SickBeard(ApiCall):
 
     def run(self):
         """ display misc sickbeard related information """
-        data = {"sb_version": sickbeard.version.SICKBEARD_VERSION, "api_version": Api.version, "api_commands": sorted(_functionMaper.keys())}
+        data = {"sb_version": sickbeard.version.SICKBEARD_RELEASE_NAME, "api_version": Api.version, "api_commands": sorted(_functionMaper.keys())}
         return _responds(RESULT_SUCCESS, data)
 
 
@@ -1469,7 +1469,7 @@ class CMD_SickBeardSearchTVDB(ApiCall):
     def run(self):
         """ search for show at tvdb with a given string and language """
         if self.name and not self.tvdbid: # only name was given
-            baseURL = "http://www.thetvdb.com/api/GetSeries.php?"
+            baseURL = "http://thetvdb.com/api/GetSeries.php?"
             params = {"seriesname": str(self.name).encode('utf-8'), 'language': self.lang}
             finalURL = baseURL + urllib.urlencode(params)
             urlData = sickbeard.helpers.getURL(finalURL)

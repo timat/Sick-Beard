@@ -9,7 +9,7 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
     <meta name="robots" content="noindex">
-    <title>Sick Beard - alpha $sickbeard.version.SICKBEARD_VERSION - $title</title>
+    <title>Sick Beard - alpha $sickbeard.version.SICKBEARD_RELEASE_NAME - $title</title>
     <!--[if lt IE 9]>
          <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
@@ -42,7 +42,7 @@
 //--> 
 </style>
 
-    <script type="text/javascript" src="$sbRoot/js/lib/jquery-1.7.2.min.js?$sbPID"></script>
+    <script type="text/javascript" src="$sbRoot/js/lib/jquery-1.8.3.min.js?$sbPID"></script>
     <script type="text/javascript" src="$sbRoot/js/lib/jquery-ui-1.8.24.custom.min.js?$sbPID"></script>
     <script type="text/javascript" src="$sbRoot/js/lib/superfish-1.4.8.js?$sbPID"></script>
     <script type="text/javascript" src="$sbRoot/js/lib/supersubs-0.2b.js?$sbPID"></script>
@@ -76,16 +76,16 @@
         \$("#SubMenu a[href^='/home/shutdown/']").addClass('btn').html('<span class="ui-icon ui-icon-power pull-left"></span> Shutdown </a>');		
 		\$("#SubMenu a:contains('Edit')").addClass('btn').html('<span class="ui-icon ui-icon-pencil pull-left"></span> Edit </a>');
 		\$("#SubMenu a:contains('Delete')").addClass('btn').html('<span class="ui-icon ui-icon-trash pull-left"></span> Delete </a>');
-		\$("#SubMenu a:contains('Clear History')").addClass('btn').html('<span class="ui-icon ui-icon-trash pull-left"></span> Clear History </a>');
-		\$("#SubMenu a:contains('Clear History')").addClass('btn').html('<span class="ui-icon ui-icon-trash pull-left"></span> Clear History </a>');
-		\$("#SubMenu a:contains('Trim History')").addClass('btn').html('<span class="ui-icon ui-icon-trash pull-left"></span> Trim History </a>');
-        \$("#SubMenu a[href='/errorlogs/clearerrors']").addClass('btn').html('<span class="ui-icon ui-icon-trash pull-left"></span> Clear Logs </a>');
+		\$("#SubMenu a:contains('Clear History')").addClass('btn confirm').html('<span class="ui-icon ui-icon-trash pull-left"></span> Clear History </a>');
+		\$("#SubMenu a:contains('Trim History')").addClass('btn confirm').html('<span class="ui-icon ui-icon-trash pull-left"></span> Trim History </a>');
+        \$("#SubMenu a[href='/errorlogs/clearerrors']").addClass('btn').html('<span class="ui-icon ui-icon-trash pull-left"></span> Clear Errors </a>');
 		\$("#SubMenu a:contains('Re-scan')").addClass('btn').html('<span class="ui-icon ui-icon-refresh pull-left"></span> Re-scan </a>');
 		\$("#SubMenu a:contains('Backlog Overview')").addClass('btn').html('<span class="ui-icon ui-icon-refresh pull-left"></span> Backlog Overview </a>');
         \$("#SubMenu a[href='/home/updatePLEX/']").addClass('btn').html('<span class="ui-icon ui-icon-refresh pull-left"></span> Update PLEX </a>');
 		\$("#SubMenu a:contains('Force')").addClass('btn').html('<span class="ui-icon ui-icon-transfer-e-w pull-left"></span> Force Full Update </a>');
 		\$("#SubMenu a:contains('Rename')").addClass('btn').html('<span class="ui-icon ui-icon-tag pull-left"></span> Preview Rename </a>');
-		\$("#SubMenu a:contains('Subtitles')").addClass('btn').html('<span class="ui-icon ui-icon-comment pull-left"></span> Download Subtitles </a>');
+		\$("#SubMenu a[href='/config/subtitles/']").addClass('btn').html('<span class="ui-icon ui-icon-comment pull-left"></span> Search Subtitles </a>');
+		\$("#SubMenu a[href^='/home/subtitleShow']").addClass('btn').html('<span class="ui-icon ui-icon-comment pull-left"></span> Download Subtitles </a>');
 		\$("#SubMenu a:contains('Settings')").addClass('btn').html('<span class="ui-icon ui-icon-search pull-left"></span> Search Settings </a>');
 		\$("#SubMenu a:contains('Provider')").addClass('btn').html('<span class="ui-icon ui-icon-search pull-left"></span> Search Providers </a>');
 		\$("#SubMenu a:contains('General')").addClass('btn').html('<span class="ui-icon ui-icon-gear pull-left"></span> General </a>');
@@ -164,7 +164,8 @@
 	<div class="wrapper">
     <a name="top"></a>
     <span id="logo"><a href="$sbRoot/home/" title="Sick Beard homepage"><img alt="Sick Beard" src="$sbRoot/images/sickbeard.png" width="150" /></a></span>
-    <span id="versiontext">alpha $sickbeard.version.SICKBEARD_VERSION</span>
+    <span id="versiontext">alpha</span>
+    <span id="releasetext">$sickbeard.version.SICKBEARD_RELEASE_NAME</span>
     <ul id="MainMenu" class="sf-menu">
                 <li id="NAVhome"><a href="$sbRoot/home/">Show list</a>
                     <ul>
