@@ -1102,7 +1102,7 @@ class ConfigPostProcessing:
         sickbeard.metadata_provider_dict['WDTV'].set_config(wdtv_data)
         sickbeard.metadata_provider_dict['TIVO'].set_config(tivo_data)
         sickbeard.metadata_provider_dict['Mede8er'].set_config(mede8er_data)
-        sickbeard.metadata_provider_dict['minidlna'].set_config(minidlna_data)
+        sickbeard.metadata_provider_dict['minidlna'].set_config(minidlna_data)        
         
         if self.isNamingValid(naming_pattern, naming_multi_ep) != "invalid":
             sickbeard.NAMING_PATTERN = naming_pattern

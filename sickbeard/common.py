@@ -245,7 +245,6 @@ qualityPresetStrings = {SD: "SD",
                         HD1080p: "HD1080p",
                         ANY: "Any"}
 
-
 class StatusStrings:
     def __init__(self):
         self.statusStrings = {UNKNOWN: "Unknown",
@@ -274,7 +273,6 @@ class StatusStrings:
 
 statusStrings = StatusStrings()
 
-
 class Overview:
     UNAIRED = UNAIRED # 1
     QUAL = 2
@@ -301,3 +299,4 @@ countryList = {'Australia': 'AU',
                'Canada': 'CA',
                'USA': 'US'
                }
+

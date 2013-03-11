@@ -1063,6 +1063,7 @@ span.RawHD {
   background: none repeat scroll 0 0 #999944;
   /* dark orange */
 }
+
 span.SD {
   background: none repeat scroll 0 0 #944;
   /* red */
@@ -1072,11 +1073,12 @@ span.Any {
   background: none repeat scroll 0 0 #444;
   /* black */
 }
+
 span.Proper {
   background: none repeat scroll 0 0 #CD7300;
   /* orange_red */
 }
-/* unused boolean tags */
+
 span.false {
   color: #993333;
   /* red */

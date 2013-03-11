@@ -624,7 +624,7 @@ class TVShow(object):
             if self.subtitles:
                 self.subtitles = 1
             else:
-                self.subtitles = 0
+                self.subtitles = 0    
 
             self.quality = int(sqlResults[0]["quality"])
             self.flatten_folders = int(sqlResults[0]["flatten_folders"])
@@ -1710,7 +1710,7 @@ class TVEpisode(object):
             show_name = self.show.name 
         
         if sickbeard.NAMING_STRIP_YEAR:
-            show_name = re.sub("\(\d+\)$", "", self.show.name).rstrip()
+            show_name = re.sub("\(\w+\)$", "", self.show.name).rstrip()
         else:
             show_name = self.show.name 
         

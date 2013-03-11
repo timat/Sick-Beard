@@ -18,7 +18,6 @@
 
 __all__ = ['ezrss',
            'tvtorrents',
-           'torrentday',
            'nzbsrus',
            'womble',
            'btn',
@@ -27,7 +26,8 @@ __all__ = ['ezrss',
            'torrentleech',
            'nzbx',
            'iptorrents',
-           'omgwtfnzbs'
+           'omgwtfnzbs',
+           'torrentday'
            ]
 
 import sickbeard
