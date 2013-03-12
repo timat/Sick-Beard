@@ -1709,11 +1709,6 @@ class TVEpisode(object):
         else:
             show_name = self.show.name 
         
-        if sickbeard.NAMING_STRIP_YEAR:
-            show_name = re.sub("\(\w+\)$", "", self.show.name).rstrip()
-        else:
-            show_name = self.show.name 
-        
         return {
                    '%SN': show_name,
                    '%S.N': dot(show_name),
