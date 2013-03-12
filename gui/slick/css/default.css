@@ -176,7 +176,8 @@ a{
 #header .wrapper {
   margin: 0 auto;
   position: relative;
-  width: 960px;
+  min-width: 900px;
+  width: 80%;
 }
 #header a:hover {
   background: none;
@@ -735,6 +736,7 @@ div#summary tr td {
   margin-top: -35px;
   position: relative;
   z-index: 99;
+  display:none;
 }
 #SubMenu a {
   font-size: 12px;
@@ -760,7 +762,7 @@ div#summary tr td {
 #content {
   line-height: 24px;
   margin: 0 auto;
-  padding: 105px 0 0;
+  padding: 75px 0 0;
   width: 960px;
 }
 .showLegend {
