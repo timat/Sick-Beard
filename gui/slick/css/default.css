@@ -176,7 +176,7 @@ a{
 #header .wrapper {
   margin: 0 auto;
   position: relative;
-  width: 925px;
+  width: 960px;
 }
 #header a:hover {
   background: none;
@@ -185,7 +185,7 @@ a{
 #header .showInfo .checkboxControls {
   margin: 0 auto;
   position: relative;
-  width: 925px;
+  width: 960px;
 }
 
 #logo {
@@ -377,7 +377,7 @@ input:not(.btn){margin-right:6px;margin-top:5px;padding-top:4px;padding-bottom:4
 /* --------------------------------------------- */
 .footer {
   clear: both;
-  width: 925px;
+  width: 960px;
   text-align: center;
   padding-top: 5px;
   padding-bottom: 5px;
@@ -761,7 +761,7 @@ div#summary tr td {
   line-height: 24px;
   margin: 0 auto;
   padding: 105px 0 0;
-  width: 925px;
+  width: 960px;
 }
 .showLegend {
   font-weight: 700;
