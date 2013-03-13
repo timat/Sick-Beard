@@ -177,7 +177,8 @@ a{
   margin: 0 auto;
   position: relative;
   min-width: 900px;
-  width: 80%;
+  width: 100%;
+  max-width: 960px;
 }
 #header a:hover {
   background: none;
@@ -186,7 +187,9 @@ a{
 #header .showInfo .checkboxControls {
   margin: 0 auto;
   position: relative;
-  width: 960px;
+  min-width: 900px;
+  width: 100%;
+  max-width: 960px;
 }
 
 #logo {
@@ -247,7 +250,7 @@ a{
   float: left;
   height: auto;
   margin-bottom: 30px;
-  margin-right: 25px;
+  margin-right: 15px;
   overflow: hidden;
   text-indent: -3000px;
   width: 175px;
@@ -378,7 +381,9 @@ input:not(.btn){margin-right:6px;margin-top:5px;padding-top:4px;padding-bottom:4
 /* --------------------------------------------- */
 .footer {
   clear: both;
-  width: 960px;
+  min-width: 900px;
+  width: 100%;
+  max-width: 960px;
   text-align: center;
   padding-top: 5px;
   padding-bottom: 5px;
@@ -691,7 +696,7 @@ tr.snatched {
   height: 35px;
 }
 .showInfo {
-  width: 745px;
+  width: 77%;
   float: right;
   padding-top: 10px;
 }
@@ -763,7 +768,9 @@ div#summary tr td {
   line-height: 24px;
   margin: 0 auto;
   padding: 75px 0 0;
-  width: 960px;
+  min-width: 900px;
+  width: 100%;
+  max-width: 960px;
 }
 .showLegend {
   font-weight: 700;

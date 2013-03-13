@@ -6,7 +6,7 @@
 </div>
 <div class="footer clearfix">
 
-<div class="meta" style="float:left;font-size: 12px;">
+<div class="meta" style="float:left;font-size: 12px; padding: 10px;">
 #set $myDB = $db.DBConnection()
 #set $today = str($datetime.date.today().toordinal())
 #set $numShows = len($sickbeard.showList)
@@ -18,7 +18,7 @@
 <!--<b>Update</b>: <a%a=str(sickbeard.updateScheduler.timeLeft()).split('.')[0]%> | //-->
 <b>Backlog</b>: $sickbeard.backlogSearchScheduler.nextRun().strftime("%a %b %d").decode($sickbeard.SYS_ENCODING) 
 </div>
-<ul style="float:right;">
+<ul style="float:right; padding: 10px;">
 	<li><a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=J8HN3S55CGAFY" onclick="window.open(this.href); return false;" target="_blank"><img src="$sbRoot/images/donate.png"> Donate</a></li>
         <li><a href="https://www.paypal.com/cgi-bin/webscr?cmd=_donations&amp;business=elmarkou%40gmail%2ecom&amp;lc=NL&amp;item_name=I%20Like%20to%20donate%20because%20I%20like%20this%20Sick-Beard%20Interface&amp;no_note=0&amp;currency_code=EUR&amp;bn=PP%2dDonationsBF%3abtn_donateCC_LG%2egif%3aNonHostedGuest" target="_blank"><img src="$sbRoot/images/like.png"> I like this interface!</a></li>
         <li><a href="$sbRoot/manage/manageSearches/forceVersionCheck"><img src="$sbRoot/images/menu/update16.png" alt="" width="16" height="16" />Force Version Check</a></li>
