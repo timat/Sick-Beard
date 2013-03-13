@@ -1183,9 +1183,11 @@ class TVEpisode(object):
         newsubtitles = set(self.subtitles).difference(set(previous_subtitles))
         
         if newsubtitles:
-            subtitleList = (subliminal.language.Language(x).name for x in newsubtitles)
-            logger.log(str(self.show.tvdbid) + ": Downloaded " + ", ".join(subtitleList) + " subtitles for episode " + str(self.season) + "x" + str(self.episode), logger.DEBUG)
-            notifiers.notify_subtitle_download(self.prettyName(), ", ".join(subtitleList))
+            subtitleList = ", ".join(subliminal.language.Language(x).name for x in newsubtitles)
+
+            logger.log(str(self.show.tvdbid) + ": Downloaded " + subtitleList + " subtitles for episode " + str(self.season) + "x" + str(self.episode), logger.DEBUG)
+            
+            notifiers.notify_subtitle_download(self.prettyName(), subtitleList)
 
         else:
             logger.log(str(self.show.tvdbid) + ": No subtitles downloaded for episode " + str(self.season) + "x" + str(self.episode), logger.DEBUG)
@@ -1194,19 +1196,6 @@ class TVEpisode(object):
             for video in subtitles:
                 for subtitle in subtitles.get(video):
                     history.logSubtitle(self.show.tvdbid, self.season, self.episode, self.status, subtitle)
-        
-        newsubtitles = set(self.subtitles).difference(set(previous_subtitles))
-        
-        if newsubtitles:
-            subtitleList = (subliminal.language.Language(x).name for x in newsubtitles)
-            logger.log(str(self.show.tvdbid) + ": Downloaded " + ", ".join(subtitleList) + " subtitles for episode " + str(self.season) + "x" + str(self.episode), logger.DEBUG)
-            
-            notifiers.notify_subtitle_download(self.prettyName(), ", ".join(subtitleList))
-            
-            for subtitle in newsubtitles:
-                history.logSubtitle(self.show.tvdbid, self.season, self.episode, self.status, subtitle)
-        else:
-            logger.log(str(self.show.tvdbid) + ": No subtitles downloaded for episode " + str(self.season) + "x" + str(self.episode), logger.DEBUG)
         
         return subtitles
 
@@ -1706,11 +1695,6 @@ class TVEpisode(object):
 
         if sickbeard.NAMING_STRIP_YEAR:
             show_name = re.sub("\(\d+\)$", "", self.show.name).rstrip()
-        else:
-            show_name = self.show.name 
-        
-        if sickbeard.NAMING_STRIP_YEAR:
-            show_name = re.sub("\(\w+\)$", "", self.show.name).rstrip()
         else:
             show_name = self.show.name 
         

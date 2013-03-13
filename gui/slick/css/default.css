@@ -728,8 +728,6 @@ div#summary tr td {
   height: 58px;
   margin: 0;
   padding: 0 0 0 10px;
-  position: relative;
-  top: -22px;
 }
 #SubMenu {
   float: right;
