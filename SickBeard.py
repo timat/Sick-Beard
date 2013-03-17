@@ -53,7 +53,7 @@ import sickbeard
 from sickbeard import db, CACHE_DIR
 from sickbeard.tv import TVShow
 from sickbeard import logger
-from sickbeard.version import SICKBEARD_VERSION
+from sickbeard.version import SICKBEARD_RELEASE_NAME
 
 from sickbeard.webserveInit import initWebServer
 
@@ -252,7 +252,7 @@ def main():
     os.chdir(sickbeard.DATA_DIR)
 
     if consoleLogging:
-        print "Starting up Sick Beard " + SICKBEARD_VERSION + " from " + sickbeard.CONFIG_FILE
+        print "Starting up Sick Beard " + SICKBEARD_RELEASE_NAME + " from " + sickbeard.CONFIG_FILE
 
     # Load the config and publish it to the sickbeard package
     if not os.path.isfile(sickbeard.CONFIG_FILE):

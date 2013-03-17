@@ -69,6 +69,7 @@ class TVEpisode(tv.TVEpisode):
         self.show = TVShow()
         self._status = Quality.compositeStatus(common.DOWNLOADED, common.Quality.SDTV)
         self._release_name = 'Show.Name.S02E03.HDTV.XviD-RLSGROUP'
+        self._is_proper = True
         self._season_name = "Season Name"
 
 def check_force_season_folders(pattern=None, multi=None, sn=False):

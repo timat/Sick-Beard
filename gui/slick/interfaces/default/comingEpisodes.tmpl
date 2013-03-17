@@ -48,7 +48,7 @@
         return false;
     },
     format: function(s) {
-        return s.replace('hd',3).replace('sd',1).replace('any',0).replace('best',2).replace('custom',4); 
+        return s.replace('hd1080p',5).replace('hd720p',4).replace('hd',3).replace('sd',2).replace('any',1).replace('best',0).replace('custom',7);
     },
     type: 'numeric'
 });
@@ -66,6 +66,7 @@
         widgets: ['stickyHeaders'],
         sortList: sortList,
         textExtraction: {
+            4: function(node) { return \$(node).find("img").attr("alt"); },
             5: function(node) { return \$(node).find("span").text().toLowerCase(); }
         },
         headers: {
@@ -76,7 +77,8 @@
             4: { sorter: 'loadingNames' },
             5: { sorter: 'quality' },
             6: { sorter: false },
-            7: { sorter: false }
+            7: { sorter: false },
+            8: { sorter: false }
         }
     });
 
@@ -136,7 +138,11 @@
     <span class="quality Custom">Custom</span>
 #end if
         </td>
-        <td align="center"><a href="http://www.imdb.com/title/${cur_result["imdb_id"]}" onclick="window.open(this.href, '_blank'); return false;" title="http://www.imdb.com/title/${cur_result["imdb_id"]}"><img alt="[imdb]" height="16" width="16" src="$sbRoot/images/imdb.png" /></td>
+        <td align="center">
+        #if $cur_result["imdb_id"]: 
+        	<a href="http://www.imdb.com/title/${cur_result["imdb_id"]}" onclick="window.open(this.href, '_blank'); return false;" title="http://www.imdb.com/title/${cur_result["imdb_id"]}"><img alt="[imdb]" height="16" width="16" src="$sbRoot/images/imdb.png" /> 
+        #end if
+        </td>
         <td align="center"><a href="http://www.thetvdb.com/?tab=series&amp;id=${cur_result["showid"]}" onclick="window.open(this.href, '_blank'); return false;" title="http://www.thetvdb.com/?tab=series&amp;id=${cur_result["showid"]}"><img alt="[tvdb]" height="16" width="16" src="$sbRoot/images/thetvdb16.png" /></a></td>
         #if cur_result["anime"]:
         	<td align="center"><a href="http://anidb.net/perl-bin/animedb.pl?show=anime&aid=${cur_result["anidb_id"]}" onclick="window.open(this.href, '_blank'); return false;" title="http://anidb.net/perl-bin/animedb.pl?show=anime&aid=${cur_result["anidb_id"]}"><img alt="[anidb]" height="16" width="16" src="$sbRoot/images/anidb16.png" /></a></td>
@@ -244,7 +250,9 @@
           	  #end if            
           	  </a></h2>
           	  <span class="tvshowTitleIcons">
+				#if $cur_result["imdb_id"]:          	  	
           	      <a href="http://www.imdb.com/title/${cur_result["imdb_id"]}" onclick="window.open(this.href, '_blank'); return false;" title="http://www.imdb.com/title/${cur_result["imdb_id"]}"><img alt="[imdb]" height="16" width="16" src="$sbRoot/images/imdb.png" /> 
+          	    #end if  
           	      <a href="http://www.thetvdb.com/?tab=series&amp;id=${cur_result["showid"]}" onclick="window.open(this.href, '_blank'); return false;" title="http://www.thetvdb.com/?tab=series&amp;id=${cur_result["showid"]}"><img alt="[tvdb]" height="16" width="16" src="$sbRoot/images/thetvdb16.png" /></a>
                   #if $cur_result["anime"]:
           	      	<a href="http://anidb.net/perl-bin/animedb.pl?show=anime&aid=${cur_result["anidb_id"]}" onclick="window.open(this.href, '_blank'); return false;" title="http://anidb.net/perl-bin/animedb.pl?show=anime&aid==${cur_result["anidb_id"]}"><img alt="[anidb]" height="16" width="16" src="$sbRoot/images/anidb16.png" /></a>
@@ -286,7 +294,6 @@
     <!-- end $cur_result["show_name"] //-->
     #end for
 
-    <br/>
 
 <!-- end non list view //-->
 #end if

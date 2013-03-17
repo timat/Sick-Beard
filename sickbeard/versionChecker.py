@@ -311,7 +311,7 @@ class GitUpdateManager(UpdateManager):
         gh = github.GitHub()
 
         # find newest commit
-        for curCommit in gh.commits('Pistachitos', 'Sick-Beard', self.branch):
+        for curCommit in gh.commits(version.SICKBEARD_TEAM, 'Sick-Beard', version.SICKBEARD_VERSION):
 
             if not self._newest_commit_hash:
                 self._newest_commit_hash = curCommit['sha']
@@ -340,9 +340,9 @@ class GitUpdateManager(UpdateManager):
             return
 
         if self._newest_commit_hash:
-            url = 'http://github.com/Pistachitos/Sick-Beard/compare/'+self._cur_commit_hash+'...'+self._newest_commit_hash
+            url = 'http://github.com/'+version.SICKBEARD_TEAM+'/Sick-Beard/compare/'+self._cur_commit_hash+'...'+self._newest_commit_hash
         else:
-            url = 'http://github.com/Pistachitos/Sick-Beard/commits/'
+            url = 'http://github.com/'+version.SICKBEARD_TEAM+'/Sick-Beard/commits/'
 
         new_str = 'There is a <a class="update" href="'+url+'" onclick="window.open(this.href); return false;">newer version available</a> ('+message+')'
         new_str += "&mdash; <a class=""update"" href=\""+self.get_update_url()+"\">Update Now</a>"
@@ -448,7 +448,7 @@ class SourceUpdateManager(GitUpdateManager):
         Downloads the latest source tarball from github and installs it over the existing version.
         """
 
-        tar_download_url = 'https://github.com/Pistachitos/Sick-Beard/tarball/'+version.SICKBEARD_VERSION
+        tar_download_url = 'https://github.com/'+version.SICKBEARD_TEAM+'/Sick-Beard/tarball/'+version.SICKBEARD_VERSION
         sb_update_dir = os.path.join(sickbeard.PROG_DIR, 'sb-update')
         version_path = os.path.join(sickbeard.PROG_DIR, 'version.txt')
 
@@ -460,7 +460,7 @@ class SourceUpdateManager(GitUpdateManager):
             logger.log(u"Unable to retrieve new version from "+tar_download_url+", can't update", logger.ERROR)
             return False
 
-        download_name = data.geturl().split('/')[-1]
+        download_name = data.geturl().split('/')[-1].split('?')[0]
 
         tar_download_path = os.path.join(sickbeard.PROG_DIR, download_name)
 

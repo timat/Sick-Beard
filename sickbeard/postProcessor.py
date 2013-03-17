@@ -23,6 +23,7 @@ import os
 import re
 import shlex
 import subprocess
+import stat
 
 import sickbeard
 
@@ -143,7 +144,6 @@ class PostProcessor(object):
             return PostProcessor.DOESNT_EXIST
 
     def _list_associated_files(self, file_path, subtitles_only=False):
-
         """
         For a given file path searches for files with the same name but different extension and returns their absolute paths
         
@@ -175,13 +175,10 @@ class PostProcessor(object):
             # only add associated to list
             if associated_file_path == file_path:
                 continue
-            # only list it if the only non-shared part is the extension
-            if '.' in associated_file_path[len(base_name):]:
-                continue
             # only list it if the only non-shared part is the extension or if it is a subtitle
-            if '.' in associated_file_path[len(base_name):] and not associated_file_path.endswith('srt'):
+            if '.' in associated_file_path[len(base_name):] and not associated_file_path[len(associated_file_path)-3:] in common.subtitleExtensions:
                 continue
-            if subtitles_only and not associated_file_path.endswith('srt'):
+            if subtitles_only and not associated_file_path[len(associated_file_path)-3:] in common.subtitleExtensions:
                 continue
 
             file_path_list.append(associated_file_path)
@@ -212,6 +209,12 @@ class PostProcessor(object):
         for cur_file in file_list:
             self._log(u"Deleting file "+cur_file, logger.DEBUG)
             if ek.ek(os.path.isfile, cur_file):
+                #check first the read-only attribute
+                file_attribute = ek.ek(os.stat, cur_file)[0]
+                if (not file_attribute & stat.S_IWRITE):
+                    # File is read-only, so make it writeable
+                    self._log('Read only mode on file ' + cur_file, logger.WARNING )
+#                    ek.ek(os.chmod,cur_file,stat.S_IWRITE)
                 ek.ek(os.remove, cur_file)
                 # do the library update for synoindex
                 notifiers.synoindex_notifier.deleteFile(cur_file)
@@ -251,7 +254,7 @@ class PostProcessor(object):
             cur_extension = cur_file_path.rpartition('.')[-1]
             
             # check if file have language of subtitles
-            if cur_extension == 'srt':
+            if cur_extension in common.subtitleExtensions:
                 cur_lang = cur_file_path.rpartition('.')[0].rpartition('.')[-1]
                 if cur_lang in sickbeard.SUBTITLES_LANGUAGES:
                     cur_extension = cur_lang + '.' + cur_extension
@@ -267,10 +270,13 @@ class PostProcessor(object):
             else:
                 new_file_name = helpers.replaceExtension(cur_file_name, cur_extension)
             
-            if sickbeard.SUBTITLES_DIR and cur_extension.endswith('srt'):
+            if sickbeard.SUBTITLES_DIR and cur_extension in common.subtitleExtensions:
                 subs_new_path = ek.ek(os.path.join, new_path, sickbeard.SUBTITLES_DIR)
-                if not ek.ek(os.path.isdir, subs_new_path):
-                    ek.ek(os.mkdir, subs_new_path)
+                dir_exists = helpers.makeDir(subs_new_path)
+                if not dir_exists:
+                    logger.log(u"Unable to create subtitles folder "+subs_new_path, logger.ERROR)
+                else:
+                    helpers.chmodAsParent(subs_new_path)
                 new_file_path = ek.ek(os.path.join, subs_new_path, new_file_name)
             else:
                 new_file_path = ek.ek(os.path.join, new_path, new_file_name)
@@ -763,7 +769,7 @@ class PostProcessor(object):
         old_ep_status, old_ep_quality = common.Quality.splitCompositeStatus(ep_obj.status) #@UnusedVariable
         if self.is_proper and new_ep_quality >= old_ep_quality:
             self._log(u"This was manually downloaded but it appears to be a proper so I'm marking it as priority", logger.DEBUG)
-            return True 
+            return True
         
         return False
 
@@ -844,7 +850,8 @@ class PostProcessor(object):
             self._log(u"Show directory doesn't exist, creating it", logger.DEBUG)
             try:
                 ek.ek(os.mkdir, ep_obj.show._location)
-
+                # do the library update for synoindex
+                notifiers.synoindex_notifier.addFolder(ep_obj.show._location)
             except (OSError, IOError):
                 raise exceptions.PostProcessingFailed("Unable to create the show directory: " + ep_obj.show._location)
 
@@ -876,7 +883,9 @@ class PostProcessor(object):
                     logger.log("good results: " + repr(self.good_results), logger.DEBUG)
 
                 cur_ep.status = common.Quality.compositeStatus(common.DOWNLOADED, new_ep_quality)
-
+                
+                cur_ep.is_proper = self.is_proper
+                
                 cur_ep.saveToDB()
 
         # find the destination folder
@@ -932,7 +941,7 @@ class PostProcessor(object):
         history.logDownload(ep_obj, self.file_path, new_ep_quality, self.release_group)
 
         # send notifications
-        notifiers.notify_download(ep_obj.prettyName())
+        notifiers.notify_download(ep_obj._format_pattern('%SN - %Sx%0E - %EN - %QN'))
 
         # generate nfo/tbn
         ep_obj.createMetaFiles()

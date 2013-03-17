@@ -40,7 +40,6 @@ proxy_dict = {
               'Rapidproxy.us (GB)' : 'http://rapidproxy.us/',
               'Proxite.eu (DE)' :'http://proxite.eu/',
               'Shieldmagic.com (GB)' : 'http://www.shieldmagic.com/',
-              'Wowspeed.co.uk (GB)' : 'http://wowspeed.co.uk/' ,             
               'Webproxy.cz (CZ)' : 'http://webproxy.cz/',
               'Freeproxy.cz (CZ)' : 'http://www.freeproxy.cz/',
              }
@@ -80,10 +79,18 @@ class ThePirateBayProvider(generic.TorrentProvider):
 
         if quality == Quality.SDTV:
             quality_string = 'HDTV x264'
+        if quality == Quality.SDDVD:
+            quality_string = 'DVDRIP'    
         elif quality == Quality.HDTV:    
             quality_string = '720p HDTV x264'
+        elif quality == Quality.FULLHDTV:
+            quality_string = '1080p HDTV x264'        
+        elif quality == Quality.RAWHDTV:
+            quality_string = '1080i HDTV mpeg2'
         elif quality == Quality.HDWEBDL:
             quality_string = '720p WEB-DL'
+        elif quality == Quality.FULLHDWEBDL:
+            quality_string = '1080p WEB-DL'            
         elif quality == Quality.HDBLURAY:
             quality_string = '720p Bluray x264'
         elif quality == Quality.FULLHDBLURAY:
@@ -92,7 +99,7 @@ class ThePirateBayProvider(generic.TorrentProvider):
         return quality_string
 
     def _find_season_quality(self,title,torrent_id,show):
-        """ Rewrite the title of a Season Torrent with the quality found inspecting torrent file list """
+        """ Return the modified title of a Season Torrent with the quality found inspecting torrent file list """
 
         mediaExtensions = ['avi', 'mkv', 'wmv', 'divx',
                            'vob', 'dvr-ms', 'wtv', 'ts'
@@ -150,7 +157,7 @@ class ThePirateBayProvider(generic.TorrentProvider):
         wantedEp = [x for x in seasonEp if show.getOverview(x.status) in (Overview.WANTED, Overview.QUAL)]          
 
         #If Every episode in Season is a wanted Episode then search for Season first
-        if wantedEp == seasonEp:
+        if wantedEp == seasonEp and not show.air_by_date:
             search_string = {'Season': [], 'Episode': []}
             for show_name in set(show_name_helpers.allPossibleShowNames(show)):
                 ep_string = show_name +' S%02d' % int(season) #1) ShowName SXX   
@@ -189,7 +196,7 @@ class ThePirateBayProvider(generic.TorrentProvider):
                 ep_string = show_name_helpers.sanitizeSceneName(show_name) +' '+ \
                 sickbeard.config.naming_ep_type[2] % {'seasonnumber': ep_obj.season, 'episodenumber': ep_obj.episode} +'|'+\
                 sickbeard.config.naming_ep_type[0] % {'seasonnumber': ep_obj.season, 'episodenumber': ep_obj.episode} +'|'+\
-                sickbeard.config.naming_ep_type[3] % {'seasonnumber': ep_obj.season, 'episodenumber': ep_obj.episode} +'|'\
+                sickbeard.config.naming_ep_type[3] % {'seasonnumber': ep_obj.season, 'episodenumber': ep_obj.episode} \
 
                 search_string['Episode'].append(ep_string)
     
@@ -224,11 +231,8 @@ class ThePirateBayProvider(generic.TorrentProvider):
                     leechers = int(torrent.group('leechers'))
 
                     #Filter unseeded torrent
-                    if seeders == 0:
+                    if seeders == 0 or not title:
                         continue 
-                       
-                    if not show_name_helpers.filterBadReleases(title):
-                        continue
                    
                     #Accept Torrent only from Good People for every Episode Search
                     if sickbeard.THEPIRATEBAY_TRUSTED and re.search('(VIP|Trusted|Helper)',torrent.group(0))== None:
@@ -237,10 +241,8 @@ class ThePirateBayProvider(generic.TorrentProvider):
 
                     #Try to find the real Quality for full season torrent analyzing files in torrent 
                     if mode == 'Season' and Quality.nameQuality(title, show.anime) == Quality.UNKNOWN:     
-                        title = self._find_season_quality(title,id,show)
-                    
-                    if not title:
-                        continue
+                        if not self._find_season_quality(title,id,show):
+                            continue
                         
                     item = title, url, id, seeders, leechers
                     
@@ -340,6 +342,9 @@ class ThePirateBayCache(tvcache.TVCache):
 
             title = torrent.group('title').replace('_','.')#Do not know why but SickBeard skip release with '_' in name
             url = torrent.group('url')
+           
+            if not title or not url:
+                continue
            
             #accept torrent only from Trusted people
             if sickbeard.THEPIRATEBAY_TRUSTED and re.search('(VIP|Trusted|Helper)',torrent.group(0))== None:
