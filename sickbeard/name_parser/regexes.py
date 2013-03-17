@@ -187,8 +187,6 @@ ep_regexes = [
               ]
 
 anime_ep_regexes = [
-                    
-
                ('anime_ultimate',
                 '''
                 ^(?:\[(?P<release_group>.+?)\][ ._-]*)
@@ -306,7 +304,37 @@ anime_ep_regexes = [
                (v(?P<version>[0-9]))?                       # the version e.g. "v2"
                .*?
                '''
-
+               ),
+                    
+               ('anime_normal',
+               # Bleach - s16e03-04 - 313-314
+               # Bleach.s16e03-04.313-314
+               # Bleach s16e03e04 313-314
+               '''
+               ^(?P<series_name>.+?)[ ._-]+                 # start of string and series name and non optinal separator
+               ((?P<season_name>.+?)[ ._-]+)?               # season name and non optinal separator
+               [sS](?P<season_num>\d+)[. _-]*               # S01 and optional separator
+               [eE](?P<ep_num>\d+)                          # epipisode E02
+               (([. _-]*e|-)                                # linking e/- char
+               (v(?P<version>[0-9]))?                       # the version e.g. "v2"
+               .*?
+               '''
+               ),
+                    
+                ('anime_normal_x',
+               # Bleach - s16e03-04 - 313-314
+               # Bleach.s16e03-04.313-314
+               # Bleach s16e03e04 313-314
+               '''
+               ^(?P<series_name>.+?)[ ._-]+                 # start of string and series name and non optinal separator
+               ((?P<season_name>.+?)[ ._-]+)?               # season name and non optinal separator
+               (?P<season_num>\d+)[. _-]*                   # S01 and optional separator
+               [xX](?P<ep_num>\d+)                          # epipisode E02
+               (([. _-]*e|-)                                # linking e/- char
+               (?P<extra_ep_num>\d+))*                      # additional E03/etc
+               (v(?P<version>[0-9]))?                       # the version e.g. "v2"
+               .*?
+               '''
                ),
                
                ('anime_and_normal_reverse',
