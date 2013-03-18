@@ -446,9 +446,9 @@ class TVShow(object):
             myDB = db.DBConnection()
             myDB.upsert('anime_seasons_data', {'anidb_id': id, 'name': seasonName}, {'show_id': self.tvdbid, 'season': seasonNum})
             
-            if isinstance(season.related_aid_type, int) and season.related_aid_type == 1:
-                getSeasonsData(anime, season.related_aid_list, seasonNum + 1)
-            elif 1 in season.related_aid_type:
+            if isinstance(season.related_aid_type, int):
+                season.related_aid_type = [season.related_aid_type]
+            if 1 in season.related_aid_type:
                 seasonId = season.related_aid_list[season.related_aid_type.index(1)]
                 getSeasonsData(anime, seasonId, seasonNum + 1)
             
