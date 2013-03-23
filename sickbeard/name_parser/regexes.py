@@ -161,16 +161,6 @@ ep_regexes = [
                '''
                ),
 
-              ('bare',
-               # Show.Name.102.Source.Quality.Etc-Group
-               '''
-               ^(?P<series_name>.+?)[. _-]+                # Show_Name and separator
-               (?P<season_num>\d{1,2})                     # 1
-               (?P<ep_num>\d{2})                           # 02 and separator
-               ([. _-]+(?P<extra_info>(?!\d{3}[. _-]+)[^-]+) # Source_Quality_Etc-
-               (-(?P<release_group>.+))?)?$                # Group
-               '''),
-              
               ('no_season',
                # Show Name - 01 - Ep Name
                # 01 - Ep Name
@@ -191,7 +181,7 @@ anime_ep_regexes = [
                 '''
                 ^(?:\[(?P<release_group>.+?)\][ ._-]*)
                 (?P<series_name>.+?)[ ._-]+
-                ((?P<season_name>.+?)[ ._-]+)?
+                (([ ._-]+[ ._]?)+(?P<season_name>.+?)[ ._-]+)?
                 (?P<ep_ab_num>\d{1,3})
                 (-(?P<extra_ab_ep_num>\d{1,3}))?[ ._-]+?
                 (?:v(?P<version>[0-9]))?
