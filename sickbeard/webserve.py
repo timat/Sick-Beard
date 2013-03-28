@@ -3000,7 +3000,7 @@ class Home:
                     
             t.groups = []
             
-            if showObj.anime and helpers.set_up_anidb_connection():
+            if showObj.anime and helpers.set_up_anidb_connection() and showObj.anidbid != 0:
                 anime = adba.Anime(sickbeard.ADBA_CONNECTION, aid=showObj.anidbid, load=True, anidbMapPath=sickbeard.CACHE_DIR, tvdbMapPath=sickbeard.CACHE_DIR)
                 t.groups = anime.get_groups()
                 t.highest_episode = anime.highest_episode_number
