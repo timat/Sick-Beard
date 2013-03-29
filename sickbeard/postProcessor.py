@@ -252,13 +252,7 @@ class PostProcessor(object):
             
             # get the extension
             cur_extension = cur_file_path.rpartition('.')[-1]
-            
-            # check if file have language of subtitles
-            if cur_extension in common.subtitleExtensions:
-                cur_lang = cur_file_path.rpartition('.')[0].rpartition('.')[-1]
-                if cur_lang in sickbeard.SUBTITLES_LANGUAGES:
-                    cur_extension = cur_lang + '.' + cur_extension
-        
+
             # replace .nfo with .nfo-orig to avoid conflicts
             if cur_extension == 'nfo':
                 cur_extension = 'nfo-orig'
@@ -272,8 +266,7 @@ class PostProcessor(object):
             
             if sickbeard.SUBTITLES_DIR and cur_extension in common.subtitleExtensions:
                 subs_new_path = ek.ek(os.path.join, new_path, sickbeard.SUBTITLES_DIR)
-                dir_exists = helpers.makeDir(subs_new_path)
-                if not dir_exists:
+                if not helpers.makeDir(subs_new_path):
                     logger.log(u"Unable to create subtitles folder "+subs_new_path, logger.ERROR)
                 else:
                     helpers.chmodAsParent(subs_new_path)
