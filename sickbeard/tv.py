@@ -1735,7 +1735,7 @@ class TVEpisode(object):
         if self.show.anime and self.show.absolute_numbering:
             pattern = '%SN - %0AE - %EN'
         else:
-            pattern = '%SN% - %Sx%0E - %EN'
+            pattern = '%SN - %Sx%0E - %EN'
         return self._format_pattern(pattern)
 
     def _ep_name(self):
