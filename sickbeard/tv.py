@@ -446,11 +446,12 @@ class TVShow(object):
             myDB = db.DBConnection()
             myDB.upsert('anime_seasons_data', {'anidb_id': id, 'name': seasonName}, {'show_id': self.tvdbid, 'season': seasonNum})
             
-            if isinstance(season.related_aid_type, int):
-                season.related_aid_type = [season.related_aid_type]
-            if 1 in season.related_aid_type:
-                seasonId = season.related_aid_list[season.related_aid_type.index(1)]
-                getSeasonsData(anime, seasonId, seasonNum + 1)
+            if season.related_aid_type:
+                if isinstance(season.related_aid_type, int):
+                    season.related_aid_type = [season.related_aid_type]
+                if 1 in season.related_aid_type:
+                    seasonId = season.related_aid_list[season.related_aid_type.index(1)]
+                    getSeasonsData(anime, seasonId, seasonNum + 1)
             
         if not self.anime:
             logger.log(u"No need to get the AniDB data, the show isn't an anime", logger.DEBUG)

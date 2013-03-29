@@ -521,34 +521,6 @@ class GenericMetadata():
         else:
             tvdb_lang = show_obj.lang
 
-        try:
-            # There's gotta be a better way of doing this but we don't wanna
-            # change the language value elsewhere
-            ltvdb_api_parms = sickbeard.TVDB_API_PARMS.copy()
-
-            if tvdb_lang and not tvdb_lang == 'en':
-                ltvdb_api_parms['language'] = tvdb_lang
-
-            t = tvdb_api.Tvdb(banners=True, **ltvdb_api_parms)
-            tvdb_show_obj = t[show_obj.tvdbid]
-        except (tvdb_exceptions.tvdb_error, IOError), e:
-            logger.log(u"Unable to look up show on TVDB, not downloading images: "+ex(e), logger.ERROR)
-            return None
-    
-        if image_type not in ('fanart', 'poster', 'banner', 'poster_thumb', 'banner_thumb'):
-            logger.log(u"Invalid image type "+str(image_type)+", couldn't find it in the TVDB object", logger.ERROR)
-            return None
-
-        try:
-            if image_type == 'poster_thumb':
-                image_url = re.sub('posters', '_cache/posters', tvdb_show_obj['poster'])
-            elif image_type == 'banner_thumb':
-                image_url = re.sub('graphical', '_cache/graphical', tvdb_show_obj['banner'])
-            else:
-                image_url = tvdb_show_obj[image_type]
-        except:
-            return None        
-    
             try:
                 # There's gotta be a better way of doing this but we don't wanna
                 # change the language value elsewhere
@@ -562,17 +534,20 @@ class GenericMetadata():
             except (tvdb_exceptions.tvdb_error, IOError), e:
                 logger.log(u"Unable to look up show on TVDB, not downloading images: "+ex(e), logger.ERROR)
                 return None
-        
+    
             if image_type not in ('fanart', 'poster', 'banner', 'poster_thumb', 'banner_thumb'):
                 logger.log(u"Invalid image type "+str(image_type)+", couldn't find it in the TVDB object", logger.ERROR)
                 return None
     
-            if image_type == 'poster_thumb':
-                image_url = re.sub('posters', '_cache/posters', tvdb_show_obj['poster'])
-            elif image_type == 'banner_thumb':
-                image_url = re.sub('graphical', '_cache/graphical', tvdb_show_obj['banner'])
-            else:
-                image_url = tvdb_show_obj[image_type]
+            try:
+                if image_type == 'poster_thumb':
+                    image_url = re.sub('posters', '_cache/posters', tvdb_show_obj['poster'])
+                elif image_type == 'banner_thumb':
+                    image_url = re.sub('graphical', '_cache/graphical', tvdb_show_obj['banner'])
+                else:
+                    image_url = tvdb_show_obj[image_type]
+            except:
+                return None
     
         image_data = metadata_helpers.getShowImage(image_url, which)
 
