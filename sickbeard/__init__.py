@@ -30,7 +30,7 @@ from threading import Lock
 
 # apparently py2exe won't build these unless they're imported somewhere
 from sickbeard import providers, metadata
-from providers import ezrss, tvtorrents, btn, nzbsrus, newznab, womble, thepiratebay, dtt, torrentleech, nzbx, iptorrents, omgwtfnzbs, torrentday
+from providers import ezrss, tvtorrents, btn, nzbsrus, newznab, womble, thepiratebay, dtt, torrentleech, nzbx, iptorrents, omgwtfnzbs, nyaatorrents, frozenlayer, torrentday
 from sickbeard.config import CheckSection, check_setting_int, check_setting_str, ConfigMigrator
 
 
@@ -132,14 +132,23 @@ QUALITY_DEFAULT = None
 STATUS_DEFAULT = None
 FLATTEN_FOLDERS_DEFAULT = None
 SUBTITLES_DEFAULT = None
+ANIME_DEFAULT = None
 PROVIDER_ORDER = []
 
 NAMING_MULTI_EP = None
-NAMING_PATTERN = None
-NAMING_ABD_PATTERN = None
-NAMING_CUSTOM_ABD = None
+
 NAMING_FORCE_FOLDERS = False
 NAMING_STRIP_YEAR = None
+NAMING_ANIME = None
+
+NAMING_CUSTOM_ABD = None # Air By Date
+NAMING_CUSTOM_AE = None # Absolute Episode
+NAMING_CUSTOM_SN = None # Season Name
+
+NAMING_PATTERN = None
+NAMING_ABD_PATTERN = None
+NAMING_AE_PATTERN = None
+NAMING_SN_PATTERN = None
 
 TVDB_API_KEY = '9DAF49C96CBF8DAC'
 TVDB_BASE_URL = None
@@ -193,6 +202,10 @@ IPTORRENTS = False
 IPTORRENTS_USERNAME = None
 IPTORRENTS_PASSWORD = None
 IPTORRENTS_FREELEECH = False
+
+NYAA = False
+
+FROZENLAYER = False
 
 
 ADD_SHOWS_WO_DIR = None
@@ -321,6 +334,16 @@ NMJ_HOST = None
 NMJ_DATABASE = None
 NMJ_MOUNT = None
 
+ANIMESUPPORT = False
+USE_ANIDB = False
+ANIDB_USERNAME = None
+ANIDB_PASSWORD = None
+ANIDB_USE_MYLIST = 0
+ADBA_CONNECTION = None
+ANIME_SPLIT_HOME = False
+USE_ROMAJI_NAME = False
+USE_ANIDB_POSTERS = False
+
 USE_SYNOINDEX = False
 
 USE_NMJv2 = False
@@ -401,10 +424,10 @@ def initialize(consoleLogging=True):
                 PLEX_SERVER_HOST, PLEX_HOST, PLEX_USERNAME, PLEX_PASSWORD, \
                 showUpdateScheduler, __INITIALIZED__, LAUNCH_BROWSER, UPDATE_SHOWS_ON_START, showList, loadingShowList, \
                 NZBS, NZBS_UID, NZBS_HASH, EZRSS, TVTORRENTS, TVTORRENTS_DIGEST, TVTORRENTS_HASH, BTN, BTN_API_KEY, \
-                DTT, DTT_NORAR, DTT_SINGLE, THEPIRATEBAY, THEPIRATEBAY_TRUSTED, THEPIRATEBAY_PROXY, THEPIRATEBAY_PROXY_URL, THEPIRATEBAY_BLACKLIST, TORRENTLEECH, TORRENTLEECH_USERNAME, TORRENTLEECH_PASSWORD, \
+                DTT, DTT_NORAR, DTT_SINGLE, THEPIRATEBAY, THEPIRATEBAY_TRUSTED, THEPIRATEBAY_PROXY, THEPIRATEBAY_PROXY_URL, THEPIRATEBAY_BLACKLIST, TORRENTLEECH, TORRENTLEECH_USERNAME, TORRENTLEECH_PASSWORD, NYAA, \
                 IPTORRENTS, IPTORRENTS_USERNAME, IPTORRENTS_PASSWORD, IPTORRENTS_FREELEECH, TORRENT_DIR, USENET_RETENTION, SOCKET_TIMEOUT, SEARCH_FREQUENCY, DEFAULT_SEARCH_FREQUENCY, BACKLOG_SEARCH_FREQUENCY, \
+                QUALITY_DEFAULT, FLATTEN_FOLDERS_DEFAULT, SUBTITLES_DEFAULT, ANIME_DEFAULT, STATUS_DEFAULT, \
                 TORRENTDAY, TORRENTDAY_U, TORRENTDAY_TP, \
-                QUALITY_DEFAULT, FLATTEN_FOLDERS_DEFAULT, SUBTITLES_DEFAULT, STATUS_DEFAULT, \
                 GROWL_NOTIFY_ONSNATCH, GROWL_NOTIFY_ONDOWNLOAD, GROWL_NOTIFY_ONSUBTITLEDOWNLOAD, TWITTER_NOTIFY_ONSNATCH, TWITTER_NOTIFY_ONDOWNLOAD, TWITTER_NOTIFY_ONSUBTITLEDOWNLOAD, \
                 USE_GROWL, GROWL_HOST, GROWL_PASSWORD, USE_PROWL, PROWL_NOTIFY_ONSNATCH, PROWL_NOTIFY_ONDOWNLOAD, PROWL_NOTIFY_ONSUBTITLEDOWNLOAD, PROWL_API, PROWL_PRIORITY, PROG_DIR, NZBMATRIX, NZBMATRIX_USERNAME, \
                 USE_PYTIVO, PYTIVO_NOTIFY_ONSNATCH, PYTIVO_NOTIFY_ONDOWNLOAD, PYTIVO_NOTIFY_ONSUBTITLEDOWNLOAD, PYTIVO_UPDATE_LIBRARY, PYTIVO_HOST, PYTIVO_SHARE_NAME, PYTIVO_TIVO_NAME, \
@@ -412,7 +435,7 @@ def initialize(consoleLogging=True):
                 NZBMATRIX_APIKEY, versionCheckScheduler, VERSION_NOTIFY, PROCESS_AUTOMATICALLY, \
                 KEEP_PROCESSED_DIR, TV_DOWNLOAD_DIR, TVDB_BASE_URL, MIN_SEARCH_FREQUENCY, \
                 showQueueScheduler, searchQueueScheduler, ROOT_DIRS, CACHE_DIR, ACTUAL_CACHE_DIR, TVDB_API_PARMS, \
-                NAMING_PATTERN, NAMING_MULTI_EP, NAMING_FORCE_FOLDERS, NAMING_ABD_PATTERN, NAMING_CUSTOM_ABD, NAMING_STRIP_YEAR, \
+                NAMING_PATTERN, NAMING_MULTI_EP, NAMING_FORCE_FOLDERS, NAMING_ABD_PATTERN, NAMING_CUSTOM_ABD, NAMING_AE_PATTERN, NAMING_CUSTOM_AE, NAMING_SN_PATTERN, NAMING_CUSTOM_SN, NAMING_STRIP_YEAR, NAMING_ANIME, \
                 RENAME_EPISODES, properFinderScheduler, PROVIDER_ORDER, autoPostProcesserScheduler, \
                 NZBSRUS, NZBSRUS_UID, NZBSRUS_HASH, WOMBLE, NZBX, NZBX_COMPLETION, OMGWTFNZBS, OMGWTFNZBS_UID, OMGWTFNZBS_KEY, providerList, newznabProviderList, \
                 EXTRA_SCRIPTS, USE_TWITTER, TWITTER_USERNAME, TWITTER_PASSWORD, TWITTER_PREFIX, \
@@ -425,7 +448,8 @@ def initialize(consoleLogging=True):
                 METADATA_MINIDLNA, \
                 NEWZBIN, NEWZBIN_USERNAME, NEWZBIN_PASSWORD, GIT_PATH, MOVE_ASSOCIATED_FILES, \
                 GUI_NAME, HOME_LAYOUT, DISPLAY_SHOW_SPECIALS, COMING_EPS_LAYOUT, COMING_EPS_SORT, COMING_EPS_DISPLAY_PAUSED, COMING_EPS_MISSED_RANGE, METADATA_WDTV, METADATA_TIVO, IGNORE_WORDS, CREATE_MISSING_SHOW_DIRS, \
-                ADD_SHOWS_WO_DIR, USE_SUBTITLES, SUBTITLES_LANGUAGES, SUBTITLES_DIR, SUBTITLES_SERVICES_LIST, SUBTITLES_SERVICES_ENABLED, SUBTITLES_HISTORY, subtitlesFinderScheduler
+                ADD_SHOWS_WO_DIR, USE_SUBTITLES, SUBTITLES_LANGUAGES, SUBTITLES_DIR, SUBTITLES_SERVICES_LIST, SUBTITLES_SERVICES_ENABLED, SUBTITLES_HISTORY, subtitlesFinderScheduler, \
+                ANIMESUPPORT, USE_ANIDB, ANIDB_USERNAME, ANIDB_PASSWORD, ANIDB_USE_MYLIST, ANIME_SPLIT_HOME, USE_ROMAJI_NAME, USE_ANIDB_POSTERS
 
         if __INITIALIZED__:
             return False
@@ -518,12 +542,17 @@ def initialize(consoleLogging=True):
         STATUS_DEFAULT = check_setting_int(CFG, 'General', 'status_default', SKIPPED)
         VERSION_NOTIFY = check_setting_int(CFG, 'General', 'version_notify', 1)
         FLATTEN_FOLDERS_DEFAULT = bool(check_setting_int(CFG, 'General', 'flatten_folders_default', 0))
-
+        ANIME_DEFAULT = bool(check_setting_int(CFG, 'General', 'anime_default', 0))
+        
         PROVIDER_ORDER = check_setting_str(CFG, 'General', 'provider_order', '').split()
 
         NAMING_PATTERN = check_setting_str(CFG, 'General', 'naming_pattern', '')
         NAMING_ABD_PATTERN = check_setting_str(CFG, 'General', 'naming_abd_pattern', '')
         NAMING_CUSTOM_ABD = check_setting_int(CFG, 'General', 'naming_custom_abd', 0)
+        NAMING_AE_PATTERN = check_setting_str(CFG, 'General', 'naming_ae_pattern', '')
+        NAMING_CUSTOM_AE = check_setting_int(CFG, 'General', 'naming_custom_ae', 0)
+        NAMING_SN_PATTERN = check_setting_str(CFG, 'General', 'naming_sn_pattern', '')
+        NAMING_CUSTOM_SN = check_setting_int(CFG, 'General', 'naming_custom_sn', 0)
         NAMING_MULTI_EP = check_setting_int(CFG, 'General', 'naming_multi_ep', 1)
         NAMING_FORCE_FOLDERS = naming.check_force_season_folders()
         NAMING_STRIP_YEAR = bool(check_setting_int(CFG, 'General', 'naming_strip_year', 0))
@@ -584,6 +613,10 @@ def initialize(consoleLogging=True):
         THEPIRATEBAY_PROXY = bool(check_setting_int(CFG, 'THEPIRATEBAY', 'thepiratebay_proxy', 0))
         THEPIRATEBAY_PROXY_URL = check_setting_str(CFG, 'THEPIRATEBAY', 'thepiratebay_proxy_url', '')        
         THEPIRATEBAY_BLACKLIST = check_setting_str(CFG, 'THEPIRATEBAY', 'thepiratebay_blacklist', '')        
+        
+        NYAA = bool(check_setting_int(CFG, 'NYAATORRENTS', 'nyaa', 0))
+        
+        FROZENLAYER = bool(check_setting_int(CFG, 'FROZENLAYER', 'frozenlayer', 0))
 
         TORRENTLEECH = bool(check_setting_int(CFG, 'TORRENTLEECH', 'torrentleech', 0))
         TORRENTLEECH_USERNAME = check_setting_str(CFG, 'TORRENTLEECH', 'torrentleech_username', '')
@@ -827,6 +860,15 @@ def initialize(consoleLogging=True):
                 tmp_provider = cur_metadata_class.metadata_class()
                 tmp_provider.set_config(cur_metadata_config)
                 metadata_provider_dict[tmp_provider.name] = tmp_provider
+
+        ANIMESUPPORT = False
+        USE_ANIDB = bool(check_setting_int(CFG, 'ANIME', 'use_anidb', 0))
+        ANIDB_USERNAME = check_setting_str(CFG, 'ANIME', 'anidb_username', '')
+        ANIDB_PASSWORD = check_setting_str(CFG, 'ANIME', 'anidb_password', '')
+        ANIDB_USE_MYLIST = bool(check_setting_int(CFG, 'ANIME', 'anidb_use_mylist', 0))
+        ANIME_SPLIT_HOME = bool(check_setting_int(CFG, 'ANIME', 'anime_split_home', 0))
+        USE_ROMAJI_NAME = bool(check_setting_int(CFG, 'ANIME', 'use_romaji_name', 0))
+        USE_ANIDB_POSTERS = bool(check_setting_int(CFG, 'ANIME', 'use_anidb_posters', 0))
 
         GUI_NAME = check_setting_str(CFG, 'GUI', 'gui_name', 'slick') 
 
@@ -1168,12 +1210,17 @@ def save_config():
     new_config['General']['quality_default'] = int(QUALITY_DEFAULT)
     new_config['General']['status_default'] = int(STATUS_DEFAULT)
     new_config['General']['flatten_folders_default'] = int(FLATTEN_FOLDERS_DEFAULT)
+    new_config['General']['anime_default'] = int(ANIME_DEFAULT)
     new_config['General']['provider_order'] = ' '.join([x.getID() for x in providers.sortedProviderList()])
     new_config['General']['version_notify'] = int(VERSION_NOTIFY)
     new_config['General']['naming_strip_year'] = int(NAMING_STRIP_YEAR)
     new_config['General']['naming_pattern'] = NAMING_PATTERN
     new_config['General']['naming_custom_abd'] = int(NAMING_CUSTOM_ABD)
     new_config['General']['naming_abd_pattern'] = NAMING_ABD_PATTERN
+    new_config['General']['naming_custom_ae'] = int(NAMING_CUSTOM_AE)
+    new_config['General']['naming_ae_pattern'] = NAMING_AE_PATTERN
+    new_config['General']['naming_custom_sn'] = int(NAMING_CUSTOM_SN)
+    new_config['General']['naming_sn_pattern'] = NAMING_SN_PATTERN
     new_config['General']['naming_multi_ep'] = int(NAMING_MULTI_EP)
     new_config['General']['launch_browser'] = int(LAUNCH_BROWSER)
     new_config['General']['update_shows_on_start'] = int(UPDATE_SHOWS_ON_START)
@@ -1235,6 +1282,12 @@ def save_config():
     new_config['THEPIRATEBAY']['thepiratebay_proxy'] = int(THEPIRATEBAY_PROXY)
     new_config['THEPIRATEBAY']['thepiratebay_proxy_url'] = THEPIRATEBAY_PROXY_URL
     new_config['THEPIRATEBAY']['thepiratebay_blacklist'] = THEPIRATEBAY_BLACKLIST
+    
+    new_config['NYAATORRENTS'] = {}
+    new_config['NYAATORRENTS']['nyaa'] = int(NYAA)
+    
+    new_config['FROZENLAYER'] = {}
+    new_config['FROZENLAYER']['frozenlayer'] = int(FROZENLAYER)
 
     new_config['TORRENTLEECH'] = {}
     new_config['TORRENTLEECH']['torrentleech'] = int(TORRENTLEECH)
@@ -1426,6 +1479,15 @@ def save_config():
 
     new_config['Newznab'] = {}
     new_config['Newznab']['newznab_data'] = '!!!'.join([x.configStr() for x in newznabProviderList])
+
+    new_config['ANIME'] = {}
+    new_config['ANIME']['use_anidb'] = int(USE_ANIDB)
+    new_config['ANIME']['anidb_username'] = ANIDB_USERNAME
+    new_config['ANIME']['anidb_password'] = ANIDB_PASSWORD
+    new_config['ANIME']['anidb_use_mylist'] = int(ANIDB_USE_MYLIST)
+    new_config['ANIME']['anime_split_home'] = int(ANIME_SPLIT_HOME)
+    new_config['ANIME']['use_romaji_name'] = int(USE_ROMAJI_NAME)
+    new_config['ANIME']['use_anidb_posters'] = int(USE_ANIDB_POSTERS)
 
     new_config['GUI'] = {}
     new_config['GUI']['gui_name'] = GUI_NAME

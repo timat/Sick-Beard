@@ -68,9 +68,9 @@ class ThePirateBayProvider(generic.TorrentProvider):
     def imageName(self):
         return 'thepiratebay.png'
     
-    def getQuality(self, item):
+    def getQuality(self, item, anime=False):
         
-        quality = Quality.nameQuality(item[0])
+        quality = Quality.nameQuality(item[0], anime)
         return quality    
 
     def _reverseQuality(self,quality):
@@ -98,7 +98,7 @@ class ThePirateBayProvider(generic.TorrentProvider):
         
         return quality_string
 
-    def _find_season_quality(self,title,torrent_id):
+    def _find_season_quality(self,title,torrent_id,show):
         """ Return the modified title of a Season Torrent with the quality found inspecting torrent file list """
 
         mediaExtensions = ['avi', 'mkv', 'wmv', 'divx',
@@ -122,7 +122,7 @@ class ThePirateBayProvider(generic.TorrentProvider):
             logger.log(u"Unable to get the torrent file list for "+title, logger.ERROR)
             
         for fileName in filter(lambda x: x.rpartition(".")[2].lower() in mediaExtensions, filesList):
-            quality = Quality.nameQuality(os.path.basename(fileName))
+            quality = Quality.nameQuality(os.path.basename(fileName), show.anime)
             if quality != Quality.UNKNOWN: break
 
         if fileName!=None and quality == Quality.UNKNOWN:
@@ -133,7 +133,7 @@ class ThePirateBayProvider(generic.TorrentProvider):
             return None
 
         try:
-            myParser = NameParser()
+            myParser = NameParser(show=show)
             parse_result = myParser.parse(fileName)
         except InvalidNameException:
             return None
@@ -187,6 +187,10 @@ class ThePirateBayProvider(generic.TorrentProvider):
             for show_name in set(show_name_helpers.allPossibleShowNames(ep_obj.show)):
                 ep_string = show_name_helpers.sanitizeSceneName(show_name) +' '+ str(ep_obj.airdate)
                 search_string['Episode'].append(ep_string)
+        elif ep_obj.show.anime and ep_obj.show.absolute_numbering:
+            for show_name in set(show_name_helpers.allPossibleShowNames(ep_obj.show)):
+                ep_string = show_name_helpers.sanitizeSceneName(show_name) +' '+ '%03d' % (ep_obj.absolute_number)
+                search_string['Episode'].append(ep_string)
         else:
             for show_name in set(show_name_helpers.allPossibleShowNames(ep_obj.show)):
                 ep_string = show_name_helpers.sanitizeSceneName(show_name) +' '+ \
@@ -236,8 +240,9 @@ class ThePirateBayProvider(generic.TorrentProvider):
                         continue
 
                     #Try to find the real Quality for full season torrent analyzing files in torrent 
-                    if mode == 'Season' and Quality.nameQuality(title) == Quality.UNKNOWN:     
-                        if not self._find_season_quality(title,id): continue
+                    if mode == 'Season' and Quality.nameQuality(title, show.anime) == Quality.UNKNOWN:     
+                        if not self._find_season_quality(title,id,show):
+                            continue
                         
                     item = title, url, id, seeders, leechers
                     

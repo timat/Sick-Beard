@@ -1,5 +1,5 @@
-# Author: Mr_Orange
-# URL: http://code.google.com/p/sickbeard/
+# Author: Nyaran <luis@pistachitos.com>
+# URL: https://github.com/Pistachitos/Sick-Beard
 #
 # This file is part of Sick Beard.
 #
@@ -36,25 +36,25 @@ from sickbeard import tvcache
 
 REMOTE_DBG = False
 
-class NyaaProvider(generic.TorrentProvider):
+class FrozenLayerProvider(generic.TorrentProvider):
 
     def __init__(self):
 
-        generic.TorrentProvider.__init__(self, "NyaaTorrents")
+        generic.TorrentProvider.__init__(self, "Frozen-Layer")
         
         self.supportsBacklog = True
         
         self.supportsAbsoluteNumbering = True
 
-        self.cache = NyaaCache(self)
+        self.cache = FrozenLayerCache(self)
 
-        self.url = 'http://www.nyaa.eu/'
+        self.url = 'http://www.frozen-layer.com/'
 
     def isEnabled(self):
-        return sickbeard.NYAA
+        return sickbeard.FROZENLAYER
         
     def imageName(self):
-        return 'nyaatorrents.png'
+        return 'frozenlayer.png'
       
     def getQuality(self, item, anime=False):
         self.debug()
@@ -77,7 +77,8 @@ class NyaaProvider(generic.TorrentProvider):
         return self._get_season_search_strings(ep_obj.show, ep_obj.season)
 
     def _doSearch(self, search_string, show=None):
-    
+        # TODO
+        return []
         params = {"term" : search_string.encode('utf-8'),
                   "sort" : '2', #Sort Descending By Seeders 
                  }
@@ -95,7 +96,7 @@ class NyaaProvider(generic.TorrentProvider):
             parsedXML = parseString(data)
             items = parsedXML.getElementsByTagName('item')
         except Exception, e:
-            logger.log(u"Error trying to load NyaaTorrents RSS feed: "+ex(e), logger.ERROR)
+            logger.log(u"Error trying to load Frozen-Layer RSS feed: "+ex(e), logger.ERROR)
             logger.log(u"RSS data: "+data, logger.DEBUG)
             return []
         
@@ -106,7 +107,7 @@ class NyaaProvider(generic.TorrentProvider):
             (title, url) = self._get_title_and_url(curItem)
             
             if not title or not url:
-                logger.log(u"The XML returned from the NyaaTorrents RSS feed is incomplete, this result is unusable: "+data, logger.ERROR)
+                logger.log(u"The XML returned from the Frozen-Layer RSS feed is incomplete, this result is unusable: "+data, logger.ERROR)
                 continue
     
             results.append(curItem)
@@ -187,27 +188,37 @@ class NyaaProvider(generic.TorrentProvider):
             return match.group(1)
         return None
 
-   
-class NyaaCache(tvcache.TVCache):
+    def debug(self):
+        
+        if REMOTE_DBG:
+                # Make pydev debugger works for auto reload.
+                # Note pydevd module need to be copied in XBMC\system\python\Lib\pysrc
+            try:
+                import pysrc.pydevd as pydevd
+                # stdoutToServer and stderrToServer redirect stdout and stderr to eclipse console
+                pydevd.settrace('localhost', port=5678, stdoutToServer=True, stderrToServer=True)
+            except ImportError:
+                sys.stderr.write("Error: " +
+                        "You must add org.python.pydev.debug.pysrc to your PYTHONPATH.")
+                sys.exit(1)         
+        
+        return
+    
+class FrozenLayerCache(tvcache.TVCache):
 
     def __init__(self, provider):
 
         tvcache.TVCache.__init__(self, provider)
 
-        # only poll NyaaTorrents every 15 minutes max
+        # only poll Frozen-Layer every 15 minutes max
         self.minTime = 15
 
 
     def _getRSSData(self):
 
-        params = {
-                    "page" : 'rss', # Use RSS page
-                    "order" : '1'   #Sort Descending By Date
-                  }
-      
-        url = self.provider.url + '?' + urllib.urlencode(params)        
+        url = 'http://feeds.feedburner.com/bittorrent'
 
-        logger.log(u"NyaaTorrents cache update URL: "+ url, logger.DEBUG)
+        logger.log(u"Frozen-Layer cache update URL: "+ url, logger.DEBUG)
 
         data = self.provider.getURL(url)
 
@@ -218,11 +229,11 @@ class NyaaCache(tvcache.TVCache):
         (title, url) = self.provider._get_title_and_url(item)
 
         if not title or not url:
-            logger.log(u"The XML returned from the NyaaTorrents RSS feed is incomplete, this result is unusable", logger.ERROR)
+            logger.log(u"The XML returned from the Frozen-Layer RSS feed is incomplete, this result is unusable", logger.ERROR)
             return
 
         logger.log(u"Adding item from RSS to cache: "+title, logger.DEBUG)
 
         self._addCacheEntry(title, url)
 
-provider = NyaaProvider()
+provider = FrozenLayerProvider()

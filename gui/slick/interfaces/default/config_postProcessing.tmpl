@@ -535,6 +535,317 @@
 
                         </div><!-- /naming_abd_different -->
 
+                        <div class="field-pair clearfix">
+                            <input type="checkbox" class="enabler" id="naming_custom_ae" name="naming_custom_ae" #if $sickbeard.NAMING_CUSTOM_AE then "checked=\"checked\"" else ""#/>
+                            <label class="clearfix" for="naming_custom_ae">
+                                <span class="component-title">Custom Absolute Episode</span>
+                                <span class="component-desc">Name Absolute Episode shows differently than regular shows?</span>
+                            </label>
+                        </div>
+
+                        <div id="content_naming_custom_ae">
+                            <div class="field-pair">
+                                <label class="nocheck clearfix" for="name_ae_presets">
+                                    <span class="component-title">Name Pattern:</span>
+                                    <span class="component-desc">
+                                        <select id="name_ae_presets">
+                                            #set is_ae_custom = True
+                                            #for $cur_preset in $naming.name_ae_presets:
+                                                #set $tmp = $naming.test_name($cur_preset)
+                                                #if $cur_preset == $sickbeard.NAMING_AE_PATTERN:
+                                                    #set is_ae_custom = False
+                                                #end if
+                                                <option id="$cur_preset" #if $cur_preset == $sickbeard.NAMING_AE_PATTERN then "selected=\"selected\"" else ""#>$os.path.join($tmp['dir'], $tmp['name'])</option>
+                                            #end for
+                                            <option id="$sickbeard.NAMING_AE_PATTERN" #if $is_ae_custom then "selected=\"selected\"" else ""#>Custom...</option>
+                                        </select>
+                                    </span>
+                                </label>
+                            </div>
+
+                            <div id="naming_ae_custom">
+                                <div class="field-pair clearfix" style="padding-top: 0;">
+                                    <label class="nocheck clearfix">
+                                        <span class="component-title">
+                                            &nbsp;
+                                        </span>
+                                        <span class="component-desc">
+                                            <input type="text" size="45" name="naming_ae_pattern" id="naming_ae_pattern" class="custom-pattern" value="$sickbeard.NAMING_AE_PATTERN" style="font-size: 13px; height: 18px; margin-top: -8px"/>
+                                            <img src="$sbRoot/images/legend16.png" width="16" height="16" alt="[Toggle Key]" id="show_naming_ae_key" title="Toggle AE Naming Legend" style="padding: 0 0 0 3px; margin-top: -2px;" />
+                                        </span>
+                                    </label>
+                                </div>
+
+                                <div id="naming_ae_key" class="nocheck clearfix" style="display: none;">
+                                      <table class="Key">
+                                        <thead>
+                                            <tr>
+                                              <th class="align-right">Meaning</th>
+                                              <th>Pattern</th>
+                                              <th width="60%">Result</th>
+                                            </tr>
+                                        </thead>
+                                        <tfoot>
+                                            <tr>
+                                              <th colspan="3">Use lower case if you want lower case names (eg. %sn, %e.n, %q_n etc)</th>
+                                            </tr>
+                                        </tfoot>
+                                        <tbody>
+                                            <tr>
+                                              <td class="align-right"><b>Show Name:</b></td>
+                                              <td>%SN</td>
+                                              <td>Show Name</td>
+                                            </tr>
+                                            <tr class="even">
+                                              <td>&nbsp;</td>
+                                              <td>%S.N</td>
+                                              <td>Show.Name</td>
+                                            </tr>
+                                            <tr>
+                                              <td>&nbsp;</td>
+                                              <td>%S_N</td>
+                                              <td>Show_Name</td>
+                                            </tr>
+                                            <tr class="even">
+	                                          <td class="align-right"><b>Absolute Episode Number:</b></td>
+	                                          <td>%AE</td>
+	                                          <td>73</td>
+	                                        </tr>
+	                                        <tr>
+	                                          <td>&nbsp;</td>
+	                                          <td>%0AE</td>
+	                                          <td>073</td>
+	                                        </tr>
+                                            <tr class="even">
+                                              <td class="align-right"><b>Episode Name:</b></td>
+                                              <td>%EN</td>
+                                              <td>Episode Name</td>
+                                            </tr>
+                                            <tr>
+                                              <td>&nbsp;</td>
+                                              <td>%E.N</td>
+                                              <td>Episode.Name</td>
+                                            </tr>
+                                            <tr class="even">
+                                              <td>&nbsp;</td>
+                                              <td>%E_N</td>
+                                              <td>Episode_Name</td>
+                                            </tr>
+                                            <tr>
+                                              <td class="align-right"><b>Quality:</b></td>
+                                              <td>%QN</td>
+                                              <td>720p BluRay</td>
+                                            </tr>
+                                            <tr class="even">
+                                              <td>&nbsp;</td>
+                                              <td>%Q.N</td>
+                                              <td>720p.BluRay</td>
+                                            </tr>
+                                            <tr>
+                                              <td>&nbsp;</td>
+                                              <td>%Q_N</td>
+                                              <td>720p_BluRay</td>
+                                            </tr>
+                                            <tr>
+                                              <td class="align-right"><i class="icon-info-sign" title="Multi-EP style is ignored"></i> <b>Release Name:</b></td>
+                                              <td>%RN</td>
+                                              <td>Show.Name.073.HDTV.XviD-RLSGROUP</td>
+                                            </tr>
+                                            <tr class="even">
+                                              <td class="align-right"><i class="icon-info-sign" title="'SiCKBEARD' is used in place of RLSGROUP if it could not be properly detected"></i> <b>Release Group:</b></td>
+                                              <td>%RG</td>
+                                              <td>RLSGROUP</td>
+                                            </tr>
+                                        </tbody>
+                                      </table>
+                                      <br/>
+                                </div>
+                            </div><!-- /naming_ae_custom -->
+                            
+                            <div id="naming_ae_example_div">
+                                <h2>Sample:</h2>
+                                <div class="example">
+                                    <span class="jumbo" id="naming_ae_example">&nbsp;</span>
+                                </div>
+                                <br/>
+                            </div>
+
+                        </div><!-- /naming_ae_different -->
+                        
+                                                <div class="field-pair clearfix">
+                            <input type="checkbox" class="enabler" id="naming_custom_sn" name="naming_custom_sn" #if $sickbeard.NAMING_CUSTOM_SN then "checked=\"checked\"" else ""#/>
+                            <label class="clearfix" for="naming_custom_sn">
+                                <span class="component-title">Custom Season Name</span>
+                                <span class="component-desc">Name Season Name shows differently than regular shows?</span>
+                            </label>
+                        </div>
+
+                        <div id="content_naming_custom_sn">
+                            <div class="field-pair">
+                                <label class="nocheck clearfix" for="name_sn_presets">
+                                    <span class="component-title">Name Pattern:</span>
+                                    <span class="component-desc">
+                                        <select id="name_sn_presets">
+                                            #set is_sn_custom = True
+                                            #for $cur_preset in $naming.name_sn_presets:
+                                                #set $tmp = $naming.test_name($cur_preset)
+                                                #if $cur_preset == $sickbeard.NAMING_SN_PATTERN:
+                                                    #set is_sn_custom = False
+                                                #end if
+                                                <option id="$cur_preset" #if $cur_preset == $sickbeard.NAMING_SN_PATTERN then "selected=\"selected\"" else ""#>$os.path.join($tmp['dir'], $tmp['name'])</option>
+                                            #end for
+                                            <option id="$sickbeard.NAMING_SN_PATTERN" #if $is_sn_custom then "selected=\"selected\"" else ""#>Custom...</option>
+                                        </select>
+                                    </span>
+                                </label>
+                            </div>
+
+                            <div id="naming_sn_custom">
+                                <div class="field-pair clearfix" style="padding-top: 0;">
+                                    <label class="nocheck clearfix">
+                                        <span class="component-title">
+                                            &nbsp;
+                                        </span>
+                                        <span class="component-desc">
+                                            <input type="text" size="45" name="naming_sn_pattern" id="naming_sn_pattern" class="custom-pattern" value="$sickbeard.NAMING_SN_PATTERN" style="font-size: 13px; height: 18px; margin-top: -8px"/>
+                                            <img src="$sbRoot/images/legend16.png" width="16" height="16" alt="[Toggle Key]" id="show_naming_sn_key" title="Toggle SN Naming Legend" style="padding: 0 0 0 3px; margin-top: -2px;" />
+                                        </span>
+                                    </label>
+                                </div>
+
+                                <div id="naming_sn_key" class="nocheck clearfix" style="display: none;">
+                                      <table class="Key">
+                                        <thead>
+                                            <tr>
+                                              <th class="align-right">Meaning</th>
+                                              <th>Pattern</th>
+                                              <th width="60%">Result</th>
+                                            </tr>
+                                        </thead>
+                                        <tfoot>
+                                            <tr>
+                                              <th colspan="3">Use lower case if you want lower case names (eg. %sn, %e.n, %q_n etc)</th>
+                                            </tr>
+                                        </tfoot>
+                                        <tbody>
+                                            <tr>
+                                              <td class="align-right"><b>Show Name:</b></td>
+                                              <td>%SN</td>
+                                              <td>Show Name</td>
+                                            </tr>
+                                            <tr class="even">
+                                              <td>&nbsp;</td>
+                                              <td>%S.N</td>
+                                              <td>Show.Name</td>
+                                            </tr>
+                                            <tr>
+                                              <td>&nbsp;</td>
+                                              <td>%S_N</td>
+                                              <td>Show_Name</td>
+                                            </tr>
+                                            <tr class="even">
+	                                          <td class="align-right"><b>Season Number:</b></td>
+	                                          <td>%S</td>
+	                                          <td>2</td>
+	                                        </tr>
+	                                        <tr>
+	                                          <td>&nbsp;</td>
+	                                          <td>%0S</td>
+	                                          <td>02</td>
+	                                        </tr>
+                                           	<tr>
+                                              <td class="align-right"><b>Season Name:</b></td>
+                                              <td>%SSN</td>
+                                              <td>Season Name</td>
+                                            </tr>
+                                            <tr class="even">
+                                              <td>&nbsp;</td>
+                                              <td>%SS.N</td>
+                                              <td>Season.Name</td>
+                                            </tr>
+                                            <tr>
+                                              <td>&nbsp;</td>
+                                              <td>%SS_N</td>
+                                              <td>Season_Name</td>
+                                            </tr>
+                                            <tr class="even">
+	                                          <td class="align-right"><b>Episode Number:</b></td>
+	                                          <td>%E</td>
+	                                          <td>3</td>
+	                                        </tr>
+	                                        <tr>
+	                                          <td>&nbsp;</td>
+	                                          <td>%0E</td>
+	                                          <td>03</td>
+	                                        </tr>
+                                            <tr class="even">
+                                              <td class="align-right"><b>Episode Name:</b></td>
+                                              <td>%EN</td>
+                                              <td>Episode Name</td>
+                                            </tr>
+                                            <tr>
+                                              <td>&nbsp;</td>
+                                              <td>%E.N</td>
+                                              <td>Episode.Name</td>
+                                            </tr>
+                                            <tr class="even">
+                                              <td>&nbsp;</td>
+                                              <td>%E_N</td>
+                                              <td>Episode_Name</td>
+                                            </tr>
+                                            <tr>
+                                              <td class="align-right"><b>Quality:</b></td>
+                                              <td>%QN</td>
+                                              <td>720p BluRay</td>
+                                            </tr>
+                                            <tr class="even">
+                                              <td>&nbsp;</td>
+                                              <td>%Q.N</td>
+                                              <td>720p.BluRay</td>
+                                            </tr>
+                                            <tr>
+                                              <td>&nbsp;</td>
+                                              <td>%Q_N</td>
+                                              <td>720p_BluRay</td>
+                                            </tr>
+                                            <tr>
+                                              <td class="align-right"><i class="icon-info-sign" title="Multi-EP style is ignored"></i> <b>Release Name:</b></td>
+                                              <td>%RN</td>
+                                              <td>Show.Name.073.HDTV.XviD-RLSGROUP</td>
+                                            </tr>
+                                            <tr class="even">
+                                              <td class="align-right"><i class="icon-info-sign" title="'SiCKBEARD' is used in place of RLSGROUP if it could not be properly detected"></i> <b>Release Group:</b></td>
+                                              <td>%RG</td>
+                                              <td>RLSGROUP</td>
+                                            </tr>
+                                        </tbody>
+                                      </table>
+                                      <br/>
+                                </div>
+                            </div><!-- /naming_sn_custom -->
+                            
+                            <div id="naming_sn_example_div">
+                                <h2>Sample:</h2>
+                                <div class="example">
+                                    <span class="jumbo" id="naming_sn_example">&nbsp;</span>
+                                </div>
+                                <br/>
+                            </div>
+
+                        </div><!-- /naming_sn_different -->
+
+                        <div class="field-pair">                                                                                                                          
+                            <input type="checkbox" id="naming_strip_year"  name="naming_strip_year" #if $sickbeard.NAMING_STRIP_YEAR then "checked=\"checked\"" else ""#/> 
+                            <label class="clearfix" for="naming_strip_year">                                                                                              
+                                <span class="component-title">Strip Show Year</span>                                                                                      
+                                <span class="component-desc">Remove the TV show's year when renaming the file?</span>                                                     
+                            </label>                                                                                                                                      
+                            <label class="nocheck clearfix">                                                                                                              
+                                <span class="component-title">&nbsp;</span>                                                                                               
+                                <span class="component-desc">Only applies to shows that have year inside parentheses</span>                                         
+                            </label>                                                                                                                                      
+                        </div>
+
                         <div class="clearfix"></div>
                         <input type="submit" class="btn config_submitter" value="Save Changes" /><br/>
 

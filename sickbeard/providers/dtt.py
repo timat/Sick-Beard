@@ -45,9 +45,9 @@ class DTTProvider(generic.TorrentProvider):
     def imageName(self):
         return 'dailytvtorrents.gif'
       
-    def getQuality(self, item):
+    def getQuality(self, item, anime=False):
         url = item.getElementsByTagName('enclosure')[0].getAttribute('url')
-        quality = Quality.nameQuality(url)
+        quality = Quality.nameQuality(url, anime)
         return quality
 
     def findSeasonResults(self, show, season):

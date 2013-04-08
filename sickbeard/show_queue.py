@@ -25,10 +25,12 @@ import sickbeard
 from lib.tvdb_api import tvdb_exceptions, tvdb_api
 from lib.imdb import _exceptions as imdb_exceptions
 
+from lib import adba
+from lib.adba.aniDBerrors import AniDBIncorrectParameterError
 from sickbeard.common import SKIPPED, WANTED
 
 from sickbeard.tv import TVShow
-from sickbeard import exceptions, logger, ui, db
+from sickbeard import exceptions, helpers, logger, ui, db
 from sickbeard import generic_queue
 from sickbeard import name_cache
 from sickbeard.exceptions import ex
@@ -130,8 +132,8 @@ class ShowQueue(generic_queue.GenericQueue):
 
         return queueItemObj
 
-    def addShow(self, tvdb_id, showDir, default_status=None, quality=None, flatten_folders=None, subtitles=None, lang="en"):
-        queueItemObj = QueueItemAdd(tvdb_id, showDir, default_status, quality, flatten_folders, lang, subtitles)
+    def addShow(self, tvdb_id, showDir, default_status=None, quality=None, flatten_folders=None, subtitles=None, lang="en", anime=0):
+        queueItemObj = QueueItemAdd(tvdb_id, showDir, default_status, quality, flatten_folders, lang, subtitles, anime)
         
         self.add_item(queueItemObj)
 
@@ -183,7 +185,7 @@ class ShowQueueItem(generic_queue.QueueItem):
 
 
 class QueueItemAdd(ShowQueueItem):
-    def __init__(self, tvdb_id, showDir, default_status, quality, flatten_folders, lang, subtitles):
+    def __init__(self, tvdb_id, showDir, default_status, quality, flatten_folders, lang, subtitles, anime):
 
         self.tvdb_id = tvdb_id
         self.showDir = showDir
@@ -192,6 +194,7 @@ class QueueItemAdd(ShowQueueItem):
         self.flatten_folders = flatten_folders
         self.lang = lang
         self.subtitles = subtitles
+        self.anime = anime
 
         self.show = None
 
@@ -269,6 +272,7 @@ class QueueItemAdd(ShowQueueItem):
             self.show.subtitles = self.subtitles if self.subtitles != None else sickbeard.SUBTITLES_DEFAULT
             self.show.quality = self.quality if self.quality else sickbeard.QUALITY_DEFAULT
             self.show.flatten_folders = self.flatten_folders if self.flatten_folders != None else sickbeard.FLATTEN_FOLDERS_DEFAULT
+            self.show.anime = self.anime if self.anime != None else sickbeard.ANIME_DEFAULT
             self.show.paused = False
             
             # be smartish about this
@@ -320,6 +324,7 @@ class QueueItemAdd(ShowQueueItem):
         try:
             self.show.loadEpisodesFromTVDB()
             self.show.setTVRID()
+            self.show.setAniDBData()
 
             self.show.writeMetadata()
             self.show.populateCache()
@@ -509,7 +514,10 @@ class QueueItemUpdate(ShowQueueItem):
             self.show.loadLatestFromTVRage()
             if self.show.tvrid == 0:
                 self.show.setTVRID()
-
+        
+        # Set anidb data        
+        self.show.setAniDBData()
+                
         sickbeard.showQueueScheduler.action.refreshShow(self.show, True) #@UndefinedVariable
 
 class QueueItemForceUpdate(QueueItemUpdate):
