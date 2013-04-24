@@ -1041,7 +1041,7 @@ class CMD_SubtitleSearch(ApiCall):
             response = _responds(RESULT_SUCCESS, msg='New subtitles found')
         else:
             status = 'No subtitles downloaded'
-            response = _responds(RESULT_SUCCESS, msg='Unable to find subtitles')
+            response = _responds(RESULT_FAILURE, msg='Unable to find subtitles')
             
         ui.notifications.message('Subtitles Search', status)
         
