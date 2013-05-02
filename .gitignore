@@ -19,19 +19,6 @@ tests/cache.db
 ######################
 *.py[co]
 
-#  IDE specific      #
-######################
-*.bak
-*.tmp
-*.wpr
-*.project
-*.pydevproject
-*.cproject
-*.tmproj
-*.tmproject
-*.sw?
-.settings
-
 # OS generated files #
 ######################
 .Spotlight-V100

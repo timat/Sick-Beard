@@ -264,21 +264,21 @@ $(document).ready(function () {
         }, 500);
     });
 
-    $('#naming_abd_pattern').focusout(fill_examples);
+    $('#naming_abd_pattern').focusout(fill_abd_examples);
     $('#naming_abd_pattern').keyup(function () {
         typewatch(function () {
             fill_abd_examples();
         }, 500);
     });
 
-	$('#naming_ae_pattern').focusout(fill_examples);
+	$('#naming_ae_pattern').focusout(fill_ae_examples);
     $('#naming_ae_pattern').keyup(function () {
         typewatch(function () {
             fill_ae_examples();
         }, 500);
     });
     
-    $('#naming_sn_pattern').focusout(fill_examples);
+    $('#naming_sn_pattern').focusout(fill_sn_examples);
     $('#naming_sn_pattern').keyup(function () {
         typewatch(function () {
             fill_sn_examples();

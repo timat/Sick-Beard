@@ -1192,7 +1192,7 @@ class ConfigPostProcessing:
 
         result = naming.test_name(pattern, multi, abd, ae, sn)
 
-        result = ek.ek(os.path.join, result['dir'], result['name']) 
+        result = ek.ek(os.path.join, result['dir'], result['name'])
 
         return result
     
