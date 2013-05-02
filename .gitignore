@@ -9,6 +9,12 @@ autoProcessTV/autoProcessTV.cfg
 server.crt
 server.key
 
+#  IDE specific      #
+######################
+*.bak
+*.tmp
+.settings
+
 #  SB Test Related   #
 ######################
 tests/Logs/*
