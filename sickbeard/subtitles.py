@@ -19,12 +19,10 @@
 import datetime
 import sickbeard
 from sickbeard.common import *
-from sickbeard import notifiers
 from sickbeard import logger
 from sickbeard import helpers
 from sickbeard import encodingKludge as ek
 from sickbeard import db
-from sickbeard import history
 from lib import subliminal
 
 SINGLE = 'und'
@@ -123,9 +121,43 @@ class SubtitlesFinder():
                 # Recent shows rule 
                 (epToSub['airdate_daydiff'] <= 7 and epToSub['searchcount'] < 7 and now - datetime.datetime.strptime(epToSub['lastsearch'], '%Y-%m-%d %H:%M:%S') > datetime.timedelta(hours=rules['new'][epToSub['searchcount']]))):
                 logger.log('Downloading subtitles for episode %dx%d of show %s' % (epToSub['season'], epToSub['episode'], epToSub['show_name']), logger.DEBUG)
-                helpers.findCertainShow(sickbeard.showList, int(epToSub['showid'])).getEpisode(int(epToSub["season"]), int(epToSub["episode"])).downloadSubtitles()
-            
-
+                
+                showObj = helpers.findCertainShow(sickbeard.showList, int(epToSub['showid']))
+                if not showObj:
+                    logger.log(u'Show not found', logger.DEBUG)
+                    return
+                
+                epObj = showObj.getEpisode(int(epToSub["season"]), int(epToSub["episode"]))
+                if isinstance(epObj, str):
+                    logger.log(u'Episode not found', logger.DEBUG)
+                    return
+                
+                previous_subtitles = epObj.subtitles
+                
+                try:
+                    subtitles = epObj.downloadSubtitles()
+                    
+                    if sickbeard.SUBTITLES_DIR:
+                        for video in subtitles:
+                            subs_new_path = ek.ek(os.path.join, os.path.dirname(video.path), sickbeard.SUBTITLES_DIR)
+                            dir_exists = helpers.makeDir(subs_new_path)
+                            if not dir_exists:
+                                logger.log(u"Unable to create subtitles folder "+subs_new_path, logger.ERROR)
+                            else:
+                                helpers.chmodAsParent(subs_new_path)
+                                
+                            for subtitle in subtitles.get(video):
+                                new_file_path = ek.ek(os.path.join, subs_new_path, os.path.basename(subtitle.path))
+                                helpers.moveFile(subtitle.path, new_file_path)
+                                helpers.chmodAsParent(new_file_path)
+                    else:
+                        for video in subtitles:
+                            for subtitle in subtitles.get(video):
+                                helpers.chmodAsParent(subtitle.path)
+                except:
+                    logger.log(u'Unable to find subtitles', logger.DEBUG)
+                    return
+                
     def _getRules(self):
         """
         Define the hours to wait between 2 subtitles search depending on:

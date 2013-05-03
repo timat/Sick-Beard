@@ -1156,20 +1156,22 @@ class ConfigPostProcessing:
         else:
             results.append("You tried saving an invalid naming config, not saving your naming settings")
 
-        if self.isNamingValid(naming_abd_pattern, None, True) != "invalid":
-            sickbeard.NAMING_ABD_PATTERN = naming_abd_pattern
-        else:
-            results.append("You tried saving an invalid air-by-date naming config, not saving your air-by-date settings")
-            
-        if self.isNamingValid(naming_ae_pattern, naming_multi_ep, ae=True) != "invalid":
-            sickbeard.NAMING_AE_PATTERN = naming_ae_pattern
-        else:
-            results.append("You tried saving an invalid absolute-episode naming config, not saving your absolute-episode settings")
-            
-        if self.isNamingValid(naming_sn_pattern, naming_multi_ep, sn=True) != "invalid":
+        if sickbeard.NAMING_CUSTOM_ABD:
+            if self.isNamingValid(naming_abd_pattern, None, True) != "invalid":
+                sickbeard.NAMING_ABD_PATTERN = naming_abd_pattern
+            else:
+                results.append("You tried saving an invalid air-by-date naming config, not saving your air-by-date settings")
+          
+        if sickbeard.NAMING_CUSTOM_AE:      
+            if self.isNamingValid(naming_ae_pattern, naming_multi_ep, ae=True) != "invalid":
+                sickbeard.NAMING_AE_PATTERN = naming_ae_pattern
+            else:
+                results.append("You tried saving an invalid absolute-episode naming config, not saving your absolute-episode settings")
+                
+        '''if self.isNamingValid(naming_sn_pattern, naming_multi_ep, sn=True) != "invalid":
             sickbeard.NAMING_SN_PATTERN = naming_sn_pattern
         else:
-            results.append("You tried saving an invalid season-name naming config, not saving your season-name settings")
+            results.append("You tried saving an invalid season-name naming config, not saving your season-name settings")'''
 
         sickbeard.USE_BANNER = use_banner
 
@@ -1193,7 +1195,7 @@ class ConfigPostProcessing:
 
         result = naming.test_name(pattern, multi, abd, ae, sn)
 
-        result = ek.ek(os.path.join, result['dir'], result['name']) 
+        result = ek.ek(os.path.join, result['dir'], result['name'])
 
         return result
     
