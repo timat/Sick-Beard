@@ -26,12 +26,10 @@ import re
 import sickbeard
 import generic
 
-from sickbeard import show_name_helpers, helpers
+from sickbeard import show_name_helpers
 
 from sickbeard import logger
 from sickbeard.common import Quality
-from sickbeard.exceptions import ex
-from sickbeard import scene_exceptions
 from sickbeard import tvcache
 
 REMOTE_DBG = False
