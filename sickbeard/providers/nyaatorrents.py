@@ -30,7 +30,6 @@ from sickbeard import show_name_helpers, helpers
 from sickbeard import logger
 from sickbeard.common import Quality
 from sickbeard.exceptions import ex
-from sickbeard.name_parser.parser import NameParser, InvalidNameException
 from sickbeard import tvcache
 
 REMOTE_DBG = False
