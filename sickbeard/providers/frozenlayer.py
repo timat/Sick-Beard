@@ -26,11 +26,8 @@ import re
 import sickbeard
 import generic
 
-from sickbeard import show_name_helpers
-
-from sickbeard import logger
+from sickbeard import helpers, logger, show_name_helpers, tvcache
 from sickbeard.common import Quality
-from sickbeard import tvcache
 
 REMOTE_DBG = False
 
@@ -71,15 +68,22 @@ class FrozenLayerProvider(generic.TorrentProvider):
         """
         Retrieves the title and URL data from the item XML node
 
-        item: An xml.dom.minidom.Node representing the <item> tag of the RSS feed
+        item: An xml.dom.minidom.Node representing the <item> tag of the RSS feed or an JSon item
 
         Returns: A tuple containing two strings representing title and URL respectively
         """
-        episode = item['descarga']['titulo_formatted']
-        fansub = item['descarga']['fansub_formatted']
-        title = '['+fansub+'] '+episode.replace('Episodio ', '')
-        url = item['descarga']['magnet']
+        if isinstance(item, dict): #JSon
+            title = item['descarga']['titulo_formatted']
+            fansub = item['descarga']['fansub_formatted']
+            url = item['descarga']['magnet']
+        else:
+            (title, url) = generic.TorrentProvider._get_title_and_url(self, item)
+            description = helpers.get_xml_text(item.getElementsByTagName('description')[0])
+            start = description.find('Fansub:</strong>') + len('Fansub:</strong>')
+            end = description.find('</li>', start)
+            fansub = description[start:end]
         
+        title = '['+fansub+'] '+title.replace('Episodio ', '')
         return (title, url)
 
     def _doSearch(self, search_string, show=None):
