@@ -20,9 +20,7 @@
 
 import datetime
 import os
-import sys
 import re
-import urllib2
 
 import sickbeard
 
@@ -43,7 +41,6 @@ class GenericProvider:
     TORRENT = "torrent"
 
     def __init__(self, name):
-
         # these need to be set in the subclass
         self.providerType = None
         self.name = name
