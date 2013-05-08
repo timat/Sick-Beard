@@ -898,7 +898,7 @@ class PostProcessor(object):
         # download subtitles
         if sickbeard.USE_SUBTITLES and ep_obj.show.subtitles:
             cur_ep.location = self.file_path
-            cur_ep.downloadSubtitles()
+            cur_ep.downloadSubtitles(force=True)
 
         # figure out the base name of the resulting episode file
         if sickbeard.RENAME_EPISODES:
