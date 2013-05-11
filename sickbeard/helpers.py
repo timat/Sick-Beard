@@ -433,7 +433,10 @@ def moveFile(srcFile, destFile):
         fixSetGroupID(destFile)
     except OSError:
         copyFile(srcFile, destFile)
-        ek.ek(os.unlink, srcFile)
+        try:
+            ek.ek(os.unlink, srcFile)
+        except OSError:
+            logger.log(u"Unable to move file "+srcFile+" to "+destFile+", but it was copied", logger.ERROR)
 
 def make_dirs(path):
     """
