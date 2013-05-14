@@ -219,12 +219,11 @@ a{
     -2px 3px 0 #9A6C28,
     0px 3px 0 #9A6C28;
     font-weight: bold;
-    display: inline-block;
   font-family: "Comic Sans MS";
   font-size: 15px;
-  position: relative;
+  position: absolute;
   top: -4px;
-  left: -128px;
+  left: 55px;
 }
 
 .update {
