@@ -47,17 +47,18 @@
 </div>
 
 <table id="historyTable" class="sickbeardTable tablesorter" cellspacing="1" border="0" cellpadding="0">
-  <thead><tr><th class="nowrap">Time</th><th>Episode</th><th>Action</th><th>Provider</th><th>Quality</th></tr></thead>
+  <thead><tr><th class="nowrap">Time</th><th>Episode</th><th>Action</th><th>Provider</th><th>Quality</th><th>Resource</th></tr></thead>
   <tbody>
 #for $hItem in $historyResults:
 #set $curStatus, $curQuality = $Quality.splitCompositeStatus(int($hItem["action"]))
   <tr>
     <td class="nowrap">$datetime.datetime.strptime(str($hItem["date"]), $history.dateFormat)</td>
-    <td width="35%"><a style="color: #000000; text-align: center;" href="$sbRoot/home/displayShow?show=$hItem["showid"]#season-$hItem["season"]">$hItem["show_name"] - <%=str(hItem["season"]) +"x"+ "%02i" % int(hItem["episode"]) %>#if "proper" in $hItem["resource"].lower or "repack" in $hItem["resource"].lower then ' <span class="quality Proper">Proper</span>' else ""#</a></td>
+    <%episode_name = hItem["show_name"] + ' - ' + (episode.absolute_number if episode.show.anime and episode.show.absolute_numbering else str(hItem["season"]) +"x"+ "%02i" % int(hItem["episode"]))%>
+    <td width="35%" class="overflow" style="max-width: 200px;"><a style="color: #000000; text-align: center;" href="$sbRoot/home/displayShow?show=$hItem["showid"]#season-$hItem["season"]" title="$episode_name">#if not "proper" in $hItem["resource"].lower or not "repack" in $hItem["resource"].lower then ' <span class="quality Proper">Proper</span>' else ""# $episode_name</a></td>
     <td align="center" #if $curStatus == SUBTITLED then 'class="subtitles_column"' else ''#><span style="cursor: help;" title="$os.path.basename($hItem["resource"])">$statusStrings[$curStatus]</span>
     	#if $curStatus == SUBTITLED:
     		<img width="16" height="11" src="/images/flags/<%= hItem["resource"][len(hItem["resource"])-6:len(hItem["resource"])-4]+'.png'%>">
-		#end if    
+		#end if
     </td>
     <td align="center">
     #if $curStatus == DOWNLOADED:
@@ -67,7 +68,7 @@
             #set $match = $re.search("(\w+)\-.*\-"+$match.group(1)+"\.\w{3}\Z", $os.path.basename($hItem["resource"]), re.IGNORECASE)
             #if $match
                 <i>$match.group(1).upper()</i>
-          #end if
+            #end if
           #else:
           <i>$match.group(1).upper()</i>
         #end if
@@ -88,6 +89,8 @@
     #end if
     </td>
     <td align="center"><span class="quality $Quality.qualityStrings[$curQuality].replace("720p","HD720p").replace("1080p","HD1080p").replace("RawHD TV", "RawHD").replace("HD TV", "HD720p")">$Quality.qualityStrings[$curQuality]</span></td>
+    #set $resource_name = $os.path.basename($hItem["resource"])
+    <td width="30%" class="overflow" style="max-width: 150px;"><span title="$resource_name">$resource_name</span></td>
   </tr>
 #end for
   </tbody>
