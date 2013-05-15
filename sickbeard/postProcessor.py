@@ -833,6 +833,10 @@ class PostProcessor(object):
 
                 cur_ep.status = common.Quality.compositeStatus(common.DOWNLOADED, new_ep_quality)
                 
+                cur_ep.subtitles = []
+                cur_ep.subtitles_searchcount = 0
+                cur_ep.subtitles_lastsearch = '0001-01-01 00:00:00'
+                
                 cur_ep.is_proper = self.is_proper
                 
                 cur_ep.saveToDB()
@@ -854,7 +858,7 @@ class PostProcessor(object):
         # download subtitles
         if sickbeard.USE_SUBTITLES and ep_obj.show.subtitles:
             cur_ep.location = self.file_path
-            cur_ep.downloadSubtitles()
+            cur_ep.downloadSubtitles(force=True)
 
         # figure out the base name of the resulting episode file
         if sickbeard.RENAME_EPISODES:
