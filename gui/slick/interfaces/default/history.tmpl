@@ -47,7 +47,7 @@
 </div>
 
 <table id="historyTable" class="sickbeardTable tablesorter" cellspacing="1" border="0" cellpadding="0">
-  <thead><tr><th class="nowrap">Time</th><th>Episode</th><th>Action</th><th>Provider</th><th>Quality</th><th>Resource</th></tr></thead>
+  <thead><tr><th class="nowrap">Time</th><th>Episode</th><th>Action</th><th>Provider</th><th>Quality</th></tr></thead>
   <tbody>
 #for $hItem in $historyResults:
 #set $curStatus, $curQuality = $Quality.splitCompositeStatus(int($hItem["action"]))
@@ -89,8 +89,6 @@
     #end if
     </td>
     <td align="center"><span class="quality $Quality.qualityStrings[$curQuality].replace("720p","HD720p").replace("1080p","HD1080p").replace("RawHD TV", "RawHD").replace("HD TV", "HD720p")">$Quality.qualityStrings[$curQuality]</span></td>
-    #set $resource_name = $os.path.basename($hItem["resource"])
-    <td width="30%" class="overflow" style="max-width: 150px;"><span title="$resource_name">$resource_name</span></td>
   </tr>
 #end for
   </tbody>
