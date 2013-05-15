@@ -877,6 +877,10 @@ class PostProcessor(object):
 
                 cur_ep.status = common.Quality.compositeStatus(common.DOWNLOADED, new_ep_quality)
                 
+                cur_ep.subtitles = []
+                cur_ep.subtitles_searchcount = 0
+                cur_ep.subtitles_lastsearch = '0001-01-01 00:00:00'
+                
                 cur_ep.is_proper = self.is_proper
                 
                 cur_ep.saveToDB()
