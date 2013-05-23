@@ -3227,7 +3227,7 @@ class Home:
         redirect("/home/displayShow?show=" + str(showObj.tvdbid))
 
     @cherrypy.expose
-    def subtitleShow(self, show=None, force=0):
+    def subtitleShow(self, show=None):
 
         if show == None:
             return _genericMessage("Error", "Invalid show ID")
@@ -3238,7 +3238,7 @@ class Home:
             return _genericMessage("Error", "Unable to find the specified show")
 
         # search and download subtitles
-        sickbeard.showQueueScheduler.action.downloadSubtitles(showObj, bool(force)) #@UndefinedVariable
+        sickbeard.showQueueScheduler.action.downloadSubtitles(showObj) #@UndefinedVariable
 
         time.sleep(3)
 
@@ -3476,7 +3476,7 @@ class Home:
         return json.dumps({'result': 'failure'})
     
     @cherrypy.expose
-    def searchEpisodeSubtitles(self, show=None, season=None, episode=None):
+    def searchEpisodeSubtitles(self, show=None, season=None, episode=None, languages="all", force=False):
 
         # retrieve the episode object and fail if we can't get one 
         ep_obj = _getEpisode(show, season, episode)
@@ -3486,7 +3486,7 @@ class Home:
         # try do download subtitles for that episode
         previous_subtitles = ep_obj.subtitles
         try:
-            subtitles = ep_obj.downloadSubtitles()
+            subtitles = ep_obj.downloadSubtitles(languages=languages, force=force)
             
             if sickbeard.SUBTITLES_DIR:
                 for video in subtitles:
