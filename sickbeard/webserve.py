@@ -1309,8 +1309,7 @@ class ConfigProviders:
                       thepiratebay_trusted=None, thepiratebay_proxy=None, thepiratebay_proxy_url=None,
                       torrentleech_username=None, torrentleech_password=None,
                       iptorrents_username=None, iptorrents_password=None, iptorrents_freeleech=None,
-                      nyaatorrents=None,
-                      frozenlayer=None,
+                      nyaatorrents_category=None, nyaatorrents_filter=None,
                       newzbin_username=None, newzbin_password=None,
                       provider_order=None):
 
@@ -1449,6 +1448,9 @@ class ConfigProviders:
             iptorrents_freeleech = 0
 
         sickbeard.IPTORRENTS_FREELEECH = iptorrents_freeleech
+
+        sickbeard.NYAATORRENTS_CATEGORY = nyaatorrents_category
+        sickbeard.NYAATORRENTS_FILTER = nyaatorrents_filter
 
         sickbeard.NZBSRUS_UID = nzbs_r_us_uid.strip()
         sickbeard.NZBSRUS_HASH = nzbs_r_us_hash.strip()
