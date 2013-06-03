@@ -1012,7 +1012,7 @@ class TVShow(object):
                     curEp.saveToDB()
 
 
-    def downloadSubtitles(self, force=False):
+    def downloadSubtitles(self, languages='all', force=False):
         #TODO: Add support for force option
         if not ek.ek(os.path.isdir, self._location):
             logger.log(str(self.tvdbid) + ": Show dir doesn't exist, can't download subtitles", logger.DEBUG)
@@ -1023,7 +1023,7 @@ class TVShow(object):
             episodes = db.DBConnection().select("SELECT location FROM tv_episodes WHERE showid = ? AND location NOT LIKE '' ORDER BY season DESC, episode DESC", [self.tvdbid])
             for episodeLoc in episodes:
                 episode = self.makeEpFromFile(episodeLoc['location']);
-                subtitles = episode.downloadSubtitles(force=force)
+                subtitles = episode.downloadSubtitles(languages=languages, force=force)
         
                 if sickbeard.SUBTITLES_DIR:
                     for video in subtitles:
@@ -1263,12 +1263,12 @@ class TVEpisode(object):
             self.file_size = 0
 
     location = property(lambda self: self._location, _set_location)
+    
     def refreshSubtitles(self):
         """Look for subtitles files and refresh the subtitles property"""
         self.subtitles = subtitles.subtitlesLanguages(self.location)
 
-    def downloadSubtitles(self,force=False):
-        #TODO: Add support for force option
+    def downloadSubtitles(self, languages="all", force=False):
         if not ek.ek(os.path.isfile, self.location):
             logger.log(str(self.show.tvdbid) + ": Episode file doesn't exist, can't download subtitles for episode " + str(self.season) + "x" + str(self.episode), logger.DEBUG)
             return
@@ -1277,7 +1277,14 @@ class TVEpisode(object):
         previous_subtitles = self.subtitles
 
         try:
-            need_languages = set(sickbeard.SUBTITLES_LANGUAGES) - set(self.subtitles)
+            if languages == 'all':
+                if force:
+                    need_languages = sickbeard.SUBTITLES_LANGUAGES
+                else:
+                    need_languages = set(sickbeard.SUBTITLES_LANGUAGES) - set(self.subtitles)
+            else:
+                need_languages = languages.split(',')
+                
             subtitles = subliminal.download_subtitles([self.location], languages=need_languages, services=sickbeard.subtitles.getEnabledServiceList(), force=force, multi=True, cache_dir=sickbeard.CACHE_DIR)
             
         except Exception as e:

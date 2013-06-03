@@ -191,17 +191,32 @@
 <div style="clear:both;" class="clearfix"></div>
 
 <div class="float-left">
-	Change selected episodes to 
-	<select id="statusSelect">
-		#for $curStatus in [$WANTED, $SKIPPED, $ARCHIVED, $IGNORED] + sorted($Quality.DOWNLOADED):
-		#if $curStatus == $DOWNLOADED:
-		#continue
-		#end if
-		<option value="$curStatus">$statusStrings[$curStatus]</option>
-		#end for
-	</select>
-	<input type="hidden" id="showID" value="$show.tvdbid" />
-	<input class="btn" type="button" id="changeStatus" value="Go" />
+	<div>
+		Change selected episodes to 
+		<select id="statusSelect">
+			#for $curStatus in [$WANTED, $SKIPPED, $ARCHIVED, $IGNORED] + sorted($Quality.DOWNLOADED):
+			#if $curStatus == $DOWNLOADED:
+			#continue
+			#end if
+			<option value="$curStatus">$statusStrings[$curStatus]</option>
+			#end for
+		</select>
+		<input type="hidden" id="showID" value="$show.tvdbid" />
+		<input class="btn" type="button" id="changeStatus" value="Go" />
+	</div>
+	#if $sickbeard.USE_SUBTITLES and $show.subtitles:
+	<div>
+		Force to download  
+		<select id="forceSubtitlesSelect">
+			<option value="all">All languages</option>
+			#for $subsLang in subtitles.wantedLanguages():
+				<option value="$subsLang">$subliminal.language.Language($subsLang).name</option>
+			#end for
+		</select> subtitles
+		<input type="hidden" id="showID" value="$show.tvdbid" />
+		<input class="btn" type="button" id="forceSubtitleDownload" value="Go" />
+	</div>
+	#end if
 </div>
 
 	<div class="float-right clearfix" id="checkboxControls" style="margin-top: 3px;">
