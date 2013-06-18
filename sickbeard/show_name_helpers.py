@@ -108,9 +108,9 @@ def sceneToNormalShowNames(name):
 
     return list(set(results))
 
-def makeSceneShowSearchStrings(show):
+def makeSceneShowSearchStrings(show, season=None):
 
-    showNames = allPossibleShowNames(show)
+    showNames = allPossibleShowNames(show, season)
 
     # scenify the names
     return map(sanitizeSceneName, showNames)
@@ -251,18 +251,18 @@ def isGoodResult(name, show, log=True):
     Use an automatically-created regex to make sure the result actually is the show it claims to be
     """
 
-    all_show_names = allPossibleShowNames(show)
+    all_show_names = allPossibleShowNames(show, season="all")
     showNames = map(sanitizeSceneName, all_show_names) + all_show_names
     
-    if show.anime and show.absolute_numbering:
-        np = NameParser()
+    if show.anime:
+        np = NameParser(show)
         parse_result = np.parse(name)
         bwl = BlackAndWhiteList(show.tvdbid)
         if bwl.whiteList and parse_result.release_group not in bwl.whiteList or bwl.blackList and parse_result.release_group in bwl.blackList:
             return False
     
     for curName in set(showNames):
-        if show.anime and show.absolute_numbering:
+        if show.anime:
             escaped_name = re.sub('\\\\[\\s.-]', '\W+', re.escape(curName))
             if show.startyear:
                 escaped_name += "(?:\W+"+str(show.startyear)+")?"
@@ -286,7 +286,7 @@ def isGoodResult(name, show, log=True):
         logger.log(u"Provider gave result "+name+" but that doesn't seem like a valid result for "+show.name+" so I'm ignoring it")
     return False
 
-def allPossibleShowNames(show):
+def allPossibleShowNames(show, season=None):
     """
     Figures out every possible variation of the name for a particular show. Includes TVDB name, TVRage name,
     country codes on the end, eg. "Show Name (AU)", and any scene exception names.
@@ -323,6 +323,23 @@ def allPossibleShowNames(show):
                     newShowNames.append(curName.replace(' ('+curCountry+')', ' ('+country_list[curCountry]+')'))
 
     showNames += newShowNames
-
+    
+    newShowNames = []
+    # Season Names
+    if season != None:
+        if season == "all":
+            seasons = range(1, len(show.seasons_name)+1)
+        elif isinstance(season, int):
+            seasons = [season]
+        else:
+            seasons = season
+        
+        for season in seasons:
+            season_name = show.seasons_name[season]
+            for showName in showNames:
+                newShowNames.append(showName + season_name)
+        
+        showNames = newShowNames # If season is specified, return only the specified season name
+    
     return showNames
 

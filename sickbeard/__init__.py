@@ -79,7 +79,7 @@ autoPostProcesserScheduler = None
 subtitlesFinderScheduler = None
 traktWatchListCheckerSchedular = None
 
-showList = None
+showList = []
 loadingShowList = None
 
 providerList = []
