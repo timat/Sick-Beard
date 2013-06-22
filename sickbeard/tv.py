@@ -2011,7 +2011,7 @@ class TVEpisode(object):
         result = self.formatted_filename()
 
         # if they want us to flatten it and we're allowed to flatten it then we will
-        if self.show.flatten_folders and not sickbeard.NAMING_FORCE_FOLDERS or self.show.anime and self.show.absolute_numbering and self.season != 0:
+        if self.show.flatten_folders and not sickbeard.NAMING_FORCE_FOLDERS:
             return result
         
         # if not we append the folder on and use that

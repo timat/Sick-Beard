@@ -58,6 +58,7 @@ class TVShow():
         self.air_by_date = 0
         self.anime = 0
         self.seasons_name = ['Season Name F', 'Season Name S', 'Season Name T']
+        self.tvdbid = 0
 
 class TVEpisode(tv.TVEpisode):
     def __init__(self, season, episode, name, absolute_number):

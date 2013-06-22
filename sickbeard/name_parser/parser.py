@@ -292,7 +292,7 @@ class NameParser(object):
 def getShowAndSeasonFromSeasonName(show, name):
     
     if not name:
-        return None
+        return None, None
 
     # Compare with all names
     for showName in [show.name] + scene_exceptions.get_scene_exceptions(show.tvdbid): 
@@ -305,6 +305,7 @@ def getShowAndSeasonFromSeasonName(show, name):
                 season_number = result[0]['season']
                 
                 return showName, season_number
+    return None, None
 
 class ParseResult(object):
     def __init__(self,
