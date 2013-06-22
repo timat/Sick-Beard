@@ -1833,15 +1833,20 @@ class TVEpisode(object):
         if sickbeard.NAMING_STRIP_YEAR:
             show_name = re.sub("\(\d+\)$", "", self.show.name).rstrip()
         else:
-            show_name = self.show.name 
+            show_name = self.show.name
+            
+        try:
+            season_name = self.show.seasons_name[self.season]
+        except:
+            season_name = "" 
         
         return {
                    '%SN': show_name,
                    '%S.N': dot(show_name),
                    '%S_N': us(show_name),
-                   '%SSN': self.show.seasons_name[self.season],
-                   '%SS.N': dot(self.show.seasons_name[self.season]),
-                   '%SS_N': us(self.show.seasons_name[self.season]),
+                   '%SSN': season_name,
+                   '%SS.N': dot(season_name),
+                   '%SS_N': us(season_name),
                    '%EN': ep_name,
                    '%E.N': dot(ep_name),
                    '%E_N': us(ep_name),
