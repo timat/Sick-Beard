@@ -326,7 +326,7 @@ def allPossibleShowNames(show, season=None):
     
     newShowNames = []
     # Season Names
-    if season != None:
+    if season != None and show.seasons_name:
         if season == "all":
             seasons = range(1, len(show.seasons_name)+1)
         elif isinstance(season, int):
@@ -335,7 +335,12 @@ def allPossibleShowNames(show, season=None):
             seasons = season
         
         for season in seasons:
-            season_name = show.seasons_name[season]
+            
+            try:
+                season_name = show.seasons_name[season]
+            except:
+                season_name = ""
+                
             for showName in showNames:
                 newShowNames.append(showName + season_name)
         
