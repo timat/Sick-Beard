@@ -221,7 +221,7 @@ class NameParser(object):
         
         if not self.show:
             for showObj in sickbeard.showList:
-                if name.find(showObj.name):
+                if showObj.name in name:
                     np = NameParser(show=showObj)
                     return np.parse(name)
         
