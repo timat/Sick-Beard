@@ -221,9 +221,10 @@ class NameParser(object):
         
         if not self.show:
             for showObj in sickbeard.showList:
-                if showObj.name in name:
-                    np = NameParser(show=showObj)
-                    return np.parse(name)
+                for showName in [showObj.name] + scene_exceptions.get_scene_exceptions(showObj.tvdbid):
+                    if showName in name:
+                        np = NameParser(show=showObj)
+                        return np.parse(name)
         
         name = self._unicodify(name)
         
