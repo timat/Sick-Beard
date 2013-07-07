@@ -123,7 +123,7 @@
             <span class="pause">[paused]</span>
             #end if
         </td>
-        <td class="nowrap" align="center" style="color: #555555; font-size: 16px;"><b><%="%02ix%02i" % (int(cur_result["season"]), int(cur_result["episode"])) %></b></td>
+        <td class="nowrap" align="center" style="color: #555555; font-size: 16px;"><b><%="%03i" % (int(cur_result["absolute_number"])) if cur_result["anime"] and cur_result["absolute_numbering"] else "%ix%02i" % (int(cur_result["season"]), int(cur_result["episode"]))%></b></td>
         <td>
         #if $cur_result["description"] != "" and $cur_result["description"] != None:
             <img alt="" src="$sbRoot/images/info32.png" height="16" width="16" class="plotInfo" id="plot_info_<%=str(cur_result["showid"])+"_"+str(cur_result["season"])+"_"+str(cur_result["episode"])%>" style="padding-top: 6px;"/>
@@ -144,6 +144,9 @@
         #end if
         </td>
         <td align="center"><a href="http://www.thetvdb.com/?tab=series&amp;id=${cur_result["showid"]}" onclick="window.open(this.href, '_blank'); return false;" title="http://www.thetvdb.com/?tab=series&amp;id=${cur_result["showid"]}"><img alt="[tvdb]" height="16" width="16" src="$sbRoot/images/thetvdb16.png" /></a></td>
+        #if cur_result["anime"]:
+        	<td align="center"><a href="http://anidb.net/perl-bin/animedb.pl?show=anime&aid=${cur_result["anidb_id"]}" onclick="window.open(this.href, '_blank'); return false;" title="http://anidb.net/perl-bin/animedb.pl?show=anime&aid=${cur_result["anidb_id"]}"><img alt="[anidb]" height="16" width="16" src="$sbRoot/images/anidb16.png" /></a></td>
+        #end if
         <td align="center">
         <a href="$sbRoot/home/searchEpisode?show=${cur_result["showid"]}&amp;season=$cur_result["season"]&amp;episode=$cur_result["episode"]" title="Manual Search" id="forceUpdate-${cur_result["showid"]}" class="forceUpdate epSearch"><img alt="[search]" height="16" width="16" src="$sbRoot/images/search32.png" id="forceUpdateImage-${cur_result["showid"]}" /></a>
         </td>
@@ -251,10 +254,13 @@
           	      <a href="http://www.imdb.com/title/${cur_result["imdb_id"]}" onclick="window.open(this.href, '_blank'); return false;" title="http://www.imdb.com/title/${cur_result["imdb_id"]}"><img alt="[imdb]" height="16" width="16" src="$sbRoot/images/imdb.png" /> 
           	    #end if  
           	      <a href="http://www.thetvdb.com/?tab=series&amp;id=${cur_result["showid"]}" onclick="window.open(this.href, '_blank'); return false;" title="http://www.thetvdb.com/?tab=series&amp;id=${cur_result["showid"]}"><img alt="[tvdb]" height="16" width="16" src="$sbRoot/images/thetvdb16.png" /></a>
+                  #if $cur_result["anime"]:
+          	      	<a href="http://anidb.net/perl-bin/animedb.pl?show=anime&aid=${cur_result["anidb_id"]}" onclick="window.open(this.href, '_blank'); return false;" title="http://anidb.net/perl-bin/animedb.pl?show=anime&aid==${cur_result["anidb_id"]}"><img alt="[anidb]" height="16" width="16" src="$sbRoot/images/anidb16.png" /></a>
+          	      #end if
           	      <span><a href="$sbRoot/home/searchEpisode?show=${cur_result["showid"]}&amp;season=$cur_result["season"]&amp;episode=$cur_result["episode"]" title="Manual Search" id="forceUpdate-${cur_result["showid"]}" class="epSearch forceUpdate"><img alt="[search]" height="16" width="16" src="$sbRoot/images/search32.png" id="forceUpdateImage-${cur_result["showid"]}" /></a></span>
           	  </span>
           	</div>
-            <span class="title">Next Episode:</span> <span><%=str(cur_result["season"])+"x"+"%02i" % int(cur_result["episode"]) %> - $cur_result["name"] ($datetime.date.fromordinal(int($cur_result["airdate"])))</span>
+            <span class="title">Next Episode:</span> <span><%="%03i" % (int(cur_result["absolute_number"])) if cur_result["anime"] and cur_result["absolute_numbering"] else "%ix%02i" % (int(cur_result["season"]), int(cur_result["episode"]))%> - $cur_result["name"] ($datetime.date.fromordinal(int($cur_result["airdate"])))</span>
             <div class="clearfix">
 	            <span class="title">Airs:</span> <span>$cur_result["airs"] on $cur_result["network"]</span>
 	        </div>

@@ -1,5 +1,5 @@
 # coding=utf-8
-# Author: Daniël Heimans
+# Author: Daniï¿½l Heimans
 # URL: http://code.google.com/p/sickbeard
 #
 # This file is part of Sick Beard.
@@ -254,10 +254,10 @@ class BTNProvider(generic.TorrentProvider):
 
         return to_return
 
-    def getQuality(self, item):
+    def getQuality(self, item, anime=False):
         quality = None 
         (title,url) = self._get_title_and_url(item)
-        quality = Quality.nameQuality(title)
+        quality = Quality.nameQuality(title, anime)
 
         return quality
 

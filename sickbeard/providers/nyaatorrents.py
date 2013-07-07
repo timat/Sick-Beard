@@ -21,7 +21,6 @@ import urllib
 from xml.dom.minidom import parseString
 
 import re
-import sys
 
 import sickbeard
 import generic
@@ -31,15 +30,27 @@ from sickbeard import show_name_helpers, helpers
 from sickbeard import logger
 from sickbeard.common import Quality
 from sickbeard.exceptions import ex
-from sickbeard.name_parser.parser import NameParser, InvalidNameException
 from sickbeard import tvcache
 
 REMOTE_DBG = False
 
+categories = {
+              'All Anime' : '1_0',
+              'English-translated Anime' : '1_37',
+              'Non-English-translated Anime' : '1_38',
+              'Raw Anime' : '1_11',
+             }
+
+filters = {
+           'None' : '0',
+           'Remakes' : '1',
+           'Trusted only': '2',
+           'A+ only' : '3', 
+           }
+
 class NyaaProvider(generic.TorrentProvider):
 
     def __init__(self):
-
         generic.TorrentProvider.__init__(self, "NyaaTorrents")
         
         self.supportsBacklog = True
@@ -57,20 +68,13 @@ class NyaaProvider(generic.TorrentProvider):
         return 'nyaatorrents.png'
       
     def getQuality(self, item, anime=False):
-        self.debug()
         title = helpers.get_xml_text(item.getElementsByTagName('title')[0]).replace("/"," ")    
         quality = Quality.nameQuality(title, anime)
         return quality        
         
-    def findSeasonResults(self, show, season):
-        results = {}
-        
-        results = generic.TorrentProvider.findSeasonResults(self, show, season)
-        
-        return results
     def _get_season_search_strings(self, show, season=None):
         names = []
-        names.extend(show_name_helpers.makeSceneShowSearchStrings(show))
+        names.extend(show_name_helpers.makeSceneShowSearchStrings(show, season))
         return names
 
     def _get_episode_search_strings(self, ep_obj):
@@ -80,6 +84,8 @@ class NyaaProvider(generic.TorrentProvider):
     
         params = {"term" : search_string.encode('utf-8'),
                   "sort" : '2', #Sort Descending By Seeders 
+                  "cats" : sickbeard.NYAATORRENTS_CATEGORY,
+                  "filter" : sickbeard.NYAATORRENTS_FILTER,
                  }
       
         searchURL = self.url+'?page=rss&'+urllib.urlencode(params)
@@ -111,72 +117,6 @@ class NyaaProvider(generic.TorrentProvider):
     
             results.append(curItem)
         
-        return results
-
-    def _get_title_and_url(self, item):
-
-        return generic.TorrentProvider._get_title_and_url(self, item)
-
-    def findEpisode (self, episode, manualSearch=False):
-
-        self._checkAuth()
-
-        logger.log(u"Searching "+self.name+" for " + episode.prettyName())
-
-        self.cache.updateCache()
-        results = self.cache.searchCache(episode, manualSearch)
-        logger.log(u"Cache results: "+str(results), logger.DEBUG)
-
-        # if we got some results then use them no matter what.
-        # OR
-        # return anyway unless we're doing a manual search
-        if results or not manualSearch:
-            return results
-
-        itemList = []
-
-        for cur_search_string in self._get_episode_search_strings(episode):
-            itemList += self._doSearch(cur_search_string, show=episode.show)
-
-        for item in itemList:
-
-            (title, url) = self._get_title_and_url(item)
-
-            # parse the file name
-            try:
-                myParser = NameParser(show=episode.show)
-                parse_result = myParser.parse(title)
-            except InvalidNameException:
-                logger.log(u"Unable to parse the filename "+title+" into a valid episode", logger.WARNING)
-                continue
-
-            if episode.show.air_by_date:
-                if parse_result.air_date != episode.airdate:
-                    logger.log("Episode "+title+" didn't air on "+str(episode.airdate)+", skipping it", logger.DEBUG)
-                    continue
-            elif episode.show.anime and episode.show.absolute_numbering:
-                if episode.absolute_number not in parse_result.ab_episode_numbers:
-                    logger.log("Episode "+title+" isn't "+str(episode.absolute_number)+", skipping it", logger.DEBUG)
-                    continue
-            elif parse_result.season_number != episode.season or episode.episode not in parse_result.episode_numbers:
-                logger.log("Episode "+title+" isn't "+str(episode.season)+"x"+str(episode.episode)+", skipping it", logger.DEBUG)
-                continue
-
-            quality = self.getQuality(item, episode.show.anime)
-
-            if not episode.show.wantEpisode(episode.season, episode.episode, quality, manualSearch):
-                logger.log(u"Ignoring result "+title+" because we don't want an episode that is "+Quality.qualityStrings[quality], logger.DEBUG)
-                continue
-
-            logger.log(u"Found result " + title + " at " + url, logger.DEBUG)
-
-            result = self.getResult([episode])
-            result.url = url
-            result.name = title
-            result.quality = quality
-
-            results.append(result)
-
         return results
 
     def _extract_name_from_filename(self, filename):
