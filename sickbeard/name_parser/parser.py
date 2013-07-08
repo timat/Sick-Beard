@@ -23,8 +23,7 @@ import re
 import regexes
 
 import sickbeard
-
-from sickbeard import logger
+from sickbeard import logger, scene_exceptions, db
 
 class NameParser(object):
     
@@ -41,6 +40,7 @@ class NameParser(object):
         else:
             regexMode = NameParser.NORMAL_REGEX
         
+        self.show=show
         self.file_name = file_name
         self.compiled_regexes = []
         self.regexMode = regexMode
@@ -219,12 +219,19 @@ class NameParser(object):
 
     def parse(self, name):
         
+        if not self.show:
+            for showObj in sickbeard.showList:
+                for showName in [showObj.name] + scene_exceptions.get_scene_exceptions(showObj.tvdbid):
+                    if showName in name:
+                        np = NameParser(show=showObj)
+                        return np.parse(name)
+        
         name = self._unicodify(name)
         
         cached = name_parser_cache.get(name)
         if cached:
             return cached
-
+        
         # break it into parts if there are any (dirname, file name, extension)
         dir_name, file_name = os.path.split(name)
         ext_match = re.match('(.*)\.\w{3,4}$', file_name)
@@ -247,17 +254,22 @@ class NameParser(object):
 
         # build the ParseResult object
         final_result.air_date = self._combine_results(file_name_result, dir_name_result, 'air_date')
-        final_result.ab_episode_numbers = self._combine_results(file_name_result, dir_name_result, 'ab_episode_numbers')
 
         if not final_result.air_date:
             final_result.season_number = self._combine_results(file_name_result, dir_name_result, 'season_number')
             final_result.episode_numbers = self._combine_results(file_name_result, dir_name_result, 'episode_numbers')
+            final_result.ab_episode_numbers = self._combine_results(file_name_result, dir_name_result, 'ab_episode_numbers')
         
         # if the dirname has a release group/show name I believe it over the filename
         final_result.series_name = self._combine_results(dir_name_result, file_name_result, 'series_name')
-        final_result.season_name = self._combine_results(dir_name_result, file_name_result, 'season_name')
         final_result.extra_info = self._combine_results(dir_name_result, file_name_result, 'extra_info')
         final_result.release_group = self._combine_results(dir_name_result, file_name_result, 'release_group')
+        
+        # Season name
+        if self.show and self.show.seasons_name:
+            if not final_result.episode_numbers: # Usually shows with season name get the absolute episode regex, this fix it
+                final_result.episode_numbers = final_result.ab_episode_numbers
+                final_result.series_name, final_result.season_number = getShowAndSeasonFromSeasonName(self.show, final_result.series_name)
 
         final_result.which_regex = []
         if final_result == file_name_result:
@@ -277,6 +289,24 @@ class NameParser(object):
         name_parser_cache.add(name, final_result)
         # return it
         return final_result
+
+def getShowAndSeasonFromSeasonName(show, name):
+    
+    if not name:
+        return None, None
+
+    # Compare with all names
+    for showName in [show.name] + scene_exceptions.get_scene_exceptions(show.tvdbid): 
+        i = name.find(showName)
+        if i != -1:
+            season_name = name[len(showName):]
+            myDB = db.DBConnection()
+            result = myDB.select("SELECT season FROM anime_seasons_data WHERE show_id = ? and name = ?", [show.tvdbid, season_name])
+            if result:
+                season_number = result[0]['season']
+                
+                return showName, season_number
+    return None, None
 
 class ParseResult(object):
     def __init__(self,

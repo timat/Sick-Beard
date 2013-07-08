@@ -57,6 +57,8 @@ class TVShow():
         self.genre = "Comedy"
         self.air_by_date = 0
         self.anime = 0
+        self.seasons_name = ['Season Name F', 'Season Name S', 'Season Name T']
+        self.tvdbid = 0
 
 class TVEpisode(tv.TVEpisode):
     def __init__(self, season, episode, name, absolute_number):
@@ -70,7 +72,6 @@ class TVEpisode(tv.TVEpisode):
         self._status = Quality.compositeStatus(common.DOWNLOADED, common.Quality.SDTV)
         self._release_name = 'Show.Name.S02E03.HDTV.XviD-RLSGROUP'
         self._is_proper = True
-        self._season_name = "Season Name"
 
 def check_force_season_folders(pattern=None, multi=None, sn=False):
     """
@@ -184,7 +185,7 @@ def validate_name(pattern, multi=None, file_only=False, abd=False, ae=False, sn=
             return False
     elif sn:
         
-        if str(result.series_name).find(ep._season_name) == -1:
+        if str(result.series_name).find(ep.seasons_name) == -1:
             logger.log(u"Season name incorrect in parsed episode, pattern isn't valid", logger.DEBUG)
             return False
     else:

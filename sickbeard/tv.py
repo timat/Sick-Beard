@@ -41,13 +41,13 @@ from lib.imdb import imdb
 from sickbeard import db
 from sickbeard import helpers, exceptions, logger
 from sickbeard.exceptions import ex
-from sickbeard.metadata import helpers as metadata_helpers
 from sickbeard import tvrage
 from sickbeard import image_cache
 from sickbeard import notifiers
 from sickbeard import postProcessor
 from sickbeard import subtitles
 from sickbeard import history
+from sickbeard import show_name_helpers
 
 from sickbeard import encodingKludge as ek
 
@@ -85,6 +85,7 @@ class TVShow(object):
         self.absolute_numbering = 0
         self.anidbid = 0
         self.anidb_picname = ""
+        self.seasons_name = {}
 
         self.lock = threading.Lock()
         self._isDirGood = False
@@ -443,6 +444,12 @@ class TVShow(object):
                 return
             
             seasonName = str(season.romaji_name).replace(str(anime.romaji_name)+":", "").strip()
+            showNames = show_name_helpers.get_scene_exceptions(self.tvdbid) + [anime.romaji_name]
+            for showName in showNames:
+                if seasonName.find(showName) != -1:
+                    seasonName = seasonName[len(showName):]
+                    break
+            
             myDB = db.DBConnection()
             myDB.upsert('anime_seasons_data', {'anidb_id': id, 'name': seasonName}, {'show_id': self.tvdbid, 'season': seasonNum})
             
@@ -739,7 +746,12 @@ class TVShow(object):
                 self.anidbid = int(sqlResults[0]["anidb_id"])
 
             if self.imdbid == "":
-                self.imdbid = sqlResults[0]["imdb_id"]                    
+                self.imdbid = sqlResults[0]["imdb_id"]
+                
+            season_name_data = myDB.select("SELECT name, season FROM anime_seasons_data WHERE show_id = ?", [self.tvdbid])
+            for cur_season in season_name_data:
+                self.seasons_name[cur_season['season']] = cur_season['name']
+                    
 
         #Get IMDb_info from database
         sqlResults = myDB.select("SELECT * FROM imdb_info WHERE tvdb_id = ?", [self.tvdbid])
@@ -1012,7 +1024,7 @@ class TVShow(object):
                     curEp.saveToDB()
 
 
-    def downloadSubtitles(self, force=False):
+    def downloadSubtitles(self, languages='all', force=False):
         #TODO: Add support for force option
         if not ek.ek(os.path.isdir, self._location):
             logger.log(str(self.tvdbid) + ": Show dir doesn't exist, can't download subtitles", logger.DEBUG)
@@ -1023,7 +1035,7 @@ class TVShow(object):
             episodes = db.DBConnection().select("SELECT location FROM tv_episodes WHERE showid = ? AND location NOT LIKE '' ORDER BY season DESC, episode DESC", [self.tvdbid])
             for episodeLoc in episodes:
                 episode = self.makeEpFromFile(episodeLoc['location']);
-                subtitles = episode.downloadSubtitles(force=force)
+                subtitles = episode.downloadSubtitles(languages=languages, force=force)
         
                 if sickbeard.SUBTITLES_DIR:
                     for video in subtitles:
@@ -1202,7 +1214,6 @@ class TVEpisode(object):
 
         self._name = ""
         self._season = season
-        self._season_name = ""
         self._episode = episode
         self._absolute_number = 0
         self._description = ""
@@ -1234,7 +1245,6 @@ class TVEpisode(object):
 
     name = property(lambda self: self._name, dirty_setter("_name"))
     season = property(lambda self: self._season, dirty_setter("_season"))
-    season_name = property(lambda self: self._season_name, dirty_setter("_season_name"))
     episode = property(lambda self: self._episode, dirty_setter("_episode"))
     absolute_number = property(lambda self: self._absolute_number, dirty_setter("_absolute_number"))
     description = property(lambda self: self._description, dirty_setter("_description"))
@@ -1263,12 +1273,12 @@ class TVEpisode(object):
             self.file_size = 0
 
     location = property(lambda self: self._location, _set_location)
+    
     def refreshSubtitles(self):
         """Look for subtitles files and refresh the subtitles property"""
         self.subtitles = subtitles.subtitlesLanguages(self.location)
 
-    def downloadSubtitles(self,force=False):
-        #TODO: Add support for force option
+    def downloadSubtitles(self, languages="all", force=False):
         if not ek.ek(os.path.isfile, self.location):
             logger.log(str(self.show.tvdbid) + ": Episode file doesn't exist, can't download subtitles for episode " + str(self.season) + "x" + str(self.episode), logger.DEBUG)
             return
@@ -1277,7 +1287,14 @@ class TVEpisode(object):
         previous_subtitles = self.subtitles
 
         try:
-            need_languages = set(sickbeard.SUBTITLES_LANGUAGES) - set(self.subtitles)
+            if languages == 'all':
+                if force:
+                    need_languages = sickbeard.SUBTITLES_LANGUAGES
+                else:
+                    need_languages = set(sickbeard.SUBTITLES_LANGUAGES) - set(self.subtitles)
+            else:
+                need_languages = languages.split(',')
+                
             subtitles = subliminal.download_subtitles([self.location], languages=need_languages, services=sickbeard.subtitles.getEnabledServiceList(), force=force, multi=True, cache_dir=sickbeard.CACHE_DIR)
             
         except Exception as e:
@@ -1411,11 +1428,6 @@ class TVEpisode(object):
             if sqlResults[0]["is_proper"]:
                 self.is_proper = int(sqlResults[0]["is_proper"])
 
-            try:
-                self.season_name = myDB.select("SELECT name FROM anime_seasons_data WHERE show_id = ? AND season = ?", [self.show.tvdbid, self.season])[0]['name']
-            except:
-                self.season_name = ""
-            
             self.dirty = False
             return True
 
@@ -1821,15 +1833,20 @@ class TVEpisode(object):
         if sickbeard.NAMING_STRIP_YEAR:
             show_name = re.sub("\(\d+\)$", "", self.show.name).rstrip()
         else:
-            show_name = self.show.name 
+            show_name = self.show.name
+            
+        try:
+            season_name = self.show.seasons_name[self.season]
+        except:
+            season_name = "" 
         
         return {
                    '%SN': show_name,
                    '%S.N': dot(show_name),
                    '%S_N': us(show_name),
-                   '%SSN': self.season_name,
-                   '%SS.N': dot(self.season_name),
-                   '%SS_N': us(self.season_name),
+                   '%SSN': season_name,
+                   '%SS.N': dot(season_name),
+                   '%SS_N': us(season_name),
                    '%EN': ep_name,
                    '%E.N': dot(ep_name),
                    '%E_N': us(ep_name),
@@ -1999,7 +2016,7 @@ class TVEpisode(object):
         result = self.formatted_filename()
 
         # if they want us to flatten it and we're allowed to flatten it then we will
-        if self.show.flatten_folders and not sickbeard.NAMING_FORCE_FOLDERS or self.show.anime and self.show.absolute_numbering and self.season != 0:
+        if self.show.flatten_folders and not sickbeard.NAMING_FORCE_FOLDERS:
             return result
         
         # if not we append the folder on and use that

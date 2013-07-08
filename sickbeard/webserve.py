@@ -1309,8 +1309,7 @@ class ConfigProviders:
                       thepiratebay_trusted=None, thepiratebay_proxy=None, thepiratebay_proxy_url=None,
                       torrentleech_username=None, torrentleech_password=None,
                       iptorrents_username=None, iptorrents_password=None, iptorrents_freeleech=None,
-                      nyaatorrents=None,
-                      frozenlayer=None,
+                      nyaatorrents_category=None, nyaatorrents_filter=None,
                       newzbin_username=None, newzbin_password=None,
                       provider_order=None):
 
@@ -1449,6 +1448,9 @@ class ConfigProviders:
             iptorrents_freeleech = 0
 
         sickbeard.IPTORRENTS_FREELEECH = iptorrents_freeleech
+
+        sickbeard.NYAATORRENTS_CATEGORY = nyaatorrents_category
+        sickbeard.NYAATORRENTS_FILTER = nyaatorrents_filter
 
         sickbeard.NZBSRUS_UID = nzbs_r_us_uid.strip()
         sickbeard.NZBSRUS_HASH = nzbs_r_us_hash.strip()
@@ -3227,7 +3229,7 @@ class Home:
         redirect("/home/displayShow?show=" + str(showObj.tvdbid))
 
     @cherrypy.expose
-    def subtitleShow(self, show=None, force=0):
+    def subtitleShow(self, show=None):
 
         if show == None:
             return _genericMessage("Error", "Invalid show ID")
@@ -3238,7 +3240,7 @@ class Home:
             return _genericMessage("Error", "Unable to find the specified show")
 
         # search and download subtitles
-        sickbeard.showQueueScheduler.action.downloadSubtitles(showObj, bool(force)) #@UndefinedVariable
+        sickbeard.showQueueScheduler.action.downloadSubtitles(showObj) #@UndefinedVariable
 
         time.sleep(3)
 
@@ -3476,7 +3478,7 @@ class Home:
         return json.dumps({'result': 'failure'})
     
     @cherrypy.expose
-    def searchEpisodeSubtitles(self, show=None, season=None, episode=None):
+    def searchEpisodeSubtitles(self, show=None, season=None, episode=None, languages="all", force=False):
 
         # retrieve the episode object and fail if we can't get one 
         ep_obj = _getEpisode(show, season, episode)
@@ -3486,7 +3488,7 @@ class Home:
         # try do download subtitles for that episode
         previous_subtitles = ep_obj.subtitles
         try:
-            subtitles = ep_obj.downloadSubtitles()
+            subtitles = ep_obj.downloadSubtitles(languages=languages, force=force)
             
             if sickbeard.SUBTITLES_DIR:
                 for video in subtitles:

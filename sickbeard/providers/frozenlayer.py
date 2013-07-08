@@ -57,7 +57,7 @@ class FrozenLayerProvider(generic.TorrentProvider):
         
     def _get_season_search_strings(self, show, season=None):
         names = []
-        for name in show_name_helpers.makeSceneShowSearchStrings(show):
+        for name in show_name_helpers.makeSceneShowSearchStrings(show, season):
             names.append(name.replace('.', '-'))
         return names
 
@@ -97,15 +97,15 @@ class FrozenLayerProvider(generic.TorrentProvider):
             return []
         
         results = []
-
-        for curItem in json.loads(data):
-            (title, url) = self._get_title_and_url(curItem)
-            
-            if not title or not url:
-                logger.log(u"The JSon returned from the Frozen-Layer API is incomplete, this result is unusable: "+data, logger.ERROR)
-                continue
-    
-            results.append(curItem)
+        if data.find("<!DOCTYPE html") == -1:
+            for curItem in json.loads(data):
+                (title, url) = self._get_title_and_url(curItem)
+                
+                if not title or not url:
+                    logger.log(u"The JSon returned from the Frozen-Layer API is incomplete, this result is unusable: "+data, logger.ERROR)
+                    continue
+        
+                results.append(curItem)
         
         return results
 

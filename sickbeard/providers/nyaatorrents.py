@@ -34,6 +34,20 @@ from sickbeard import tvcache
 
 REMOTE_DBG = False
 
+categories = {
+              'All Anime' : '1_0',
+              'English-translated Anime' : '1_37',
+              'Non-English-translated Anime' : '1_38',
+              'Raw Anime' : '1_11',
+             }
+
+filters = {
+           'None' : '0',
+           'Remakes' : '1',
+           'Trusted only': '2',
+           'A+ only' : '3', 
+           }
+
 class NyaaProvider(generic.TorrentProvider):
 
     def __init__(self):
@@ -60,7 +74,7 @@ class NyaaProvider(generic.TorrentProvider):
         
     def _get_season_search_strings(self, show, season=None):
         names = []
-        names.extend(show_name_helpers.makeSceneShowSearchStrings(show))
+        names.extend(show_name_helpers.makeSceneShowSearchStrings(show, season))
         return names
 
     def _get_episode_search_strings(self, ep_obj):
@@ -70,6 +84,8 @@ class NyaaProvider(generic.TorrentProvider):
     
         params = {"term" : search_string.encode('utf-8'),
                   "sort" : '2', #Sort Descending By Seeders 
+                  "cats" : sickbeard.NYAATORRENTS_CATEGORY,
+                  "filter" : sickbeard.NYAATORRENTS_FILTER,
                  }
       
         searchURL = self.url+'?page=rss&'+urllib.urlencode(params)

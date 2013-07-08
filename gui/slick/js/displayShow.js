@@ -42,6 +42,28 @@ $(document).ready(function(){
         window.location.href = url
 
     });
+    
+    $('#forceSubtitleDownload').click(function(){
+        var sbRoot = $('#sbRoot').val()
+        var epArr = new Array()
+
+        $('.epCheck').each(function() {
+      
+            if (this.checked == true) {
+            	var episode = $(this).attr('id').split("x");
+            
+                epArr.push("season="+episode[0]+"&episode="+episode[1])
+            }
+
+        });  
+
+        if (epArr.length == 0)
+            return false
+
+        url = sbRoot+'/home/searchEpisodeSubtitles?show='+$('#showID').attr('value')+'&'+epArr.join('&')+'&force=True&languages='+$('#forceSubtitlesSelect').attr('value')
+        window.location.href = url
+
+    });
 
     $('.seasonCheck').click(function(){
         var seasCheck = this;
