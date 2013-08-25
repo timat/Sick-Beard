@@ -801,3 +801,19 @@ class Add1080pAndRawHDQualities(AddProperNamingSupport):
             self.connection.action("UPDATE history SET quality = ? WHERE showid = ? AND date = ?", [self._update_quality(cur_entry["quality"]), cur_entry["showid"], cur_entry["date"]])
 
         self.incDBVersion()
+        
+class AddAnimeSupport(Add1080pAndRawHDQualities):
+    def test(self):
+        return self.checkDBVersion() >= 16
+
+    def execute(self):
+        self.addColumn("tv_shows", "anime")
+        self.addColumn("tv_shows", "absolute_numbering")
+        self.addColumn("tv_shows", "anidb_id")
+        self.addColumn("tv_episodes", "absolute_number")
+        self.connection.action("CREATE TABLE whitelist (show_id INTEGER, range TEXT, keyword TEXT)")
+        self.connection.action("CREATE TABLE blacklist (show_id INTEGER, range TEXT, keyword TEXT)")
+        self.connection.action("CREATE TABLE anime_seasons_data (show_id INTEGER, season INTEGER, anidb_id, name TEXT)")
+        
+        self.incDBVersion()
+

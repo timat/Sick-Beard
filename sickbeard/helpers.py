@@ -31,7 +31,7 @@ from xml.dom.minidom import Node
 
 import sickbeard
 
-from sickbeard.exceptions import MultipleShowObjectsException, ex
+from sickbeard.exceptions import MultipleShowObjectsException, ex, EpisodeNotFoundByAbsoluteNumerException
 from sickbeard import logger, classes
 from sickbeard.common import USER_AGENT, mediaExtensions, subtitleExtensions, XML_NSMAP
 
@@ -45,6 +45,8 @@ import xml.etree.cElementTree as etree
 
 from lib import subliminal
 #from sickbeard.subtitles import EXTENSIONS
+
+from lib import adba
 
 urllib._urlopener = classes.SickBeardURLopener()
 
@@ -431,7 +433,10 @@ def moveFile(srcFile, destFile):
         fixSetGroupID(destFile)
     except OSError:
         copyFile(srcFile, destFile)
-        ek.ek(os.unlink, srcFile)
+        try:
+            ek.ek(os.unlink, srcFile)
+        except OSError:
+            logger.log(u"Unable to move file "+srcFile+" to "+destFile+", but it was copied", logger.ERROR)
 
 def make_dirs(path):
     """
@@ -624,6 +629,62 @@ def fixSetGroupID(childPath):
             logger.log(u"Respecting the set-group-ID bit on the parent directory for %s" % (childPath), logger.DEBUG)
         except OSError:
             logger.log(u"Failed to respect the set-group-ID bit on the parent directory for %s (setting group ID %i)" % (childPath, parentGID), logger.ERROR)
+
+def is_anime_in_show_list():
+    for show in sickbeard.showList:
+        if show.anime:
+            return True
+    return False
+
+def update_anime_support():
+    sickbeard.ANIMESUPPORT = is_anime_in_show_list()
+
+def get_all_episodes_from_absolute_number(show, tvdb_id, absolute_numbers):
+    if len(absolute_numbers) == 0:
+        raise EpisodeNotFoundByAbsoluteNumerException()
+
+    episodes = []
+    season = None
+    
+    if not show and not tvdb_id:
+        return (season, episodes)
+    
+    if not show and tvdb_id:
+        show = findCertainShow(sickbeard.showList, tvdb_id)
+
+    for absolute_number in absolute_numbers:
+        ep = show.getEpisode(None, None,absolute_number=absolute_number)
+        if ep:
+            episodes.append(ep.episode)
+        else:
+            raise EpisodeNotFoundByAbsoluteNumerException()
+        season = ep.season # this will always take the last found seson so eps that cross the season border are not handeled well
+    
+    return (season, episodes)
+
+def set_up_anidb_connection():
+        if not sickbeard.USE_ANIDB:
+            logger.log(u"Usage of anidb disabled. Skiping", logger.DEBUG)
+            return False
+        
+        if not sickbeard.ANIDB_USERNAME and not sickbeard.ANIDB_PASSWORD:
+            logger.log(u"anidb username and/or password are not set. Aborting anidb lookup.", logger.DEBUG)
+            return False
+        
+        if not sickbeard.ADBA_CONNECTION:
+            anidb_logger = lambda x : logger.log("ANIDB: "+str(x), logger.DEBUG)
+            sickbeard.ADBA_CONNECTION = adba.Connection(keepAlive=True,log=anidb_logger)
+        
+        if not sickbeard.ADBA_CONNECTION.authed():
+            try:
+                sickbeard.ADBA_CONNECTION.auth(sickbeard.ANIDB_USERNAME, sickbeard.ANIDB_PASSWORD)
+            except Exception,e :
+                logger.log(u"exception msg: "+str(e))
+                return False
+        else:
+            return True
+ 
+        return sickbeard.ADBA_CONNECTION.authed()
 
 def sanitizeSceneName (name, ezrss=False):
     """

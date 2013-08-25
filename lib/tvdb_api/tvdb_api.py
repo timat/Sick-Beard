@@ -114,6 +114,12 @@ class Show(dict):
         if len(ret) == 0:
             raise tvdb_episodenotfound("Could not find any episodes that aired on %s" % date)
         return ret
+    
+    def absoluteNumber(self, absolute_number):
+        ret = self.search(str(absolute_number), 'absolute_number')
+        if len(ret) == 0:
+            raise tvdb_episodenotfound("Could not find any episodes with absolute episode %s" % absolute_number)
+        return ret
 
     def search(self, term = None, key = None):
         """

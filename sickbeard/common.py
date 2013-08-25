@@ -147,7 +147,7 @@ class Quality:
         return (sorted(anyQualities), sorted(bestQualities))
 
     @staticmethod
-    def nameQuality(name):
+    def nameQuality(name, anime=False):
         name = os.path.basename(name)
 
         # if we have our exact text then assume we put it there
@@ -161,28 +161,49 @@ class Quality:
                 return x
 
         checkName = lambda list, func: func([re.search(x, name, re.I) for x in list])
-
-        if checkName(["(pdtv|hdtv|dsr|tvrip|web.dl|webrip).(xvid|x264|h.?264)"], all) and not checkName(["(720|1080)[pi]"], all):
-            return Quality.SDTV
-        elif checkName(["(dvdrip|bdrip)(.ws)?.(xvid|divx|x264)"], any) and not checkName(["(720|1080)[pi]"], all):
-            return Quality.SDDVD
-        elif checkName(["720p", "hdtv", "x264"], all) or checkName(["hr.ws.pdtv.x264"], any) and not checkName(["(1080)[pi]"], all):          
-            return Quality.HDTV                                                                        
-        elif checkName(["720p|1080i", "hdtv", "mpeg2"], all):
-            return Quality.RAWHDTV                                                                     
-        elif checkName(["1080p", "hdtv", "x264"], all):         
-            return Quality.FULLHDTV                                                                    
-        elif checkName(["720p", "web.dl|webrip", "h.?264"], all) or checkName(["720p", "itunes", "h.?264"], all):
-            return Quality.HDWEBDL                                                                     
-        elif checkName(["1080p", "web.dl|webrip", "h.?264"], all) or checkName(["1080p", "itunes", "h.?264"], all):     
-            return Quality.FULLHDWEBDL                                                                 
-        elif checkName(["720p", "bluray|hddvd", "x264"], all):
-            return Quality.HDBLURAY                                                                    
-        elif checkName(["1080p", "bluray|hddvd", "x264"], all):
-            return Quality.FULLHDBLURAY
+        
+        if anime:
+            blueRayOptions = checkName(["bluray", "blu-ray"], any)
+            hdOptions = checkName(["720p", "1280x720", "960x720"], any)
+            fullHD = checkName(["1080p", "1920x1080"], any)
+            
+            if checkName(["360p", "XviD"], any):
+                return Quality.SDTV
+            elif checkName(["dvd", "480p", "848x480"], any):
+                return Quality.SDDVD
+            elif hdOptions and not blueRayOptions and not fullHD:
+                return Quality.HDTV
+            elif hdOptions and not blueRayOptions and not fullHD:
+                return Quality.HDWEBDL
+            elif blueRayOptions and hdOptions and not fullHD:
+                return Quality.HDBLURAY
+            elif fullHD:
+                return Quality.FULLHDBLURAY
+            else:
+                return Quality.assumeQuality(name)
         else:
-            return Quality.UNKNOWN
+            if checkName(["(pdtv|hdtv|dsr|tvrip|web.dl|webrip).(xvid|x264|h.?264)"], all) and not checkName(["(720|1080)[pi]"], all):
+                return Quality.SDTV
+            elif checkName(["(dvdrip|bdrip)(.ws)?.(xvid|divx|x264)"], any) and not checkName(["(720|1080)[pi]"], all):
+                return Quality.SDDVD
+            elif checkName(["720p", "hdtv", "x264"], all) or checkName(["hr.ws.pdtv.x264"], any) and not checkName(["(1080)[pi]"], all):          
+                return Quality.HDTV                                                                        
+            elif checkName(["720p|1080i", "hdtv", "mpeg2"], all):
+                return Quality.RAWHDTV                                                                     
+            elif checkName(["1080p", "hdtv", "x264"], all):         
+                return Quality.FULLHDTV                                                                    
+            elif checkName(["720p", "web.dl|webrip", "h.?264"], all) or checkName(["720p", "itunes", "h.?264"], all):
+                return Quality.HDWEBDL                                                                     
+            elif checkName(["1080p", "web.dl|webrip", "h.?264"], all) or checkName(["1080p", "itunes", "h.?264"], all):     
+                return Quality.FULLHDWEBDL                                                                 
+            elif checkName(["720p", "bluray|hddvd", "x264"], all):
+                return Quality.HDBLURAY                                                                    
+            elif checkName(["1080p", "bluray|hddvd", "x264"], all):
+                return Quality.FULLHDBLURAY
+            else:
+                return Quality.UNKNOWN
 
+        
     @staticmethod
     def assumeQuality(name):
         if name.lower().endswith((".avi", ".mp4")):

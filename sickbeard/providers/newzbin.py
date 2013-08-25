@@ -80,7 +80,7 @@ class NewzbinProvider(generic.NZBProvider):
     def isEnabled(self):
         return sickbeard.NEWZBIN
 
-    def getQuality(self, item):
+    def getQuality(self, item, anime=False):
         attributes = item.getElementsByTagName('report:attributes')[0]
         attr_dict = {}
 

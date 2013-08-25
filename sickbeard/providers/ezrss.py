@@ -47,13 +47,13 @@ class EZRSSProvider(generic.TorrentProvider):
     def imageName(self):
         return 'ezrss.png'
       
-    def getQuality(self, item):
+    def getQuality(self, item, anime=False):
         
         torrent_node = item.getElementsByTagName('torrent')[0]
         filename_node = torrent_node.getElementsByTagName('fileName')[0]
         filename = get_xml_text(filename_node)
 
-        quality = Quality.nameQuality(filename)
+        quality = Quality.nameQuality(filename, anime)
         
         return quality
 
