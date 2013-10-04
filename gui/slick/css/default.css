@@ -744,13 +744,13 @@ div#summary tr td {
 }
 #SubMenu {
   display:none;
+  margin-top: -35px;
 }
 #ShowActions {
   display:block;
 }
 #SubMenu, #ShowActions {
   float: right;
-  margin-top: -35px;
   position: relative;
   z-index: 99;
 }
