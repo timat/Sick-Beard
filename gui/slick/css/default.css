@@ -743,17 +743,22 @@ div#summary tr td {
   position: relative;
 }
 #SubMenu {
+  display:none;
+}
+#ShowActions {
+  display:block;
+}
+#SubMenu, #ShowActions {
   float: right;
   margin-top: -35px;
   position: relative;
   z-index: 99;
-  display:none;
 }
-#SubMenu a {
+#SubMenu a, #ShowActions a {
   font-size: 12px;
   text-decoration: none;
 }
-#SubMenu span b {
+#SubMenu span b, #ShowActions span b {
   margin-left: 20px;
 }
 #donate {

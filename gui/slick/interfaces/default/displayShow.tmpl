@@ -25,8 +25,8 @@
 <script type="text/javascript" src="$sbRoot/js/ajaxEpSearch.js?$sbPID"></script>
 <script type="text/javascript" src="$sbRoot/js/ajaxEpSubtitles.js?$sbPID"></script>
 
+<!--
 <div class="navShows">
-</br>
 <div class="align-left"><b>Change Show:</b>
 <div class="navShow"><img id="prevShow" src="$sbRoot/images/prev.gif" alt="&lt;&lt;" title="Prev Show" /></div>
 <select id="pickShow">
@@ -46,7 +46,9 @@
 #end for
 </select>
 <div class="navShow"><img id="nextShow" src="$sbRoot/images/next.gif" alt="&gt;&gt;" title="Next Show" /></div>
-</div></div>
+</div>
+</div>
+-->
 
 <div class="tvshowImg"><a href="$sbRoot/showPoster/?show=$show.tvdbid&amp;which=poster" rel="dialog" title="$show.name"><img src="$sbRoot/showPoster/?show=$show.tvdbid&amp;which=poster_thumb" class="posterThumb" alt=""/></a>
 </div>
@@ -182,6 +184,29 @@
 </tr>
 </table>
 </div>
+#if $varExists('submenu'):
+<div id="ShowActions">
+<span>
+#set $first = True
+#for $menuItem in $submenu:
+	#if 'requires' not in $menuItem or $menuItem.requires():
+		#if type($menuItem.path) == dict:
+			#if $first then "" else "</span><span>"#<b>$menuItem.title</b>
+			#set $first = False
+			#set $inner_first = True
+			#for $cur_link in $menuItem.path:
+				#if $inner_first then "" else "&middot; "#<a class="inner" href="$sbRoot/$menuItem.path[$cur_link]">$cur_link</a>
+				#set $inner_first = False
+			#end for
+		#else
+			#if $first then "" else ""#<a href="$sbRoot/$menuItem.path" #if 'confirm' in $menuItem then "class=\"confirm\"" else "" #>$menuItem.title</a>
+			#set $first = False
+		#end if
+	#end if
+#end for
+</span>
+</div>
+#end if
 </div>
 
 
