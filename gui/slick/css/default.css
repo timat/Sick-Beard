@@ -252,7 +252,7 @@ a{
   margin-right: 15px;
   overflow: hidden;
   text-indent: -3000px;
-  width: 175px;
+  width: 210px;
 }
 .tvshowImg img {
   float: left;
@@ -702,7 +702,7 @@ tr.snatched {
   height: 35px;
 }
 .showInfo {
-  width: 77%;
+  width: 75%;
   float: right;
   padding-top: 10px;
 }
