@@ -38,7 +38,7 @@ class OmgwtfnzbsProvider(generic.NZBProvider):
     def __init__(self):
         generic.NZBProvider.__init__(self, "omgwtfnzbs")
         self.cache = OmgwtfnzbsCache(self)
-        self.url = 'http://omgwtfnzbs.org/'
+        self.url = 'https://omgwtfnzbs.org/'
         self.supportsBacklog = True
 
     def isEnabled(self):
@@ -68,13 +68,13 @@ class OmgwtfnzbsProvider(generic.NZBProvider):
         if retention or not params['retention']:
             params['retention'] = retention
 
-        url = 'https://api.omgwtfnzbs.org/json?' + urllib.urlencode(params)
-        logger.log(u"omgwtfnzbs search url: " + url, logger.DEBUG)
-        data = self.getURL(url)
-        try:
-            items = json.loads(data)
-        except ValueError:
-            logger.log(u"Error trying to decode omgwtfnzbs json response", logger.ERROR)
+        search_url = 'https://api.omgwtfnzbs.org/json/?' + urllib.urlencode(params)
+        logger.log(u"Search url: " + search_url, logger.DEBUG)
+
+        data = self.getURL(search_url)
+
+        if not data:
+            logger.log(u"No data returned from " + search_url, logger.ERROR)
             return []
 
         results = []
@@ -112,6 +112,18 @@ class OmgwtfnzbsCache(tvcache.TVCache):
                   'api': sickbeard.OMGWTFNZBS_KEY,
                   'eng': 1,
                   'catid': '19,20'} # SD,HD
+
+        rss_url = 'https://rss.omgwtfnzbs.org/rss-download.php?' + urllib.urlencode(params)
+
+        logger.log(self.provider.name + u" cache update URL: " + rss_url, logger.DEBUG)
+
+        data = self.provider.getURL(rss_url)
+
+        if not data:
+            logger.log(u"No data returned from " + rss_url, logger.ERROR)
+            return None
+
+        return data
 
         url = 'http://rss.omgwtfnzbs.org/rss-download.php?' + urllib.urlencode(params)
         logger.log(u"omgwtfnzbs cache update URL: " + url, logger.DEBUG)

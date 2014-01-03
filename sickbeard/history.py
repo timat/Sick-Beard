@@ -28,6 +28,9 @@ def _logHistoryItem(action, showid, season, episode, quality, resource, provider
 
     logDate = datetime.datetime.today().strftime(dateFormat)
 
+    if not isinstance(resource, unicode):
+        resource = unicode(resource, 'utf-8')
+
     myDB = db.DBConnection()
     myDB.action("INSERT INTO history (action, date, showid, season, episode, quality, resource, provider) VALUES (?,?,?,?,?,?,?,?)",
                 [action, logDate, showid, season, episode, quality, resource, provider])
@@ -74,7 +77,7 @@ def logDownload(episode, filename, new_ep_quality, release_group=None):
 
 def logSubtitle(showid, season, episode, status, subtitleResult):
     
-    resource = subtitleResult.release if subtitleResult.release else '' 
+    resource = subtitleResult.path
     provider = subtitleResult.service
     status, quality  = Quality.splitCompositeStatus(status) 
     action = Quality.compositeStatus(SUBTITLED, quality)

@@ -45,7 +45,16 @@ class CaseInsensitiveDict(dict):
         if key in self:
             return self[key]
         else:
-            return default
+            return NotImplemented
+        # Compare insensitively
+        return dict(self.lower_items()) == dict(other.lower_items())
+
+    # Copy is required
+    def copy(self):
+         return CaseInsensitiveDict(self._store.values())
+
+    def __repr__(self):
+        return '%s(%r)' % (self.__class__.__name__, dict(self.items()))
 
 
 class LookupDict(dict):

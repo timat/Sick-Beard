@@ -71,6 +71,10 @@ class MockRequest(object):
     def unverifiable(self):
         return self.is_unverifiable()
 
+    @property
+    def origin_req_host(self):
+        return self.get_origin_req_host()
+
 
 class MockResponse(object):
     """Wraps a `httplib.HTTPMessage` to mimic a `urllib.addinfourl`.
@@ -253,6 +257,14 @@ class RequestsCookieJar(cookielib.CookieJar, collections.MutableMapping):
     def __delitem__(self, name):
         """Deletes a cookie given a name. Wraps cookielib.CookieJar's remove_cookie_by_name()."""
         remove_cookie_by_name(self, name)
+
+    def update(self, other):
+        """Updates this jar with cookies from another CookieJar or dict-like"""
+        if isinstance(other, cookielib.CookieJar):
+            for cookie in other:
+                self.set_cookie(cookie)
+        else:
+            super(RequestsCookieJar, self).update(other)
 
     def _find(self, name, domain=None, path=None):
         """Requests uses this method internally to get cookie values. Takes as args name

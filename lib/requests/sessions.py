@@ -48,13 +48,108 @@ def merge_kwargs(local_kwarg, default_kwarg):
     # Remove keys that are set to None.
     for (k, v) in local_kwarg.items():
         if v is None:
-            del kwargs[k]
+            del merged_setting[k]
 
-    return kwargs
+    return merged_setting
 
 
-class Session(object):
-    """A Requests session."""
+class SessionRedirectMixin(object):
+    def resolve_redirects(self, resp, req, stream=False, timeout=None,
+                          verify=True, cert=None, proxies=None):
+        """Receives a Response. Returns a generator of Responses."""
+
+        i = 0
+        prepared_request = PreparedRequest()
+        prepared_request.body = req.body
+        prepared_request.headers = req.headers.copy()
+        prepared_request.hooks = req.hooks
+        prepared_request.method = req.method
+        prepared_request.url = req.url
+
+        # ((resp.status_code is codes.see_other))
+        while (('location' in resp.headers and resp.status_code in REDIRECT_STATI)):
+
+            resp.content  # Consume socket so it can be released
+
+            if i >= self.max_redirects:
+                raise TooManyRedirects('Exceeded %s redirects.' % self.max_redirects)
+
+            # Release the connection back into the pool.
+            resp.close()
+
+            url = resp.headers['location']
+            method = prepared_request.method
+
+            # Handle redirection without scheme (see: RFC 1808 Section 4)
+            if url.startswith('//'):
+                parsed_rurl = urlparse(resp.url)
+                url = '%s:%s' % (parsed_rurl.scheme, url)
+
+            # Facilitate non-RFC2616-compliant 'location' headers
+            # (e.g. '/path/to/resource' instead of 'http://domain.tld/path/to/resource')
+            # Compliant with RFC3986, we percent encode the url.
+            if not urlparse(url).netloc:
+                url = urljoin(resp.url, requote_uri(url))
+            else:
+                url = requote_uri(url)
+
+            prepared_request.url = url
+
+            # http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.3.4
+            if (resp.status_code == codes.see_other and
+                    prepared_request.method != 'HEAD'):
+                method = 'GET'
+
+            # Do what the browsers do, despite standards...
+            if (resp.status_code in (codes.moved, codes.found) and
+                    prepared_request.method not in ('GET', 'HEAD')):
+                method = 'GET'
+
+            prepared_request.method = method
+
+            # https://github.com/kennethreitz/requests/issues/1084
+            if resp.status_code not in (codes.temporary, codes.resume):
+                if 'Content-Length' in prepared_request.headers:
+                    del prepared_request.headers['Content-Length']
+
+                prepared_request.body = None
+
+            headers = prepared_request.headers
+            try:
+                del headers['Cookie']
+            except KeyError:
+                pass
+
+            prepared_request.prepare_cookies(self.cookies)
+
+            resp = self.send(
+                prepared_request,
+                stream=stream,
+                timeout=timeout,
+                verify=verify,
+                cert=cert,
+                proxies=proxies,
+                allow_redirects=False,
+            )
+
+            extract_cookies_to_jar(self.cookies, prepared_request, resp.raw)
+
+            i += 1
+            yield resp
+
+
+class Session(SessionRedirectMixin):
+    """A Requests session.
+
+    Provides cookie persistience, connection-pooling, and configuration.
+
+    Basic Usage::
+
+      >>> import requests
+      >>> s = requests.Session()
+      >>> s.get('http://httpbin.org/get')
+      200
+    """
 
     __attrs__ = [
         'headers', 'cookies', 'auth', 'timeout', 'proxies', 'hooks',
@@ -73,33 +168,8 @@ class Session(object):
         verify=True,
         cert=None):
 
-        self.headers = from_key_val_list(headers or [])
-        self.auth = auth
-        self.timeout = timeout
-        self.proxies = from_key_val_list(proxies or [])
-        self.hooks = from_key_val_list(hooks or {})
-        self.params = from_key_val_list(params or [])
-        self.config = from_key_val_list(config or {})
-        self.prefetch = prefetch
-        self.verify = verify
-        self.cert = cert
-
-        for (k, v) in list(defaults.items()):
-            self.config.setdefault(k, deepcopy(v))
-
-        self.init_poolmanager()
-
         # Set up a CookieJar to be used by default
-        if isinstance(cookies, cookielib.CookieJar):
-            self.cookies = cookies
-        else:
-            self.cookies = cookiejar_from_dict(cookies)
-
-    def init_poolmanager(self):
-        self.poolmanager = PoolManager(
-            num_pools=self.config.get('pool_connections'),
-            maxsize=self.config.get('pool_maxsize')
-        )
+        self.cookies = cookiejar_from_dict({})
 
     def __repr__(self):
         return '<requests-client at 0x%x>' % (id(self))
@@ -109,14 +179,6 @@ class Session(object):
 
     def __exit__(self, *args):
         self.close()
-
-    def close(self):
-        """Dispose of any internal state.
-
-        Currently, this just closes the PoolManager, which closes pooled
-        connections.
-        """
-        self.poolmanager.clear()
 
     def request(self, method, url,
         params=None,
@@ -156,92 +218,75 @@ class Session(object):
         :param cert: (optional) if String, path to ssl client cert file (.pem). If Tuple, ('cert', 'key') pair.
         """
 
-        method = str(method).upper()
+        cookies = cookies or {}
+        proxies = proxies or {}
 
-        # Default empty dicts for dict params.
-        data = [] if data is None else data
-        files = [] if files is None else files
-        headers = {} if headers is None else headers
-        params = {} if params is None else params
-        hooks = {} if hooks is None else hooks
-        prefetch = prefetch if prefetch is not None else self.prefetch
-
-        # use session's hooks as defaults
-        for key, cb in list(self.hooks.items()):
-            hooks.setdefault(key, cb)
-
-        # Expand header values.
-        if headers:
-            for k, v in list(headers.items() or {}):
-                headers[k] = header_expand(v)
-
-        args = dict(
-            method=method,
-            url=url,
-            data=data,
-            params=from_key_val_list(params),
-            headers=from_key_val_list(headers),
-            cookies=cookies,
-            files=files,
-            auth=auth,
-            hooks=from_key_val_list(hooks),
-            timeout=timeout,
-            allow_redirects=allow_redirects,
-            proxies=from_key_val_list(proxies),
-            config=from_key_val_list(config),
-            prefetch=prefetch,
-            verify=verify,
-            cert=cert,
-            _poolmanager=self.poolmanager
-        )
-
-        # merge session cookies into passed-in ones
-        dead_cookies = None
-        # passed-in cookies must become a CookieJar:
+        # Bootstrap CookieJar.
         if not isinstance(cookies, cookielib.CookieJar):
-            args['cookies'] = cookiejar_from_dict(cookies)
-            # support unsetting cookies that have been passed in with None values
-            # this is only meaningful when `cookies` is a dict ---
-            # for a real CookieJar, the client should use session.cookies.clear()
-            if cookies is not None:
-                dead_cookies = [name for name in cookies if cookies[name] is None]
-        # merge the session's cookies into the passed-in cookies:
-        for cookie in self.cookies:
-            args['cookies'].set_cookie(cookie)
-        # remove the unset cookies from the jar we'll be using with the current request
-        # (but not from the session's own store of cookies):
-        if dead_cookies is not None:
-            for name in dead_cookies:
-                remove_cookie_by_name(args['cookies'], name)
+            cookies = cookiejar_from_dict(cookies)
 
-        # Merge local kwargs with session kwargs.
-        for attr in self.__attrs__:
-            # we already merged cookies:
-            if attr == 'cookies':
-                continue
+        # Merge with session cookies
+        merged_cookies = RequestsCookieJar()
+        merged_cookies.update(self.cookies)
+        merged_cookies.update(cookies)
+        cookies = merged_cookies
 
-            session_val = getattr(self, attr, None)
-            local_val = args.get(attr)
-            args[attr] = merge_kwargs(local_val, session_val)
+        # Gather clues from the surrounding environment.
+        if self.trust_env:
+            # Set environment's proxies.
+            env_proxies = get_environ_proxies(url) or {}
+            for (k, v) in env_proxies.items():
+                proxies.setdefault(k, v)
 
-        # Arguments manipulation hook.
-        args = dispatch_hook('args', args['hooks'], args)
+            # Set environment's basic authentication.
+            if not auth:
+                auth = get_netrc_auth(url)
 
-        # Create the (empty) response.
-        r = Request(**args)
+            # Look for configuration.
+            if not verify and verify is not False:
+                verify = os.environ.get('REQUESTS_CA_BUNDLE')
 
-        # Give the response some context.
-        r.session = self
+            # Curl compatibility.
+            if not verify and verify is not False:
+                verify = os.environ.get('CURL_CA_BUNDLE')
 
-        # Don't send if asked nicely.
-        if not return_response:
-            return r
+        # Merge all the kwargs.
+        params = merge_setting(params, self.params)
+        headers = merge_setting(headers, self.headers, dict_class=CaseInsensitiveDict)
+        auth = merge_setting(auth, self.auth)
+        proxies = merge_setting(proxies, self.proxies)
+        hooks = merge_setting(hooks, self.hooks)
+        stream = merge_setting(stream, self.stream)
+        verify = merge_setting(verify, self.verify)
+        cert = merge_setting(cert, self.cert)
 
-        # Send the HTTP Request.
-        r.send(prefetch=prefetch)
+        # Create the Request.
+        req = Request()
+        req.method = method.upper()
+        req.url = url
+        req.headers = headers
+        req.files = files
+        req.data = data
+        req.params = params
+        req.auth = auth
+        req.cookies = cookies
+        req.hooks = hooks
 
-        # Return the response.
-        return r.response
+        # Prepare the Request.
+        prep = req.prepare()
+
+        # Send the request.
+        send_kwargs = {
+            'stream': stream,
+            'timeout': timeout,
+            'verify': verify,
+            'cert': cert,
+            'proxies': proxies,
+            'allow_redirects': allow_redirects,
+        }
+        resp = self.send(prep, **send_kwargs)
+
+        return resp
 
     def get(self, url, **kwargs):
         """Sends a GET request. Returns :class:`Response` object.
@@ -310,7 +355,89 @@ class Session(object):
         :param \*\*kwargs: Optional arguments that ``request`` takes.
         """
 
-        return self.request('delete', url, **kwargs)
+        return self.request('DELETE', url, **kwargs)
+
+    def send(self, request, **kwargs):
+        """Send a given PreparedRequest."""
+        # Set defaults that the hooks can utilize to ensure they always have
+        # the correct parameters to reproduce the previous request.
+        kwargs.setdefault('stream', self.stream)
+        kwargs.setdefault('verify', self.verify)
+        kwargs.setdefault('cert', self.cert)
+        kwargs.setdefault('proxies', self.proxies)
+
+        # It's possible that users might accidentally send a Request object.
+        # Guard against that specific failure case.
+        if getattr(request, 'prepare', None):
+            raise ValueError('You can only send PreparedRequests.')
+
+        # Set up variables needed for resolve_redirects and dispatching of
+        # hooks
+        allow_redirects = kwargs.pop('allow_redirects', True)
+        stream = kwargs.get('stream')
+        timeout = kwargs.get('timeout')
+        verify = kwargs.get('verify')
+        cert = kwargs.get('cert')
+        proxies = kwargs.get('proxies')
+        hooks = request.hooks
+
+        # Get the appropriate adapter to use
+        adapter = self.get_adapter(url=request.url)
+
+        # Start time (approximately) of the request
+        start = datetime.utcnow()
+        # Send the request
+        r = adapter.send(request, **kwargs)
+        # Total elapsed time of the request (approximately)
+        r.elapsed = datetime.utcnow() - start
+
+        # Response manipulation hooks
+        r = dispatch_hook('response', hooks, r, **kwargs)
+
+        # Persist cookies
+        extract_cookies_to_jar(self.cookies, request, r.raw)
+
+        # Redirect resolving generator.
+        gen = self.resolve_redirects(r, request, stream=stream,
+                                     timeout=timeout, verify=verify, cert=cert,
+                                     proxies=proxies)
+
+        # Resolve redirects if allowed.
+        history = [resp for resp in gen] if allow_redirects else []
+
+        # Shuffle things around if there's history.
+        if history:
+            # Insert the first (original) request at the start
+            history.insert(0, r)
+            # Get the last request made
+            r = history.pop()
+            r.history = tuple(history)
+
+        return r
+
+    def get_adapter(self, url):
+        """Returns the appropriate connnection adapter for the given URL."""
+        for (prefix, adapter) in self.adapters.items():
+
+            if url.startswith(prefix):
+                return adapter
+
+        # Nothing matches :-/
+        raise InvalidSchema("No connection adapters were found for '%s'" % url)
+
+    def close(self):
+        """Closes all adapters and as such the session"""
+        for _, v in self.adapters.items():
+            v.close()
+
+    def mount(self, prefix, adapter):
+        """Registers a connection adapter to a prefix.
+
+        Adapters are sorted in descending order by key length."""
+        self.adapters[prefix] = adapter
+        keys_to_move = [k for k in self.adapters if len(k) < len(prefix)]
+        for key in keys_to_move:
+            self.adapters[key] = self.adapters.pop(key)
 
     def __getstate__(self):
         return dict((attr, getattr(self, attr, None)) for attr in self.__attrs__)

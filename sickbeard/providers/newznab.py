@@ -22,7 +22,10 @@ import datetime
 import re
 import os
 
-from xml.dom.minidom import parseString
+try:
+    import xml.etree.cElementTree as etree
+except ImportError:
+    import elementtree.ElementTree as etree
 
 import sickbeard
 import generic
@@ -32,25 +35,33 @@ from sickbeard import helpers
 from sickbeard import scene_exceptions
 from sickbeard import encodingKludge as ek
 
-from sickbeard import exceptions
 from sickbeard import logger
 from sickbeard import tvcache
-from sickbeard.exceptions import ex
+from sickbeard.exceptions import ex, AuthException
 
 
 class NewznabProvider(generic.NZBProvider):
 
-    def __init__(self, name, url, key=''):
+    def __init__(self, name, url, key='', catIDs='5030,5040'):
 
         generic.NZBProvider.__init__(self, name)
 
         self.cache = NewznabCache(self)
 
         self.url = url
+
         self.key = key
 
-        # if a provider doesn't need an api key then this can be false
+        # a 0 in the key spot indicates that no key is needed
+        if self.key == '0':
+            self.needs_auth = False
+        else:
         self.needs_auth = True
+
+        if catIDs:
+            self.catIDs = catIDs
+        else:
+            self.catIDs = '5030,5040'
 
         self.enabled = True
         self.supportsBacklog = True
@@ -58,10 +69,10 @@ class NewznabProvider(generic.NZBProvider):
         self.default = False
 
     def configStr(self):
-        return self.name + '|' + self.url + '|' + self.key + '|' + str(int(self.enabled))
+        return self.name + '|' + self.url + '|' + self.key + '|' + self.catIDs + '|' + str(int(self.enabled))
 
     def imageName(self):
-        if ek.ek(os.path.isfile, ek.ek(os.path.join, sickbeard.PROG_DIR, 'gui', 'slick', 'images', 'providers', self.getID() + '.png')):
+        if ek.ek(os.path.isfile, ek.ek(os.path.join, sickbeard.PROG_DIR, 'data', 'images', 'providers', self.getID() + '.png')):
             return self.getID() + '.png'
         return 'newznab.png'
 
@@ -150,73 +161,79 @@ class NewznabProvider(generic.NZBProvider):
     def _doGeneralSearch(self, search_string):
         return self._doSearch({'q': search_string})
 
-    def _checkAuthFromData(self, data):
+    def _checkAuth(self):
 
-        try:
-            parsedXML = parseString(data)
-        except Exception:
-            return False
+        if self.needs_auth and not self.key:
+            logger.log(u"Incorrect authentication credentials for " + self.name + " : " + "API key is missing", logger.DEBUG)
+            raise AuthException("Your authentication credentials for " + self.name + " are missing, check your config.")
 
-        if parsedXML.documentElement.tagName == 'error':
-            code = parsedXML.documentElement.getAttribute('code')
+        return True
+
+    def _checkAuthFromData(self, parsedXML):
+
+        if parsedXML is None:
+            return self._checkAuth()
+
+        if parsedXML.tag == 'error':
+            code = parsedXML.attrib['code']
+
             if code == '100':
-                raise exceptions.AuthException("Your API key for " + self.name + " is incorrect, check your config.")
+                raise AuthException("Your API key for " + self.name + " is incorrect, check your config.")
             elif code == '101':
-                raise exceptions.AuthException("Your account on " + self.name + " has been suspended, contact the administrator.")
+                raise AuthException("Your account on " + self.name + " has been suspended, contact the administrator.")
             elif code == '102':
-                raise exceptions.AuthException("Your account isn't allowed to use the API on " + self.name + ", contact the administrator")
+                raise AuthException("Your account isn't allowed to use the API on " + self.name + ", contact the administrator")
             else:
-                logger.log(u"Unknown error given from " + self.name + ": "+parsedXML.documentElement.getAttribute('description'), logger.ERROR)
+                logger.log(u"Unknown error given from " + self.name + ": " + parsedXML.attrib['description'], logger.ERROR)
                 return False
 
         return True
 
     def _doSearch(self, search_params, show=None, max_age=0):
 
+        self._checkAuth()
+
         params = {"t": "tvsearch",
                   "maxage": sickbeard.USENET_RETENTION,
                   "limit": 100,
-                  "cat": '5030,5040'}
+                  "cat": self.catIDs}
 
         # if max_age is set, use it, don't allow it to be missing
         if max_age or not params['maxage']:
             params['maxage'] = max_age
 
-        # hack this in for now
-        if self.getID() == 'nzbs_org':
-            params['cat'] += ',5070,5090'
-
         if search_params:
             params.update(search_params)
 
-        if self.key:
+        if self.needs_auth and self.key:
             params['apikey'] = self.key
 
-        searchURL = self.url + 'api?' + urllib.urlencode(params)
+        search_url = self.url + 'api?' + urllib.urlencode(params)
 
-        logger.log(u"Search url: " + searchURL, logger.DEBUG)
+        logger.log(u"Search url: " + search_url, logger.DEBUG)
 
-        data = self.getURL(searchURL)
+        data = self.getURL(search_url)
 
         if not data:
+            logger.log(u"No data returned from " + search_url, logger.ERROR)
             return []
 
         # hack this in until it's fixed server side
         if not data.startswith('<?xml'):
             data = '<?xml version="1.0" encoding="ISO-8859-1" ?>' + data
 
-        try:
-            parsedXML = parseString(data)
-            items = parsedXML.getElementsByTagName('item')
-        except Exception, e:
-            logger.log(u"Error trying to load " + self.name + " RSS feed: " + ex(e), logger.ERROR)
-            logger.log(u"RSS data: " + data, logger.DEBUG)
+        parsedXML = helpers.parse_xml(data)
+
+        if parsedXML is None:
+            logger.log(u"Error trying to load " + self.name + " XML data", logger.ERROR)
             return []
 
-        if not self._checkAuthFromData(data):
-            return []
+        if self._checkAuthFromData(parsedXML):
 
-        if parsedXML.documentElement.tagName != 'rss':
+            if parsedXML.tag == 'rss':
+                items = parsedXML.findall('.//item')
+
+            else:
             logger.log(u"Resulting XML from " + self.name + " isn't RSS, not parsing it", logger.ERROR)
             return []
 
@@ -225,47 +242,48 @@ class NewznabProvider(generic.NZBProvider):
         for curItem in items:
             (title, url) = self._get_title_and_url(curItem)
 
-            if not title or not url:
-                logger.log(u"The XML returned from the " + self.name + " RSS feed is incomplete, this result is unusable: " + data, logger.ERROR)
-                continue
-
+                if title and url:
+                    logger.log(u"Adding item from RSS to results: " + title, logger.DEBUG)
             results.append(curItem)
+                else:
+                    logger.log(u"The XML returned from the " + self.name + " RSS feed is incomplete, this result is unusable", logger.DEBUG)
 
         return results
 
-    def findPropers(self, date=None):
+        return []
+
+    def findPropers(self, search_date=None):
 
         search_terms = ['.proper.', '.repack.']
-        results = []
 
-        cache_results = self.cache.listPropers(date)
+        cache_results = self.cache.listPropers(search_date)
         results = [classes.Proper(x['name'], x['url'], datetime.datetime.fromtimestamp(x['time'])) for x in cache_results]
 
         for term in search_terms:
-            for curResult in self._doSearch({'q': term}, max_age=4):
+            for item in self._doSearch({'q': term}, max_age=4):
 
-                (title, url) = self._get_title_and_url(curResult)
+                (title, url) = self._get_title_and_url(item)
 
-                description_node = curResult.getElementsByTagName('pubDate')[0]
-                descriptionStr = helpers.get_xml_text(description_node)
+                description_node = item.find('pubDate')
+                description_text = helpers.get_xml_text(description_node)
 
                 try:
                     # we could probably do dateStr = descriptionStr but we want date in this format
-                    dateStr = re.search('(\w{3}, \d{1,2} \w{3} \d{4} \d\d:\d\d:\d\d) [\+\-]\d{4}', descriptionStr).group(1)
+                    date_text = re.search('(\w{3}, \d{1,2} \w{3} \d{4} \d\d:\d\d:\d\d) [\+\-]\d{4}', description_text).group(1)
                 except:
-                    dateStr = None
+                    date_text = None
 
-                if not dateStr:
+                if not date_text:
                     logger.log(u"Unable to figure out the date for entry " + title + ", skipping it")
                     continue
                 else:
 
-                    resultDate = email.utils.parsedate(dateStr)
-                    if resultDate:
-                        resultDate = datetime.datetime(*resultDate[0:6])
+                    result_date = email.utils.parsedate(date_text)
+                    if result_date:
+                        result_date = datetime.datetime(*result_date[0:6])
 
-                if date == None or resultDate > date:
-                    search_result = classes.Proper(title, url, resultDate)
+                if not search_date or result_date > search_date:
+                    search_result = classes.Proper(title, url, result_date)
                     results.append(search_result)
 
         return results
@@ -283,20 +301,20 @@ class NewznabCache(tvcache.TVCache):
     def _getRSSData(self):
 
         params = {"t": "tvsearch",
-                  "cat": '5040,5030'}
+                  "cat": self.provider.catIDs}
 
-        # hack this in for now
-        if self.provider.getID() == 'nzbs_org':
-            params['cat'] += ',5070,5090'
-
-        if self.provider.key:
+        if self.provider.needs_auth and self.provider.key:
             params['apikey'] = self.provider.key
 
-        url = self.provider.url + 'api?' + urllib.urlencode(params)
+        rss_url = self.provider.url + 'api?' + urllib.urlencode(params)
 
-        logger.log(self.provider.name + " cache update URL: " + url, logger.DEBUG)
+        logger.log(self.provider.name + " cache update URL: " + rss_url, logger.DEBUG)
 
-        data = self.provider.getURL(url)
+        data = self.provider.getURL(rss_url)
+
+        if not data:
+            logger.log(u"No data returned from " + rss_url, logger.ERROR)
+            return None
 
         # hack this in until it's fixed server side
         if data and not data.startswith('<?xml'):
@@ -304,6 +322,5 @@ class NewznabCache(tvcache.TVCache):
 
         return data
 
-    def _checkAuth(self, data):
-
-        return self.provider._checkAuthFromData(data)
+    def _checkAuth(self, parsedXML):
+            return self.provider._checkAuthFromData(parsedXML)

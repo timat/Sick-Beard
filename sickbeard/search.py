@@ -20,6 +20,7 @@ from __future__ import with_statement
 
 import os
 import traceback
+import datetime
 
 import sickbeard
 
@@ -35,6 +36,8 @@ from sickbeard import nzbSplitter
 from sickbeard import ui
 from sickbeard import encodingKludge as ek
 from sickbeard import providers
+
+from sickbeard import failed_history
 
 from sickbeard.exceptions import ex
 from sickbeard.providers.generic import GenericProvider
@@ -88,8 +91,8 @@ def _downloadResult(result):
         logger.log(u"Invalid provider type - this is a coding error, report it please", logger.ERROR)
         return False
 
-    if newResult:
-        ui.notifications.message('Episode snatched','<b>%s</b> snatched from <b>%s</b>' % (result.name, resProvider.name))
+    if newResult and sickbeard.USE_FAILED_DOWNLOADS:
+        ui.notifications.message('Episode snatched', '<b>%s</b> snatched from <b>%s</b>' % (result.name, resProvider.name))
 
     return newResult
 
@@ -103,6 +106,12 @@ def snatchEpisode(result, endStatus=SNATCHED):
     result: SearchResult instance to be snatched.
     endStatus: the episode status that should be used for the episode object once it's snatched.
     """
+    result.priority = 0 # -1 = low, 0 = normal, 1 = high
+    if sickbeard.ALLOW_HIGH_PRIORITY:
+        # if it aired recently make it high priority
+        for curEp in result.episodes:
+            if datetime.date.today() - curEp.airdate <= datetime.timedelta(days=7):
+                result.priority = 1
 
     # NZBs can be sent straight to SAB or saved to disk
     if result.resultType in ("nzb", "nzbdata"):
@@ -122,6 +131,7 @@ def snatchEpisode(result, endStatus=SNATCHED):
         if sickbeard.TORRENT_METHOD == "blackhole": 
             dlResult = _downloadResult(result)
         else:
+            result.content = result.provider.getURL(result.url) if not result.url.startswith('magnet') else None 
             client = clients.getClientIstance(sickbeard.TORRENT_METHOD)()
             dlResult = client.sendTORRENT(result)
     else:
@@ -130,6 +140,11 @@ def snatchEpisode(result, endStatus=SNATCHED):
 
     if dlResult == False:
         return False
+
+    if sickbeard.USE_FAILED_DOWNLOADS:
+        failed_history.logSnatch(result)
+    else:
+        ui.notifications.message('Episode snatched', result.name)
 
     history.logSnatch(result)
 
@@ -187,6 +202,11 @@ def searchForNeededEpisodes():
 
             bestResult = pickBestResult(curFoundResults[curEp])
 
+            # if all results were rejected move on to the next episode 
+            if not bestResult:
+                logger.log(u"All found results for "+curEp.prettyName()+" were rejected.", logger.DEBUG)
+                continue
+
             # if it's already in the list (from another provider) and the newly found quality is no better then skip it
             if curEp in foundResults and bestResult.quality <= foundResults[curEp].quality:
                 continue
@@ -212,6 +232,10 @@ def pickBestResult(results, quality_list=None):
             logger.log(cur_result.name+" is a quality we know we don't want, rejecting it", logger.DEBUG)
             continue
         
+        if sickbeard.USE_FAILED_DOWNLOADS and failed_history.hasFailed(cur_result.name, cur_result.size):
+            logger.log(cur_result.name + u" has previously failed, rejecting it")
+            continue
+
         if not bestResult or bestResult.quality < cur_result.quality and cur_result.quality != Quality.UNKNOWN:
             bestResult = cur_result
         elif bestResult.quality == cur_result.quality:
@@ -301,22 +325,6 @@ def findEpisode(episode, manualSearch=False):
             if done_searching:
                 break
 
-            # if we are searching an anime we are a little more loose
-            # this means we check every turn for a possible result
-            # in contrast the isFinalResultlooks function looks for a perfect result (best quality)
-            # but this will accept any result that would have been picked in the end -> pickBestResult
-            # and then stop and use that
-            if episode.show.anime:
-                logger.log(u"We are searching an anime. i am checking if we got a good result with search provider "+curProvider.name, logger.DEBUG)
-                bestResult = pickBestResult(curFoundResults)
-                if bestResult:
-                    return bestResult
-
-            foundResults += curFoundResults
-            # if we did find a result that's good enough to stop then don't continue
-            # this breaks the turn loop
-            if done_searching:
-                break
         foundResults += curFoundResults
 
         # if we did find a result that's good enough to stop then don't continue
@@ -390,7 +398,7 @@ def findSeason(show, season):
     if bestSeasonNZB:
 
         # get the quality of the season nzb
-        seasonQual = Quality.nameQuality(bestSeasonNZB.name, show.anime)
+        seasonQual = Quality.sceneQuality(bestSeasonNZB.name)
         seasonQual = bestSeasonNZB.quality
         logger.log(u"The quality of the season "+bestSeasonNZB.provider.providerType+" is "+Quality.qualityStrings[seasonQual], logger.DEBUG)
 
@@ -462,6 +470,10 @@ def findSeason(show, season):
         for multiResult in foundResults[MULTI_EP_RESULT]:
 
             logger.log(u"Seeing if we want to bother with multi-episode result "+multiResult.name, logger.DEBUG)
+
+            if sickbeard.USE_FAILED_DOWNLOADS and failed_history.hasFailed(multiResult.name, multiResult.size):
+                logger.log(multiResult.name + u" has previously failed, rejecting this multi-ep result")
+                continue
 
             # see how many of the eps that this result covers aren't covered by single results
             neededEps = []

@@ -31,21 +31,18 @@ class uTorrentAPI(GenericClient):
             
     def _request(self, method='get', params={}, files=None):
 
-        params.update({'token':self._get_auth()})
+        params.update({'token':self.auth})
         return super(uTorrentAPI, self)._request(method=method, params=params, files=files)
 
     def _get_auth(self):
 
-        self.response = self.session.get(self.url + 'token.html')
-        if self.response.status_code == 404:
-            return None
-        
         try: 
+        self.response = self.session.get(self.url + 'token.html')
             self.auth = re.findall("<div.*?>(.*?)</", self.response.text)[0]
         except:    
             return None
             
-        return self.auth
+        return self.auth if not self.response.status_code == 404 else None
       
     def _add_torrent_uri(self, result):
 
@@ -55,7 +52,7 @@ class uTorrentAPI(GenericClient):
     def _add_torrent_file(self, result):
 
         params = {'action':'add-file'}
-        files={'torrent_file': ('tv.torrent', result.content)}
+        files={'torrent_file': (result.name + '.torrent', result.content)}
         return  self._request(method='post', params=params, files=files)
 
     def _set_torrent_label(self, result):
@@ -71,8 +68,9 @@ class uTorrentAPI(GenericClient):
 
         if sickbeard.TORRENT_PAUSED:
             params = {'action':'pause', 'hash':result.hash}
-            return self._request(params=params)
+        else:
+            params = {'action':'start', 'hash':result.hash}
         
-        return True
+            return self._request(params=params)
         
 api = uTorrentAPI()       

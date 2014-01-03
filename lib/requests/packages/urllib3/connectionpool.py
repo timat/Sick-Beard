@@ -96,12 +96,19 @@ class VerifiedHTTPSConnection(HTTPSConnection):
 
         # Wrap socket using verification with the root certs in
         # trusted_root_certs
-        self.sock = ssl.wrap_socket(sock, self.key_file, self.cert_file,
-                                    cert_reqs=self.cert_reqs,
-                                    ca_certs=self.ca_certs)
-        if self.ca_certs:
-            match_hostname(self.sock.getpeercert(), self.host)
+        self.sock = ssl_wrap_socket(sock, self.key_file, self.cert_file,
+                                    cert_reqs=resolved_cert_reqs,
+                                    ca_certs=self.ca_certs,
+                                    server_hostname=self.host,
+                                    ssl_version=resolved_ssl_version)
 
+        if resolved_cert_reqs != ssl.CERT_NONE:
+            if self.assert_fingerprint:
+                assert_fingerprint(self.sock.getpeercert(binary_form=True),
+                                   self.assert_fingerprint)
+            else:
+                match_hostname(self.sock.getpeercert(),
+                               self.assert_hostname or self.host)
 
 ## Pool objects
 
@@ -491,7 +498,10 @@ class HTTPSConnectionPool(HTTPConnectionPool):
 
     When Python is compiled with the :mod:`ssl` module, then
     :class:`.VerifiedHTTPSConnection` is used, which *can* verify certificates,
-    instead of :class:httplib.HTTPSConnection`.
+    instead of :class:`httplib.HTTPSConnection`.
+
+    :class:`.VerifiedHTTPSConnection` uses one of ``assert_fingerprint``,
+    ``assert_hostname`` and ``host`` in this order to verify connections.
 
     The ``key_file``, ``cert_file``, ``cert_reqs``, and ``ca_certs`` parameters
     are only used if :mod:`ssl` is available and are fed into

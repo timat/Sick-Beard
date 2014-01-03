@@ -226,22 +226,28 @@ def check_setting_float(config, cfg_name, item_name, def_val):
 # Check_setting_str                                                            #
 ################################################################################
 def check_setting_str(config, cfg_name, item_name, def_val, log=True):
+
+    # For passwords you must include the word `password` in the item_name and add `helpers.encrypt(ITEM_NAME, ENCRYPTION_VERSION)` in save_config()
+    if bool(item_name.find('password') + 1):
+        encryption_version = sickbeard.ENCRYPTION_VERSION
+    else:
+        encryption_version = 0
+        
     try:
-        my_val = config[cfg_name][item_name]
+        my_val = helpers.decrypt(config[cfg_name][item_name], encryption_version)
     except:
         my_val = def_val
         try:
-            config[cfg_name][item_name] = my_val
+            config[cfg_name][item_name] = helpers.encrypt(my_val, encryption_version)
         except:
             config[cfg_name] = {}
-            config[cfg_name][item_name] = my_val
+            config[cfg_name][item_name] = helpers.encrypt(my_val, encryption_version)
 
     if log:
         logger.log(item_name + " -> " + my_val, logger.DEBUG)
     else:
         logger.log(item_name + " -> ******", logger.DEBUG)
     return my_val
-
 
 class ConfigMigrator():
 
@@ -254,9 +260,13 @@ class ConfigMigrator():
         self.config_obj = config_obj
 
         # check the version of the config
-        self.config_version = check_setting_int(config_obj, 'General', 'config_version', 0)
-
-        self.migration_names = {1: 'Custom naming'}
+        self.config_version = check_setting_int(config_obj, 'General', 'config_version', sickbeard.CONFIG_VERSION)
+        self.expected_config_version = sickbeard.CONFIG_VERSION
+        self.migration_names = {1: 'Custom naming',
+                                2: 'Sync backup number with version number',
+                                3: 'Rename omgwtfnzb variables',
+                                4: 'Add newznab catIDs'
+                                } 
 
 
     def migrate_config(self):
@@ -272,7 +282,12 @@ class ConfigMigrator():
             else:
                 migration_name = ''
             
-            helpers.backupVersionedFile(sickbeard.CONFIG_FILE, next_version)
+            logger.log(u"Backing up config before upgrade")
+            if not helpers.backupVersionedFile(sickbeard.CONFIG_FILE, self.config_version):
+                logger.log(u"Config backup failed, abort upgrading config")
+                sys.exit("Config backup failed, abort upgrading config") 
+            else:
+                logger.log(u"Proceeding with upgrade")  
             
             # do the migration, expect a method named _migrate_v<num>
             logger.log(u"Migrating config up to version "+str(next_version)+migration_name)
@@ -385,3 +400,45 @@ class ConfigMigrator():
 
         return finalName
     
+    # Migration v2: Dummy migration to sync backup number with config version number
+    def _migrate_v2(self):
+        return
+ 
+    # Migration v2: Rename  omgwtfnzb variables
+    def _migrate_v3(self):
+        """
+        Reads in the old naming settings from your config and generates a new config template from them.
+        """
+        # get the old settings from the file and store them in the new variable names
+        sickbeard.OMGWTFNZBS_USERNAME = check_setting_str(self.config_obj, 'omgwtfnzbs', 'omgwtfnzbs_uid', '')
+        sickbeard.OMGWTFNZBS_APIKEY = check_setting_str(self.config_obj, 'omgwtfnzbs', 'omgwtfnzbs_key', '')
+
+    # Migration v4: Add default newznab catIDs
+    def _migrate_v4(self):
+        """ Update newznab providers so that the category IDs can be set independently via the config """
+
+        new_newznab_data = []
+        old_newznab_data = check_setting_str(self.config_obj, 'Newznab', 'newznab_data', '')
+
+        if old_newznab_data:
+            old_newznab_data_list = old_newznab_data.split("!!!")
+
+            for cur_provider_data in old_newznab_data_list:
+                try:
+                    name, url, key, enabled = cur_provider_data.split("|")
+                except ValueError:
+                    logger.log(u"Skipping Newznab provider string: '" + cur_provider_data + "', incorrect format", logger.ERROR)
+                    continue
+
+                if name == 'Sick Beard Index':
+                    key = '0'
+
+                if name == 'NZBs.org':
+                    catIDs = '5030,5040,5070,5090'
+                else:
+                    catIDs = '5030,5040'
+
+                cur_provider_data_list = [name, url, key, catIDs, enabled]
+                new_newznab_data.append("|".join(cur_provider_data_list))
+
+            sickbeard.NEWZNAB_DATA = "!!!".join(new_newznab_data)          

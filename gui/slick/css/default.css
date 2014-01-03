@@ -202,32 +202,10 @@ a{
   color: #FFFFFF;
   font-family: Arial, Helvetica, sans-serif;
   font-size: 11px;
-/*  text-transform: lowercase;*/
   position: relative;
-  top: 36px;
-  left: -5px;
-}
-
-#releasetext {
-  color: #145623;
-  text-shadow:
-    0px -1px 0 #FFF,
-    1px 1px 0 #FFF,  
-    -1px -1px 0 #FFF,
-    -1px  1px 0 #FFF,
-    0px  1px 0 #FFF,
-    
-    0px -2px 0 #9A6C28,
-    2px 3px 0 #9A6C28,
-    -2px -2px 0 #9A6C28,
-    -2px 3px 0 #9A6C28,
-    0px 3px 0 #9A6C28;
-    font-weight: bold;
-  font-family: "Comic Sans MS";
-  font-size: 15px;
-  position: absolute;
-  top: -4px;
-  left: 55px;
+/*  text-transform: lowercase;*/
+  top: 42px;
+  left: -5px
 }
 
 .update {
@@ -249,10 +227,10 @@ a{
   float: left;
   height: auto;
   margin-bottom: 30px;
-  margin-right: 15px;
+  margin-right: 25px;
   overflow: hidden;
   text-indent: -3000px;
-  width: 210px;
+  width: 175px;
 }
 .tvshowImg img {
   float: left;
@@ -420,13 +398,6 @@ input:not(.btn){margin-right:6px;margin-top:5px;padding-top:4px;padding-bottom:4
   padding: 4px;
   border-top: #fff 1px solid;
   vertical-align: middle;
-}
-
-.sickbeardTable td.overflow {
-     overflow: hidden;
-     text-overflow:ellipsis;
-     word-wrap: none;
-     white-space: nowrap;
 }
 
 #massUpdateTable.sickbeardTable th {
@@ -740,25 +711,18 @@ div#summary tr td {
   height: 58px;
   margin: 0;
   padding: 0 0 0 10px;
-  position: relative;
 }
 #SubMenu {
-  display:none;
-  margin-top: -35px;
-}
-#ShowActions {
-  display:block;
-}
-#SubMenu, #ShowActions {
   float: right;
+  margin-top: -35px;
   position: relative;
   z-index: 99;
 }
-#SubMenu a, #ShowActions a {
+#SubMenu a {
   font-size: 12px;
   text-decoration: none;
 }
-#SubMenu span b, #ShowActions span b {
+#SubMenu span b {
   margin-left: 20px;
 }
 #donate {
@@ -778,14 +742,12 @@ div#summary tr td {
 #content {
   line-height: 24px;
   margin: 0 auto;
-  padding: 75px 0 0;
-  min-width: 900px;
-  width: 100%;
-  max-width: 960px;
+  padding: 105px 0 0;
+  width: 960px;
 }
 .showLegend {
   font-weight: 700;
-  padding-right: 10px;
+  padding-right: 6px;
   padding-bottom: 1px;
 }
 /* for the add new/existing show */
@@ -901,6 +863,9 @@ td.tvShow a {
   text-decoration: none;
   font-size: 18px;
   font-weight: bold;
+  display: block;
+  width: 100%;
+  height: 100%;   
 }
 
 .navShow {
@@ -1782,11 +1747,11 @@ input[type="submit"].btn.btn-mini {
 }
 
 [class^="icon-"], [class*=" icon-"] {
-    background-image: url("/images/glyphicons-halflings.png");
+    background-image: url("../images/glyphicons-halflings.png");
 }
 
 .icon-white {
-  background-image: url("/images/glyphicons-halflings-white.png");
+  background-image: url("../images/glyphicons-halflings-white.png");
 }
 
 [class^="icon-"],
@@ -1831,6 +1796,10 @@ input[type="submit"].btn.btn-mini {
 
 .icon-remove {
   background-position: -312px 0;
+}
+
+.icon-calendar {
+  background-position: -192px -120px;
 }
 
 h3 {
@@ -1882,70 +1851,21 @@ pre {
      -moz-border-radius: 4px;
           border-radius: 4px;
 }
-.ui-pnotify-text img {
-	padding-top: 3px;
-}
 
-#animeSettings{
-	padding: 10px 0 10px 20px;
-}
+.vertical {
+    display: inline-block;
 
-div.blackwhitelist > div.whitelist,
-div.blackwhitelist > div.move,
-div.blackwhitelist > div.blacklist{
-	display: inline-block;
-	height: 100%;
-	vertical-align: middle;
+    background-color: #79DF46;
+    border-radius: 0 4px 4px 0;
+    border-width: 3px 3px 3px 0;
+    border-style: solid;
+    border-color: #B7B7B7;    
+    position: absolute;
+    font-weight: bold;
+    font-size: 0.99em;
+    line-height: 12.5px;
+    width: 24px;
+    color: #343434;
+    height: 37px;
 	text-align: center;
-}
-
-div.blackwhitelist select{
-	min-width: 150px;
-	height: 100px;
-}
-
-div.epsRangeBar
-{
-	width: 100px;
-	height: 16px;
-	padding-top: 3px;
-}
-div.epsRangeBar > div:first-child
-{
-	border-radius: 5px 0 0 5px;
-}
-div.epsRangeBar > div:last-child
-{
-	border-radius: 0 5px 5px 0;
-}
-div.epsRangeBar div.done
-{
-    display: inline-block;
-    background: #9dd53a; /* Old browsers */
-	/* IE9 SVG, needs conditional override of 'filter' to 'none' */
-	background: url(data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiA/Pgo8c3ZnIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgdmlld0JveD0iMCAwIDEgMSIgcHJlc2VydmVBc3BlY3RSYXRpbz0ibm9uZSI+CiAgPGxpbmVhckdyYWRpZW50IGlkPSJncmFkLXVjZ2ctZ2VuZXJhdGVkIiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgeDE9IjAlIiB5MT0iMCUiIHgyPSIwJSIgeTI9IjEwMCUiPgogICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iIzlkZDUzYSIgc3RvcC1vcGFjaXR5PSIxIi8+CiAgICA8c3RvcCBvZmZzZXQ9IjUwJSIgc3RvcC1jb2xvcj0iI2ExZDU0ZiIgc3RvcC1vcGFjaXR5PSIxIi8+CiAgICA8c3RvcCBvZmZzZXQ9IjUxJSIgc3RvcC1jb2xvcj0iIzgwYzIxNyIgc3RvcC1vcGFjaXR5PSIxIi8+CiAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiM3Y2JjMGEiIHN0b3Atb3BhY2l0eT0iMSIvPgogIDwvbGluZWFyR3JhZGllbnQ+CiAgPHJlY3QgeD0iMCIgeT0iMCIgd2lkdGg9IjEiIGhlaWdodD0iMSIgZmlsbD0idXJsKCNncmFkLXVjZ2ctZ2VuZXJhdGVkKSIgLz4KPC9zdmc+);
-	background: -moz-linear-gradient(top,  #9dd53a 0%, #a1d54f 50%, #80c217 51%, #7cbc0a 100%); /* FF3.6+ */
-	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#9dd53a), color-stop(50%,#a1d54f), color-stop(51%,#80c217), color-stop(100%,#7cbc0a)); /* Chrome,Safari4+ */
-	background: -webkit-linear-gradient(top,  #9dd53a 0%,#a1d54f 50%,#80c217 51%,#7cbc0a 100%); /* Chrome10+,Safari5.1+ */
-	background: -o-linear-gradient(top,  #9dd53a 0%,#a1d54f 50%,#80c217 51%,#7cbc0a 100%); /* Opera 11.10+ */
-	background: -ms-linear-gradient(top,  #9dd53a 0%,#a1d54f 50%,#80c217 51%,#7cbc0a 100%); /* IE10+ */
-	background: linear-gradient(to bottom,  #9dd53a 0%,#a1d54f 50%,#80c217 51%,#7cbc0a 100%); /* W3C */
-	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#9dd53a', endColorstr='#7cbc0a',GradientType=0 ); /* IE6-8 */
-
-    height: 100%;
-}
-div.epsRangeBar div.notdone
-{
-    display: inline-block;
-    background: #f85032; /* Old browsers */
-	/* IE9 SVG, needs conditional override of 'filter' to 'none' */
-	background: url(data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiA/Pgo8c3ZnIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgdmlld0JveD0iMCAwIDEgMSIgcHJlc2VydmVBc3BlY3RSYXRpbz0ibm9uZSI+CiAgPGxpbmVhckdyYWRpZW50IGlkPSJncmFkLXVjZ2ctZ2VuZXJhdGVkIiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgeDE9IjAlIiB5MT0iMCUiIHgyPSIwJSIgeTI9IjEwMCUiPgogICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iI2Y4NTAzMiIgc3RvcC1vcGFjaXR5PSIxIi8+CiAgICA8c3RvcCBvZmZzZXQ9IjUwJSIgc3RvcC1jb2xvcj0iI2YxNmY1YyIgc3RvcC1vcGFjaXR5PSIxIi8+CiAgICA8c3RvcCBvZmZzZXQ9IjUxJSIgc3RvcC1jb2xvcj0iI2Y2MjkwYyIgc3RvcC1vcGFjaXR5PSIxIi8+CiAgICA8c3RvcCBvZmZzZXQ9IjcxJSIgc3RvcC1jb2xvcj0iI2YwMmYxNyIgc3RvcC1vcGFjaXR5PSIxIi8+CiAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiNlNzM4MjciIHN0b3Atb3BhY2l0eT0iMSIvPgogIDwvbGluZWFyR3JhZGllbnQ+CiAgPHJlY3QgeD0iMCIgeT0iMCIgd2lkdGg9IjEiIGhlaWdodD0iMSIgZmlsbD0idXJsKCNncmFkLXVjZ2ctZ2VuZXJhdGVkKSIgLz4KPC9zdmc+);
-	background: -moz-linear-gradient(top, #f85032 0%, #f16f5c 50%, #f6290c 51%, #f02f17 71%, #e73827 100%); /* FF3.6+ */
-	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#f85032), color-stop(50%,#f16f5c), color-stop(51%,#f6290c), color-stop(71%,#f02f17), color-stop(100%,#e73827)); /* Chrome,Safari4+ */
-	background: -webkit-linear-gradient(top, #f85032 0%,#f16f5c 50%,#f6290c 51%,#f02f17 71%,#e73827 100%); /* Chrome10+,Safari5.1+ */
-	background: -o-linear-gradient(top, #f85032 0%,#f16f5c 50%,#f6290c 51%,#f02f17 71%,#e73827 100%); /* Opera 11.10+ */
-	background: -ms-linear-gradient(top, #f85032 0%,#f16f5c 50%,#f6290c 51%,#f02f17 71%,#e73827 100%); /* IE10+ */
-	background: linear-gradient(to bottom, #f85032 0%,#f16f5c 50%,#f6290c 51%,#f02f17 71%,#e73827 100%); /* W3C */
-	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#f85032', endColorstr='#e73827',GradientType=0 ); /* IE6-8 */
-    height: 100%;
 }

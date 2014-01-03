@@ -8,10 +8,8 @@ import gzip
 import logging
 import zlib
 
-from io import BytesIO
-
 from .exceptions import DecodeError
-from .packages.six import string_types as basestring
+from .packages.six import string_types as basestring, binary_type
 
 
 log = logging.getLogger(__name__)
@@ -27,6 +25,9 @@ def decode_deflate(data):
         return zlib.decompress(data)
     except zlib.error:
         return zlib.decompress(data, -zlib.MAX_WBITS)
+
+
+    return DeflateDecoder()
 
 
 class HTTPResponse(object):
@@ -146,11 +147,15 @@ class HTTPResponse(object):
                 return self._fp.read(amt)
 
             try:
-                if decode_content and decoder:
-                    data = decoder(data)
+                if decode_content and self._decoder:
+                    data = self._decoder.decompress(data)
             except (IOError, zlib.error):
                 raise DecodeError("Received response with content-encoding: %s, but "
                                   "failed to decode it." % content_encoding)
+
+            if flush_decoder and self._decoder:
+                buf = self._decoder.decompress(binary_type())
+                data += buf + self._decoder.flush()
 
             if cache_content:
                 self._body = data

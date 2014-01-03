@@ -24,17 +24,15 @@ from .packages.urllib3.exceptions import SSLError as _SSLError
 from .packages.urllib3.exceptions import HTTPError as _HTTPError
 from .packages.urllib3 import connectionpool, poolmanager
 from .packages.urllib3.filepost import encode_multipart_formdata
-from .defaults import SCHEMAS
-from .exceptions import (
-    ConnectionError, HTTPError, RequestException, Timeout, TooManyRedirects,
-    URLRequired, SSLError, MissingSchema, InvalidSchema, InvalidURL)
+from .packages.urllib3.util import parse_url
+from .exceptions import HTTPError, RequestException, MissingSchema, InvalidURL
 from .utils import (
     get_encoding_from_headers, stream_untransfer, guess_filename, requote_uri,
     stream_decode_response_unicode, get_netrc_auth, get_environ_proxies,
     to_key_val_list, DEFAULT_CA_BUNDLE_PATH, parse_header_links, iter_slices)
 from .compat import (
-    cookielib, urlparse, urlunparse, urljoin, urlsplit, urlencode, str, bytes,
-    StringIO, is_py2, chardet, json, builtin_str)
+    cookielib, urlparse, urlunparse, urlsplit, urlencode, str, bytes, StringIO,
+    is_py2, chardet, json, builtin_str, basestring)
 
 REDIRECT_STATI = (codes.moved, codes.found, codes.other, codes.temporary_moved)
 CONTENT_CHUNK_SIZE = 10 * 1024
@@ -385,10 +383,154 @@ class Request(object):
     def full_url(self):
         """Build the actual URL to use."""
 
-        if not self.url:
-            raise URLRequired()
+class RequestHooksMixin(object):
+    def register_hook(self, event, hook):
+        """Properly register a hook."""
 
-        url = self.url
+        if isinstance(hook, collections.Callable):
+            self.hooks[event].append(hook)
+        elif hasattr(hook, '__iter__'):
+            self.hooks[event].extend(h for h in hook if isinstance(h, collections.Callable))
+
+    def deregister_hook(self, event, hook):
+        """Deregister a previously registered hook.
+        Returns True if the hook existed, False if not.
+        """
+
+        try:
+            self.hooks[event].remove(hook)
+            return True
+        except ValueError:
+            return False
+
+
+class Request(RequestHooksMixin):
+    """A user-created :class:`Request <Request>` object.
+
+    Used to prepare a :class:`PreparedRequest <PreparedRequest>`, which is sent to the server.
+
+    :param method: HTTP method to use.
+    :param url: URL to send.
+    :param headers: dictionary of headers to send.
+    :param files: dictionary of {filename: fileobject} files to multipart upload.
+    :param data: the body to attach the request. If a dictionary is provided, form-encoding will take place.
+    :param params: dictionary of URL parameters to append to the URL.
+    :param auth: Auth handler or (user, pass) tuple.
+    :param cookies: dictionary or CookieJar of cookies to attach to this request.
+    :param hooks: dictionary of callback hooks, for internal usage.
+
+    Usage::
+
+      >>> import requests
+      >>> req = requests.Request('GET', 'http://httpbin.org/get')
+      >>> req.prepare()
+      <PreparedRequest [GET]>
+
+    """
+    def __init__(self,
+        method=None,
+        url=None,
+        headers=None,
+        files=None,
+        data=dict(),
+        params=dict(),
+        auth=None,
+        cookies=None,
+        hooks=None):
+
+        # Default empty dicts for dict params.
+        data = [] if data is None else data
+        files = [] if files is None else files
+        headers = {} if headers is None else headers
+        params = {} if params is None else params
+        hooks = {} if hooks is None else hooks
+
+        self.hooks = default_hooks()
+        for (k, v) in list(hooks.items()):
+            self.register_hook(event=k, hook=v)
+
+        self.method = method
+        self.url = url
+        self.headers = headers
+        self.files = files
+        self.data = data
+        self.params = params
+        self.auth = auth
+        self.cookies = cookies
+        self.hooks = hooks
+
+    def __repr__(self):
+        return '<Request [%s]>' % (self.method)
+
+    def prepare(self):
+        """Constructs a :class:`PreparedRequest <PreparedRequest>` for transmission and returns it."""
+        p = PreparedRequest()
+
+        p.prepare_method(self.method)
+        p.prepare_url(self.url, self.params)
+        p.prepare_headers(self.headers)
+        p.prepare_cookies(self.cookies)
+        p.prepare_body(self.data, self.files)
+        p.prepare_auth(self.auth, self.url)
+        # Note that prepare_auth must be last to enable authentication schemes
+        # such as OAuth to work on a fully prepared request.
+
+        # This MUST go after prepare_auth. Authenticators could add a hook
+        p.prepare_hooks(self.hooks)
+
+        return p
+
+
+class PreparedRequest(RequestEncodingMixin, RequestHooksMixin):
+    """The fully mutable :class:`PreparedRequest <PreparedRequest>` object,
+    containing the exact bytes that will be sent to the server.
+
+    Generated from either a :class:`Request <Request>` object or manually.
+
+    Usage::
+
+      >>> import requests
+      >>> req = requests.Request('GET', 'http://httpbin.org/get')
+      >>> r = req.prepare()
+      <PreparedRequest [GET]>
+
+      >>> s = requests.Session()
+      >>> s.send(r)
+      <Response [200]>
+
+    """
+
+    def __init__(self):
+        #: HTTP verb to send to the server.
+        self.method = None
+        #: HTTP URL to send the request to.
+        self.url = None
+        #: dictionary of HTTP headers.
+        self.headers = None
+        #: request body to send to the server.
+        self.body = None
+        #: dictionary of callback hooks, for internal usage.
+        self.hooks = default_hooks()
+
+    def __repr__(self):
+        return '<PreparedRequest [%s]>' % (self.method)
+
+    def prepare_method(self, method):
+        """Prepares the given HTTP method."""
+        self.method = method
+        if self.method is not None:
+            self.method = self.method.upper()
+
+    def prepare_url(self, url, params):
+        """Prepares the given HTTP URL."""
+        #: Accept objects that have string representations.
+        try:
+            url = unicode(url)
+        except NameError:
+            # We're on Python 3.
+            url = str(url)
+        except UnicodeDecodeError:
+            pass
 
         # Support for unicode domain names and paths.
         scheme, netloc, path, params, query, fragment = urlparse(url)
@@ -523,6 +665,8 @@ class Request(object):
         # Nottin' on you.
         body = None
         content_type = None
+        length = None
+        is_stream = False
 
         # Multi-part file uploads.
         if self.files:
@@ -530,63 +674,22 @@ class Request(object):
         else:
             if self.data:
 
-                body = self._encode_params(self.data)
-                if isinstance(self.data, str) or isinstance(self.data, builtin_str) or hasattr(self.data, 'read'):
-                    content_type = None
-                else:
-                    content_type = 'application/x-www-form-urlencoded'
-
-        # Add content-type if it wasn't explicitly provided.
-        if (content_type) and (not 'content-type' in self.headers):
-            self.headers['Content-Type'] = content_type
-
-        _p = urlparse(url)
-        no_proxy = filter(lambda x: x.strip(), self.proxies.get('no', '').split(','))
-        proxy = self.proxies.get(_p.scheme)
-
-        if proxy and not any(map(_p.hostname.endswith, no_proxy)):
-            conn = poolmanager.proxy_from_url(proxy)
-            _proxy = urlparse(proxy)
-            if '@' in _proxy.netloc:
-                auth, url = _proxy.netloc.split('@', 1)
-                self.proxy_auth = HTTPProxyAuth(*auth.split(':', 1))
-                r = self.proxy_auth(self)
-                self.__dict__.update(r.__dict__)
-        else:
-            # Check to see if keep_alive is allowed.
             try:
-                if self.config.get('keep_alive'):
-                    conn = self._poolmanager.connection_from_url(url)
-                else:
-                    conn = connectionpool.connection_from_url(url)
-                    self.headers['Connection'] = 'close'
-            except LocationParseError as e:
-                raise InvalidURL(e)
+            length = super_len(data)
+        except (TypeError, AttributeError):
+            length = False
 
         if url.startswith('https') and self.verify:
 
             cert_loc = None
 
-            # Allow self-specified cert location.
-            if self.verify is not True:
-                cert_loc = self.verify
+            if length:
+                self.headers['Content-Length'] = str(length)
+            else:
+                self.headers['Transfer-Encoding'] = 'chunked'
+        # Check if file, fo, generator, iterator.
+        # If not, run through normal process.
 
-            # Look for configuration.
-            if not cert_loc and self.config.get('trust_env'):
-                cert_loc = os.environ.get('REQUESTS_CA_BUNDLE')
-
-            # Curl compatibility.
-            if not cert_loc and self.config.get('trust_env'):
-                cert_loc = os.environ.get('CURL_CA_BUNDLE')
-
-            if not cert_loc:
-                cert_loc = DEFAULT_CA_BUNDLE_PATH
-
-            if not cert_loc:
-                raise Exception("Could not find a suitable SSL CA certificate bundle.")
-
-            conn.cert_reqs = 'CERT_REQUIRED'
-            conn.ca_certs = cert_loc
         else:
             conn.cert_reqs = 'CERT_NONE'
             conn.ca_certs = None
@@ -741,7 +844,7 @@ class Response(object):
 
         def generate():
             while 1:
-                chunk = self.raw.read(chunk_size)
+                chunk = self.raw.read(chunk_size, decode_content=True)
                 if not chunk:
                     break
                 yield chunk
@@ -887,6 +990,7 @@ class Response(object):
             http_error_msg = '%s Server Error: %s' % (self.status_code, self.reason)
 
         if http_error_msg:
-            http_error = HTTPError(http_error_msg)
-            http_error.response = self
-            raise http_error
+            raise HTTPError(http_error_msg, response=self)
+
+    def close(self):
+        return self.raw.release_conn()

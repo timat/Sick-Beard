@@ -80,11 +80,8 @@ class PoolManager(RequestMethods):
             return pool
 
         # Make a fresh ConnectionPool of the desired type
-        pool_cls = pool_classes_by_scheme[scheme]
-        pool = pool_cls(host, port, **self.connection_pool_kw)
-
+        pool = self._new_pool(scheme, host, port)
         self.pools[pool_key] = pool
-
         return pool
 
     def connection_from_url(self, url):
@@ -137,8 +134,16 @@ class ProxyManager(RequestMethods):
     def __init__(self, proxy_pool):
         self.proxy_pool = proxy_pool
 
-    def _set_proxy_headers(self, headers=None):
-        headers = headers or {}
+    def _set_proxy_headers(self, url, headers=None):
+        """
+        Sets headers needed by proxies: specifically, the Accept and Host
+        headers. Only sets headers not provided by the user.
+        """
+        headers_ = {'Accept': '*/*'}
+
+        host = parse_url(url).host
+        if host:
+            headers_['Host'] = host
 
         # Same headers are curl passes for --proxy1.0
         headers['Accept'] = '*/*'

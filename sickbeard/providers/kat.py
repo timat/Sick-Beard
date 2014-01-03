@@ -206,8 +206,24 @@ class KATProvider(generic.TorrentProvider):
 
                 table_order = ['name', 'size', 'files', 'age', 'seeds', 'leechers']
 
+                    #Continue only if one Release is found
+                    if len(torrent_rows)<2:
+                        logger.log(u"The Data returned from " + self.name + " do not contains any torrent", logger.WARNING)
+                        continue
+                    
+                    for tr in torrent_rows[1:]:
+
                 try:
-                    html = BeautifulSoup(data)
+                            link = self.url + (tr.find('div', {'class': 'torrentname'}).find_all('a')[1])['href']
+                            id = tr.get('id')[-7:]
+                            title = (tr.find('div', {'class': 'torrentname'}).find_all('a')[1]).text
+                            url = tr.find('a', 'imagnet')['href']
+                            verified = True if tr.find('a', 'iverify') else False
+                            trusted =  True if tr.find('img', {'alt': 'verified'}) else False
+                            seeders = int(tr.find_all('td')[-2].text)
+                            leechers = int(tr.find_all('td')[-1].text)
+                        except (AttributeError, TypeError):
+                            continue
 
                     resultdiv = html.find('div', attrs = {'class':'tabs'})
                     

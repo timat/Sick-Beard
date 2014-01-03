@@ -58,6 +58,7 @@ ARCHIVED = 6 # episodes that you don't have locally (counts toward download comp
 IGNORED = 7 # episodes that you don't want included in your download stats
 SNATCHED_PROPER = 9 # qualified with quality
 SUBTITLED = 10 # qualified with quality
+FAILED = 11 #episode downloaded or snatched we don't want
 
 NAMING_REPEAT = 1
 NAMING_EXTEND = 2
@@ -73,19 +74,6 @@ multiEpStrings[NAMING_DUPLICATE] = "Duplicate"
 multiEpStrings[NAMING_EXTEND] = "Extend"
 multiEpStrings[NAMING_LIMITED_EXTEND] = "Extend (Limited)"
 multiEpStrings[NAMING_LIMITED_EXTEND_E_PREFIXED] = "Extend (Limited, E-prefixed)"
-
-NAMING_REPEAT = 1
-NAMING_EXTEND = 2
-NAMING_DUPLICATE = 4
-NAMING_LIMITED_EXTEND = 8
-NAMING_SEPARATED_REPEAT = 16
-
-multiEpStrings = {}
-multiEpStrings[NAMING_REPEAT] = "Repeat"
-multiEpStrings[NAMING_SEPARATED_REPEAT] = "Repeat (Separated)"
-multiEpStrings[NAMING_DUPLICATE] = "Duplicate"
-multiEpStrings[NAMING_EXTEND] = "Extend"
-multiEpStrings[NAMING_LIMITED_EXTEND] = "Extend (Limited)"
 
 class Quality:                                                        
     NONE = 0              # 0                                         
@@ -115,7 +103,8 @@ class Quality:
                       FULLHDBLURAY: "1080p BluRay"}
 
     statusPrefixes = {DOWNLOADED: "Downloaded",
-                      SNATCHED: "Snatched"}
+                      SNATCHED: "Snatched",
+                      FAILED: "Failed"}
 
     @staticmethod
     def _getStatusStrings(status):
@@ -159,6 +148,14 @@ class Quality:
             regex_match = re.search(regex, name, re.I)
             if regex_match:
                 return x
+        
+    @staticmethod
+    def sceneQuality(name):
+        """
+        Return The quality from the scene episode File 
+        """
+
+        name = os.path.basename(name)
 
         checkName = lambda list, func: func([re.search(x, name, re.I) for x in list])
         
@@ -249,6 +246,7 @@ class Quality:
 Quality.DOWNLOADED = [Quality.compositeStatus(DOWNLOADED, x) for x in Quality.qualityStrings.keys()]
 Quality.SNATCHED = [Quality.compositeStatus(SNATCHED, x) for x in Quality.qualityStrings.keys()]
 Quality.SNATCHED_PROPER = [Quality.compositeStatus(SNATCHED_PROPER, x) for x in Quality.qualityStrings.keys()]
+Quality.FAILED = [Quality.compositeStatus(FAILED, x) for x in Quality.qualityStrings.keys()]
 
 SD = Quality.combineQualities([Quality.SDTV, Quality.SDDVD], [])                                                                                                                                          
 HD = Quality.combineQualities([Quality.HDTV, Quality.FULLHDTV, Quality.HDWEBDL, Quality.FULLHDWEBDL, Quality.HDBLURAY, Quality.FULLHDBLURAY], []) # HD720p + HD1080p                                      
@@ -277,7 +275,8 @@ class StatusStrings:
                               WANTED: "Wanted",
                               ARCHIVED: "Archived",
                               IGNORED: "Ignored",
-                              SUBTITLED: "Subtitled"}
+                              SUBTITLED: "Subtitled",
+                              FAILED: "Failed"}
 
     def __getitem__(self, name):
         if name in Quality.DOWNLOADED + Quality.SNATCHED + Quality.SNATCHED_PROPER:

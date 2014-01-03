@@ -24,31 +24,19 @@
 <script type="text/javascript" src="$sbRoot/js/plotTooltip.js?$sbPID"></script>
 <script type="text/javascript" src="$sbRoot/js/ajaxEpSearch.js?$sbPID"></script>
 <script type="text/javascript" src="$sbRoot/js/ajaxEpSubtitles.js?$sbPID"></script>
+<script type="text/javascript" src="$sbRoot/js/ajaxEpRetry.js?$sbPID"></script>
 
-<!--
 <div class="navShows">
+</br>
 <div class="align-left"><b>Change Show:</b>
 <div class="navShow"><img id="prevShow" src="$sbRoot/images/prev.gif" alt="&lt;&lt;" title="Prev Show" /></div>
 <select id="pickShow">
-#for $curShowList in $sortedShowLists:
-#set $curShowType = $curShowList[0]
-#set $curShowList = $curShowList[1]
-
-#if len($sortedShowLists) > 1:
-    <optgroup label="$curShowType">
-#end if
-	#for $curShow in $curShowList:
-	<option value="$curShow.tvdbid" #if $curShow == $show then "selected=\"selected\"" else ""#>$curShow.name</option>
-	#end for
-#if len($sortedShowLists) > 1:
-    </optgroup>
-#end if
+#for $curShow in $sortedShowList:
+<option value="$curShow.tvdbid" #if $curShow == $show then "selected=\"selected\"" else ""#>$curShow.name</option>
 #end for
 </select>
 <div class="navShow"><img id="nextShow" src="$sbRoot/images/next.gif" alt="&gt;&gt;" title="Next Show" /></div>
-</div>
-</div>
--->
+</div></div>
 
 <div class="tvshowImg"><a href="$sbRoot/showPoster/?show=$show.tvdbid&amp;which=poster" rel="dialog" title="$show.name"><img src="$sbRoot/showPoster/?show=$show.tvdbid&amp;which=poster_thumb" class="posterThumb" alt=""/></a>
 </div>
@@ -62,17 +50,18 @@
 		- $show.genre[1:-1].replace('|',' | ') 
 	#end if
 	<span class="tvshowLink" style="vertical-align: text-top">
+		<a href="http://www.thetvdb.com/?tab=series&amp;id=$show.tvdbid" onclick="window.open(this.href, '_blank'); return false;" title="http://www.thetvdb.com/?tab=series&amp;id=$show.tvdbid"><img alt="[tvdb]" height="16" width="16" src="$sbRoot/images/thetvdb16.png" style="margin-top: -1px;"/></a>
+	</span>
 #else
 	<img src="$sbRoot/images/flags/${$show.imdb_info['country_codes']}.png" width="16" height="11" style="margin-top: 3px; margin-left: 3px" /> ($show.imdb_info['year']) - $show.imdb_info['runtimes'] min - $show.imdb_info['genres'].replace('|',' | ')
 	<span class="tvshowLink" style="vertical-align: text-top">
-		<a href="http://www.imdb.com/title/$show.imdbid" onclick="window.open(this.href, '_blank'); return false;" title="http://www.imdb.com/title/$show.imdbid"><img alt="[imdb]" height="16" width="16" src="$sbRoot/images/imdb.png" style="margin-top: -1px;"/></a>
+		<a href="http://www.imdb.com/title/$show.imdbid" rel="noreferrer" onclick="window.open('${sickbeard.ANON_REDIRECT}' + this.href, '_blank'); return false;" title="http://www.imdb.com/title/$show.imdbid"><img alt="[imdb]" height="16" width="16" src="$sbRoot/images/imdb.png" style="margin-top: -1px;"/>
+		<a href="http://www.thetvdb.com/?tab=series&amp;id=$show.tvdbid" rel="noreferrer" onclick="window.open('${sickbeard.ANON_REDIRECT}' + this.href, '_blank'); return false;" title="http://www.thetvdb.com/?tab=series&amp;id=$show.tvdbid"><img alt="[tvdb]" height="16" width="16" src="$sbRoot/images/thetvdb16.png" style="margin-top: -1px;"/></a>
+	</span>
+
 #end if
-        <a href="http://www.thetvdb.com/?tab=series&amp;id=$show.tvdbid" onclick="window.open(this.href, '_blank'); return false;" title="http://www.thetvdb.com/?tab=series&amp;id=$show.tvdbid"><img alt="[tvdb]" height="16" width="16" src="$sbRoot/images/thetvdb16.png" style="margin-top: -1px;"/></a>
-        #if $show.anime:
-            <a href="http://anidb.net/perl-bin/animedb.pl?show=anime&aid=$show.anidbid" onclick="window.open(this.href, '_blank'); return false;" title="http://anidb.net/perl-bin/animedb.pl?show=anime&aid=$show.anidbid"><img alt="[anidb]" height="16" width="16" src="$sbRoot/images/anidb16.png" /></a>
-        #end if
-    </span>
 </span>
+
 ##There is a special/season_0?## 
 #if int($seasonResults[-1]["season"]) == 0:	
 	#set $season_special=1
@@ -86,27 +75,11 @@
 
 <div class="seasonList"> 
 <span>
-#if $show.anime and $show.absolute_numbering:
-	<a href="#episodes">Episodes</a>
-    #for $seasonNum in $seasonResults:
-        #if int($seasonNum["season"]) == 0:
-            | <a href="#season-0">Specials</a>
-        #end if
-    #end for
-#elif (len($seasonResults) > 14):
+#if (len($seasonResults) > 14):
     <select id="seasonJump">
         <option value="jump">Jump to Season</option>
     #for $seasonNum in $seasonResults:
-        <option value="#season-$seasonNum["season"]">
-        	#if int($seasonNum["season"]) == 0:
-        		Specials
-        	#else:
-        		Season $seasonNum["season"]
-        		#if $seasonNum['name']:
-        			- $seasonNum['name']
-        		#end if
-        	#end if 
-        </option>
+        <option value="#season-$seasonNum["season"]">#if int($seasonNum["season"]) == 0 then "Specials" else "Season " + str($seasonNum["season"])#</option>
     #end for
     </select>
 #else:
@@ -115,7 +88,7 @@
         #if int($seasonNum["season"]) == 0:
             <a href="#season-$seasonNum["season"]">Specials</a>
         #else:
-            <a href="#season-$seasonNum["season"]">${str($seasonNum["season"])} #if $seasonNum['name'] then "- " + $seasonNum['name'] else ""#</a>
+            <a href="#season-$seasonNum["season"]">${str($seasonNum["season"])}</a>
         #end if
         #if $seasonNum != $seasonResults[-1]:
             <span class="separator">|</span>
@@ -172,7 +145,6 @@
     <td style="float: right;">
     <table>
     <tr><td class="showLegend">Info Language:</td><td><img src="$sbRoot/images/flags/${show.lang}.png" width="16" height="11" alt="$show.lang" title="$show.lang" /></td></tr>
-    <tr><td class="showLegend">Anime: </td><td><img src="$sbRoot/images/#if int($show.anime) == 1 then "yes16.png\" alt=\"Y" else "no16.png\" alt=\"N"#" width="16" height="16" /></td></tr>
 #if $sickbeard.USE_SUBTITLES
     <tr><td class="showLegend">Subtitles: </td><td><img src="$sbRoot/images/#if int($show.subtitles) == 1 then "yes16.png\" alt=\"Y" else "no16.png\" alt=\"N"#" width="16" height="16" /></td></tr>
 #end if
@@ -185,29 +157,6 @@
 </table>
 </div>
 </div>
-#if $varExists('submenu'):
-<div id="ShowActions">
-<span>
-#set $first = True
-#for $menuItem in $submenu:
-	#if 'requires' not in $menuItem or $menuItem.requires():
-		#if type($menuItem.path) == dict:
-			#if $first then "" else "</span><span>"#<b>$menuItem.title</b>
-			#set $first = False
-			#set $inner_first = True
-			#for $cur_link in $menuItem.path:
-				#if $inner_first then "" else "&middot; "#<a class="inner" href="$sbRoot/$menuItem.path[$cur_link]">$cur_link</a>
-				#set $inner_first = False
-			#end for
-		#else
-			#if $first then "" else ""#<a href="$sbRoot/$menuItem.path" #if 'confirm' in $menuItem then "class=\"confirm\"" else "" #>$menuItem.title</a>
-			#set $first = False
-		#end if
-	#end if
-#end for
-</span>
-</div>
-#end if
 
 
 #set $curSeason = -1
@@ -216,10 +165,9 @@
 <div style="clear:both;" class="clearfix"></div>
 
 <div class="float-left">
-	<div>
 		Change selected episodes to 
 		<select id="statusSelect">
-			#for $curStatus in [$WANTED, $SKIPPED, $ARCHIVED, $IGNORED] + sorted($Quality.DOWNLOADED):
+		#for $curStatus in [$WANTED, $SKIPPED, $ARCHIVED, $IGNORED, $FAILED] + sorted($Quality.DOWNLOADED):
 			#if $curStatus == $DOWNLOADED:
 			#continue
 			#end if
@@ -228,20 +176,6 @@
 		</select>
 		<input type="hidden" id="showID" value="$show.tvdbid" />
 		<input class="btn" type="button" id="changeStatus" value="Go" />
-	</div>
-	#if $sickbeard.USE_SUBTITLES and $show.subtitles:
-	<div>
-		Force to download  
-		<select id="forceSubtitlesSelect">
-			<option value="all">All languages</option>
-			#for $subsLang in subtitles.wantedLanguages():
-				<option value="$subsLang">$subliminal.language.Language($subsLang).name</option>
-			#end for
-		</select> subtitles
-		<input type="hidden" id="showID" value="$show.tvdbid" />
-		<input class="btn" type="button" id="forceSubtitleDownload" value="Go" />
-	</div>
-	#end if
 </div>
 
 	<div class="float-right clearfix" id="checkboxControls" style="margin-top: 3px;">
@@ -265,37 +199,15 @@
   	#continue
   #end if
 
-	#set $absolute_numbering = $show.anime and $show.absolute_numbering and $epResult["season"] != 0
-    #if int($epResult["season"]) != $curSeason and not ($absolute_numbering and $curSeason  != -1):
-    	
-    	#set $curSeason = int($epResult["season"])
-	    <tr><td colspan="9"  style="height: 0px; padding:0; margin:0;"><a name="#if $absolute_numbering then 'episodes' else 'season-'+str($epResult['season'])#"></a></td></tr>
+  #if int($epResult["season"]) != $curSeason:
+  <tr><td colspan="9"  style="height: 0px; padding:0; margin:0;"><a name="season-$epResult["season"]"></a></td></tr>
 	    <tr class="seasonheader" id="season-$epResult["season"]" >
 	        <td colspan="9">
-	            <h2>
-	            	#if int($epResult["season"]) == 0:
-	            		Special
-	            	#elif $absolute_numbering:
-	            		Episodes
-	            	#else
-	            		Season $epResult["season"]
-	            		#if $show.anime:
-		            		#set $season_data = $seasonResults[len($seasonResults)-int($epResult["season"])-1]
-		            		#if $season_data['name']:
-		            			- $season_data['name'] <a href="http://anidb.net/perl-bin/animedb.pl?show=anime&aid=$season_data['anidb_id']" onclick="window.open(this.href, '_blank'); return false;" title="http://anidb.net/perl-bin/animedb.pl?show=anime&aid=$season_data['anidb_id']"><img alt="[anidb]" height="16" width="16" src="$sbRoot/images/anidb16.png" /></a>
-		            		#end if
-		            	#end if
-	            	#end if
-	            </h2>
+        <h2>#if int($epResult["season"]) == 0 then "Specials" else "Season "+str($epResult["season"])#</h2>
 	        </td>
 	    </tr>
-	   	#if $absolute_numbering:
-	  		<tr id="episodes-cols"><th width="1%"><input type="checkbox" class="episodesCheck" />
-	   	#else:
-	   		<tr id="season-$epResult["season"]-cols"><th width="1%"><input type="checkbox" class="seasonCheck" id="$epResult["season"]" />
-	  	#end if
-	  	</th><th>NFO</th><th>TBN</th><th>Episode</th><th>Name</th><th class="nowrap">Airdate</th><th>Filename</th>#if $sickbeard.USE_SUBTITLES and $show.subtitles then "<th>Subtitles</th>" else ""#<th>Status</th><th>Search</th></tr>
-        
+  <tr id="season-$epResult["season"]-cols"><th width="1%"><input type="checkbox" class="seasonCheck" id="$epResult["season"]" /></th><th>NFO</th><th>TBN</th><th>Episode</th><th>Name</th><th class="nowrap">Airdate</th><th>Filename</th>#if $sickbeard.USE_SUBTITLES and $show.subtitles then "<th>Subtitles</th>" else ""#<th>Status</th><th>Search</th></tr>
+        #set $curSeason = int($epResult["season"])
   #end if    
 
   #set $epStr = str($epResult["season"]) + "x" + str($epResult["episode"])
@@ -308,10 +220,10 @@
     </td>
     <td align="center"><img src="$sbRoot/images/#if $epResult["hasnfo"] == 1 then "nfo.gif\" alt=\"Y" else "nfo-no.gif\" alt=\"N"#" width="23" height="11" /></td>
     <td align="center"><img src="$sbRoot/images/#if $epResult["hastbn"] == 1 then "tbn.gif\" alt=\"Y" else "tbn-no.gif\" alt=\"N"#" width="23" height="11" /></td>
-    <td align="center">#if $absolute_numbering then $epResult["absolute_number"] else $epResult["episode"]#</td>
+    <td align="center">$epResult["episode"]</td>
     <td class="title">
     #if $epResult["description"] != "" and $epResult["description"] != None:
-    <img style="padding-top: 3px;" src="$sbRoot/images/info32.png" height="16" class="plotInfo" alt="" id="plot_info_$show.tvdbid<%="_"+str(epResult["season"])+"_"+str(epResult["episode"])%>" />
+    <img style="padding-top: 3px;" src="$sbRoot/images/info32.png" width="16" height="16" class="plotInfo" alt="" id="plot_info_$show.tvdbid<%="_"+str(epResult["season"])+"_"+str(epResult["episode"])%>" />
 	#end if    
     $epResult["name"]
 </td>
@@ -344,7 +256,11 @@ $epLoc
 #end if
     <td class="search">
     #if int($epResult["season"]) != 0:
-      <a class="epSearch" href="searchEpisode?show=$show.tvdbid&amp;season=$epResult["season"]&amp;episode=$epResult["episode"]"><img src="$sbRoot/images/search32.png" height="16" alt="search" title="Manual Search" /></a>
+		#if ( int($epResult["status"]) in $Quality.SNATCHED or int($epResult["status"]) in $Quality.DOWNLOADED ) and $sickbeard.USE_FAILED_DOWNLOADS:
+			<a class="epRetry" href="retryEpisode?show=$show.tvdbid&amp;season=$epResult["season"]&amp;episode=$epResult["episode"]"><img src="$sbRoot/images/search32.png" height="16" alt="retry" title="Retry Download" /></a>
+		#else:
+	    	<a class="epSearch" href="searchEpisode?show=$show.tvdbid&amp;season=$epResult["season"]&amp;episode=$epResult["episode"]"><img src="$sbRoot/images/search32.png" width="16" height="16" alt="search" title="Manual Search" /></a>
+		#end if
     #end if
     #if $sickbeard.USE_SUBTITLES and $show.subtitles and len(set(str($epResult["subtitles"]).split(',')).intersection(set($subtitles.wantedLanguages()))) < len($subtitles.wantedLanguages()) and $epResult["location"]
       <a class="epSubtitlesSearch" href="searchEpisodeSubtitles?show=$show.tvdbid&amp;season=$epResult["season"]&amp;episode=$epResult["episode"]"><img src="$sbRoot/images/closed_captioning.png" height="16" alt="search subtitles" title="Search Subtitles" /></a>

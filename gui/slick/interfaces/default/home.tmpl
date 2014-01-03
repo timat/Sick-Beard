@@ -29,7 +29,12 @@
     format: function(s) {
         if (s.indexOf('Loading...') == 0)
             return s.replace('Loading...','000');
-        return (s || '').replace(/^(The|A)\s/i,'');
+		else
+		#if not $sickbeard.SORT_ARTICLE:
+			return (s || '').replace(/^(The|A|An)\s/i,'');
+		#else:
+			return (s || '');
+		#end if	
     },
     type: 'text'
 });
@@ -81,7 +86,9 @@
 	
 	        sortList: [[6,0],[2,0]],
 	        textExtraction: {
+	        #if ( $layout != 'simple'):
 	            3: function(node) { return \$(node).find("img").attr("alt"); },
+	        #end if
 	            4: function(node) { return \$(node).find("span").text(); },
 	            6: function(node) { return \$(node).find("img").attr("alt"); }
 	        },
@@ -95,23 +102,6 @@
 	        }
     });
     
-    if(\$("#showListTableAnime").length > 0){
-        \$("#showListTableAnime").tablesorter({
-            sortList: [[5,1],[1,0]],
-            textExtraction: {
-                3: function(node) { return \$(node).find("span").text().toLowerCase(); },
-                4: function(node) { return \$(node).find("span").text(); },
-                5: function(node) { return \$(node).find("img").attr("alt"); }
-            },
-            widgets: ['saveSort', 'zebra', 'stickyHeaders'],
-            headers: {
-                0: { sorter: 'isoDate' },
-                1: { sorter: 'loadingNames' },
-                3: { sorter: 'quality' },
-                4: { sorter: 'eps' }
-            }
-        });
-    };
 });
 
 //-->
@@ -131,15 +121,7 @@
 	</span>
 </div>
 
-#for $curShowlist in $showlists:
-#set $curListType = $curShowlist[0]
-#set $myShowList = $list($curShowlist[1])
-#if $curListType == "Anime":
-	<h1 class="header">Anime List</h1>
-	<table id="showListTableAnime" class="sickbeardTable tablesorter" cellspacing="1" border="0" cellpadding="0">
-#else:
-	<table id="showListTable" class="sickbeardTable tablesorter" cellspacing="1" border="0" cellpadding="0">
-#end if
+<table id="showListTable" class="sickbeardTable tablesorter" cellspacing="1" border="0" cellpadding="0">
 
   <thead><tr><th class="nowrap">Next Ep</th>#if $layout=="poster" then "<th>Poster</th>" else "<th style='display: none;'></th>"#<th>Show</th><th>Network</th><th>Quality</th><th>Downloads</th><th>Active</th><th>Status</th></tr></thead>
   <tfoot>
@@ -174,6 +156,7 @@
   </tr>
 #end for
 
+#set $myShowList = $list($sickbeard.showList)
 $myShowList.sort(lambda x, y: cmp(x.name, y.name))
 #for $curShow in $myShowList:
 #set $curEp = $curShow.nextEpisode()
@@ -191,7 +174,7 @@ $myShowList.sort(lambda x, y: cmp(x.name, y.name))
     #set $den = $curShowAll[0]
   #end if
 #else
-  #set $dlStat = "?"
+  #set $dlStat = "0"
   #set $nom = 0
   #set $den = 1
 #end if
@@ -245,9 +228,10 @@ $myShowList.sort(lambda x, y: cmp(x.name, y.name))
         <!--
             \$(function() {
                \$("\#progressbar$curShow.tvdbid").progressbar({
-                   value: parseInt($nom) * 100 / parseInt($den)
-               });
+       			value: parseInt($nom) * 100 / parseInt($den) / 1000 });
                \$("\#progressbar$curShow.tvdbid").append( "<div class='progressbarText'>$dlStat</div>" )
+				var progressBarWidth = parseInt($nom) * 100 / parseInt($den) + "%"
+               \$("\#progressbar$curShow.tvdbid > .ui-progressbar-value").animate({ width: progressBarWidth }, 1000);
             });
         //-->
         </script>
@@ -260,6 +244,5 @@ $myShowList.sort(lambda x, y: cmp(x.name, y.name))
 #end for
 </tbody>
 </table>
-#end for
-<script type="text/javascript" src="$sbRoot/js/tableClick.js?$sbPID"></script>
+
 #include $os.path.join($sickbeard.PROG_DIR,"gui/slick/interfaces/default/inc_bottom.tmpl")

@@ -122,6 +122,79 @@ $(document).ready(function(){
             $("#provider_order").val(finalArr.join(' '));
     }
 
+    $.fn.hideConfigTab = function () {
+
+      $("#config-components").tabs( "disable", 1 );
+      $("#config-components ul li:eq(1)").hide();
+
+    };
+
+    $.fn.showProvidersConfig = function () {
+
+    $("#provider_order_list li").each(function( index ) {
+
+      if ($(this).find("input").attr("checked")) {
+        $(this).addTip();
+        } else {
+          $(this).qtip('destroy');
+        }
+      });
+    };
+
+  $.fn.addTip = function() {
+
+      var config_id = $(this).find("input").attr('id').replace("enable_", "") + "Div";
+      var config_form = '<div id="config"><form id="configForm_tip" action="saveProviders" method="post"><fieldset class="component-group-list tip_scale"><div class="providerDiv_tip">' + $("div[id*="+config_id+"]").html() + '</div></fieldset></form></div>'
+      var provider_name =  $.trim($(this).text()).replace('*','')
+  
+      if ($("div[id*="+config_id+"]").length == 0) {
+        return false
+      }
+  
+      $(this).qtip({
+  
+          overwrite: true,
+          position: {
+             adjust: {
+                x: 0, y: 0,
+             },
+             my: 'left top',
+               at: 'top right',
+          },
+          show: {
+               event: 'mouseenter', // Show it on click...
+               target: false,
+               solo: true,
+               delay: 90,
+               effect: true,
+          },
+          hide: {
+               fixed: true,
+               delay: 900,
+          },
+          content: {
+          text: config_form,
+                title: {
+                    text: provider_name + ' Config',
+                    button: true
+                }
+          },
+          style: {
+              border: {
+                  width: 5,
+                  radius: 2,
+                  color: '#e1e1e1'
+              },
+              width: 350,
+              background: '#FFF',
+              padding: 15,
+              tip: true, // Give it a speech bubble tip with automatic corner detection
+              classes: 'qtip-dark qtip-shadow',
+          },
+      });
+
+    }
+
     var newznabProviders = new Array();
 
     $('.newznab_key').change(function(){
@@ -164,11 +237,20 @@ $(document).ready(function(){
         
         var selectedProvider = $('#editANewznabProvider :selected').val();
         
-        var name = $('#newznab_name').val();
-        var url = $('#newznab_url').val();
-        var key = $('#newznab_key').val();
+        var name = $.trim($('#newznab_name').val());
+        var url = $.trim($('#newznab_url').val());
+        var key = $.trim($('#newznab_key').val());
         
-        var params = { name: name }
+        if (!name)
+        	return;
+
+        if (!url)
+        	return;        	
+
+        if (!key)
+        	return;
+
+        var params = {name: name};
         
         // send to the form with ajax, get a return value
         $.getJSON(sbRoot + '/config/providers/canAddNewznabProvider', params,
@@ -192,9 +274,94 @@ $(document).ready(function(){
 
     });
 
+    $('#torrentrss_add').click(function(){
+        var selectedProvider = $('#editATorrentRssProvider :selected').val();
+
+        var name = $('#torrentrss_name').val();
+        var url = $('#torrentrss_url').val();
+        var params = { name: name, url: url}
+
+        // send to the form with ajax, get a return value
+        $.getJSON(sbRoot + '/config/providers/canAddTorrentRssProvider', params,
+            function(data){
+                if (data.error != undefined) {
+                    alert(data.error);
+                    return;
+                }
+
+                $(this).addTorrentRssProvider(data.success, name, url);
+        });
+    });
+
+    $('.torrentrss_delete').on('click', function(){
+        var selectedProvider = $('#editATorrentRssProvider :selected').val();
+        $(this).deleteTorrentRssProvider(selectedProvider);
+    });
+
+
+    $(this).on('change', "[class='providerDiv_tip'] input", function(){
+        $('div .providerDiv ' + "[name=" + $(this).attr('name') + "]").replaceWith($(this).clone());
+        $('div .providerDiv ' + "[newznab_name=" + $(this).attr('id') + "]").replaceWith($(this).clone());
+    });
+
+    $(this).on('change', "[class='providerDiv_tip'] select", function(){
+
+    $(this).find('option').each( function() {
+      if ($(this).is(':selected')) {
+        $(this).prop('defaultSelected', true)
+      } else {
+        $(this).prop('defaultSelected', false);
+      }
+    });
+
+    $('div .providerDiv ' + "[name=" + $(this).attr('name') + "]").empty().replaceWith($(this).clone())});
+
+    $(this).on('change', '.enabler', function(){
+      if ($(this).is(':checked')) {
+          $('.content_'+$(this).attr('id')).each( function() {
+              $(this).show()
+          })
+      } else {
+            $('.content_'+$(this).attr('id')).each( function() {
+                $(this).hide()
+            })
+      }
+    });
+
+    $(".enabler").each(function(){
+        if (!$(this).is(':checked')) {
+          $('.content_'+$(this).attr('id')).hide();
+        } else {
+          $('.content_'+$(this).attr('id')).show();
+      }
+    });
+
+    $.fn.makeTorrentOptionString = function(provider_id) {
+
+	    var seed_ratio  = $('.providerDiv_tip #'+provider_id+'_seed_ratio').prop('value');
+	    var seed_time   = $('.providerDiv_tip #'+provider_id+'_seed_time').prop('value');
+	    var process_met = $('.providerDiv_tip #'+provider_id+'_process_method').prop('value');
+		var option_string = $('.providerDiv_tip #'+provider_id+'_option_string');	
+
+        option_string.val([seed_ratio, seed_time, process_met].join('|'))
+
+    }
+
+    $(this).on('change', '.seed_option', function(){
+
+        var provider_id = $(this).attr('id').split('_')[0];
+
+		$(this).makeTorrentOptionString(provider_id);
+
+    });
+
     // initialization stuff
 
+    $(this).hideConfigTab();
+
     $(this).showHideProviders();
+
+    $(this).showProvidersConfig();
 
     $("#provider_order_list").sortable({
         placeholder: 'ui-state-highlight',

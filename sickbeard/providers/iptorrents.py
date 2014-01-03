@@ -169,16 +169,17 @@ class IPTorrentsProvider(generic.TorrentProvider):
 
                     for result in torrents[1:]:
 
+                        try:
                         torrent = result.find_all('td')[1].find('a')
-
                         torrent_name = torrent.string
                         torrent_download_url = self.urls['base_url'] + (result.find_all('td')[3].find('a'))['href']
                         torrent_details_url = self.urls['base_url'] + torrent['href']
                         torrent_seeders = int(result.find('td', attrs = {'class' : 'ac t_seeders'}).string)
-
                         ## Not used, perhaps in the future ##
                         #torrent_id = int(torrent['href'].replace('/details.php?id=', ''))
                         #torrent_leechers = int(result.find('td', attrs = {'class' : 'ac t_leechers'}).string)
+                        except (AttributeError, TypeError):
+                            continue
 
                         # Filter unseeded torrent and torrents with no name/url
                         if torrent_seeders == 0 or not torrent_name or not torrent_download_url:

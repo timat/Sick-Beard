@@ -25,12 +25,10 @@ import sickbeard
 from lib.tvdb_api import tvdb_exceptions, tvdb_api
 from lib.imdb import _exceptions as imdb_exceptions
 
-from lib import adba
-from lib.adba.aniDBerrors import AniDBIncorrectParameterError
 from sickbeard.common import SKIPPED, WANTED
 
 from sickbeard.tv import TVShow
-from sickbeard import exceptions, helpers, logger, ui, db
+from sickbeard import exceptions, logger, ui, db
 from sickbeard import generic_queue
 from sickbeard import name_cache
 from sickbeard.exceptions import ex
@@ -132,8 +130,8 @@ class ShowQueue(generic_queue.GenericQueue):
 
         return queueItemObj
 
-    def addShow(self, tvdb_id, showDir, default_status=None, quality=None, flatten_folders=None, subtitles=None, lang="en", anime=0):
-        queueItemObj = QueueItemAdd(tvdb_id, showDir, default_status, quality, flatten_folders, lang, subtitles, anime)
+    def addShow(self, tvdb_id, showDir, default_status=None, quality=None, flatten_folders=None, subtitles=None, lang="en"):
+        queueItemObj = QueueItemAdd(tvdb_id, showDir, default_status, quality, flatten_folders, lang, subtitles)
         
         self.add_item(queueItemObj)
 
@@ -185,7 +183,7 @@ class ShowQueueItem(generic_queue.QueueItem):
 
 
 class QueueItemAdd(ShowQueueItem):
-    def __init__(self, tvdb_id, showDir, default_status, quality, flatten_folders, lang, subtitles, anime):
+    def __init__(self, tvdb_id, showDir, default_status, quality, flatten_folders, lang, subtitles):
 
         self.tvdb_id = tvdb_id
         self.showDir = showDir
@@ -194,7 +192,6 @@ class QueueItemAdd(ShowQueueItem):
         self.flatten_folders = flatten_folders
         self.lang = lang
         self.subtitles = subtitles
-        self.anime = anime
 
         self.show = None
 
@@ -272,7 +269,6 @@ class QueueItemAdd(ShowQueueItem):
             self.show.subtitles = self.subtitles if self.subtitles != None else sickbeard.SUBTITLES_DEFAULT
             self.show.quality = self.quality if self.quality else sickbeard.QUALITY_DEFAULT
             self.show.flatten_folders = self.flatten_folders if self.flatten_folders != None else sickbeard.FLATTEN_FOLDERS_DEFAULT
-            self.show.anime = self.anime if self.anime != None else sickbeard.ANIME_DEFAULT
             self.show.paused = False
             
             # be smartish about this
@@ -312,31 +308,32 @@ class QueueItemAdd(ShowQueueItem):
             logger.log(u"Error loading IMDb info: " + ex(e), logger.ERROR)
             logger.log(traceback.format_exc(), logger.DEBUG)
 
+        try:
+            self.show.saveToDB()
+        except Exception, e:
+            logger.log(u"Error saving the show to the database: " + ex(e), logger.ERROR)
+            logger.log(traceback.format_exc(), logger.DEBUG)
+            self._finishEarly()
+            raise
+        
         # add it to the show list
         sickbeard.showList.append(self.show)
 
         try:
-            self.show.loadEpisodesFromDir()
-        except Exception, e:
-            logger.log(u"Error searching dir for episodes: " + ex(e), logger.ERROR)
-            logger.log(traceback.format_exc(), logger.DEBUG)
-
-        try:
             self.show.loadEpisodesFromTVDB()
-            self.show.setTVRID()
-            self.show.setAniDBData()
-
-            self.show.writeMetadata()
-            self.show.populateCache()
-            
         except Exception, e:
             logger.log(u"Error with TVDB, not creating episode list: " + ex(e), logger.ERROR)
             logger.log(traceback.format_exc(), logger.DEBUG)
 
         try:
-            self.show.saveToDB()
+            self.show.setTVRID()
         except Exception, e:
-            logger.log(u"Error saving the episode to the database: " + ex(e), logger.ERROR)
+            logger.log(u"Error with TVRage, not setting tvrid" + ex(e), logger.ERROR)
+
+        try:
+            self.show.loadEpisodesFromDir()
+        except Exception, e:
+            logger.log(u"Error searching dir for episodes: " + ex(e), logger.ERROR)
             logger.log(traceback.format_exc(), logger.DEBUG)
 
         # if they gave a custom status then change all the eps to it
@@ -349,6 +346,9 @@ class QueueItemAdd(ShowQueueItem):
         if self.default_status == WANTED:
             logger.log(u"Launching backlog for this show since its episodes are WANTED")
             sickbeard.backlogSearchScheduler.action.searchBacklog([self.show]) #@UndefinedVariable
+
+        self.show.writeMetadata()
+        self.show.populateCache()    
 
         self.show.flushEpisodes()
 
@@ -456,6 +456,9 @@ class QueueItemUpdate(ShowQueueItem):
         except tvdb_exceptions.tvdb_error, e:
             logger.log(u"Unable to contact TVDB, aborting: " + ex(e), logger.WARNING)
             return
+        except tvdb_exceptions.tvdb_attributenotfound, e:
+            logger.log(u"Data retrieved from TVDB was incomplete, aborting: " + ex(e), logger.ERROR)
+            return
 
         logger.log(u"Retrieving show info from IMDb", logger.DEBUG)
         try:
@@ -515,9 +518,6 @@ class QueueItemUpdate(ShowQueueItem):
             if self.show.tvrid == 0:
                 self.show.setTVRID()
         
-        # Set anidb data        
-        self.show.setAniDBData()
-                
         sickbeard.showQueueScheduler.action.refreshShow(self.show, True) #@UndefinedVariable
 
 class QueueItemForceUpdate(QueueItemUpdate):
